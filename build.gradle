@@ -88,7 +88,7 @@ subprojects {
 
   apply plugin: "com.diffplug.gradle.spotless"
   spotless {
-    lineEndings = 'unix';
+    lineEndings = 'GIT_ATTRIBUTES';
     java {
       eclipseFormatFile "${rootProject.projectDir}/etc/eclipse-java-google-style.xml"
     }
