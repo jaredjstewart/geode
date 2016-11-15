@@ -27,6 +27,7 @@ import org.apache.geode.test.dunit.SerializableRunnable;
 import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.FlakyTest;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -36,120 +37,69 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
+import static org.apache.geode.management.cli.Result.Status.OK;
 import static org.apache.geode.test.dunit.Assert.assertEquals;
 import static org.apache.geode.test.dunit.Assert.fail;
 import static org.apache.geode.test.dunit.LogWriterUtils.getLogWriter;
 import static org.apache.geode.distributed.ConfigurationProperties.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Dunit class for testing gemfire function commands : export logs
  */
 @Category(DistributedTest.class)
-public class MiscellaneousCommandsExportLogsPart3DUnitTest extends CliCommandTestBase {
+public class MiscellaneousCommandsExportLogsPart3DUnitTest extends ExportLogsTestBase {
 
-  private static final long serialVersionUID = 1L;
+  private static final String GROUP1 = "Group1";
 
-  public String getMemberId() {
-    Cache cache = getCache();
-    return cache.getDistributedSystem().getDistributedMember().getId();
+  private transient MiscellaneousCommands misc;
+  private String start;
+  private String end;
+
+
+  @Before
+  public void setUpCacheInLocalVM() {
+    start = sf.format(new Date(System.currentTimeMillis() - ONE_MINUTE));
+    end = sf.format(new Date(System.currentTimeMillis() + ONE_HOUR));
+    getCache();
+    misc = new MiscellaneousCommands();
   }
 
-  void setupForExportLogs() {
-    final VM vm1 = Host.getHost(0).getVM(1);
-    setUpJmxManagerOnVm0ThenConnect(null);
-
-    vm1.invoke(new SerializableRunnable() {
-      public void run() {
-        // no need to close cache as it will be closed as part of teardown2
-        Cache cache = getCache();
-
-        RegionFactory<Integer, Integer> dataRegionFactory =
-            cache.createRegionFactory(RegionShortcut.PARTITION);
-        Region region = dataRegionFactory.create("testRegion");
-        for (int i = 0; i < 5; i++) {
-          region.put("key" + (i + 200), "value" + (i + 200));
-        }
-      }
-    });
-  }
-
-  String getCurrentTimeString() {
-    SimpleDateFormat sf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS_z");
-    Date startDate = new Date(System.currentTimeMillis());
-    String formattedStartDate = sf.format(startDate);
-    return ("_" + formattedStartDate);
-  }
-
-  @Category(FlakyTest.class) // GEODE-672: random ports, java.rmi.server.ExportException: Port
-                             // already in use, HeadlessGfsh, disk IO
+  @Category(FlakyTest.class) // GEODE-672
   @Test
   public void testExportLogsForGroup() throws IOException {
-    Properties localProps = new Properties();
-    localProps.setProperty(NAME, "Manager");
-    localProps.setProperty(GROUPS, "Group1");
-    setUpJmxManagerOnVm0ThenConnect(localProps);
-    String dir = getCurrentTimeString();
+    Properties props = new Properties();
+    props.setProperty(NAME, "Manager");
+    props.setProperty(GROUPS, GROUP1);
+    setUpJmxManagerOnVm0ThenConnect(props);
 
-    Date startDate = new Date(System.currentTimeMillis() - 2 * 60 * 1000);
-    SimpleDateFormat sf = new SimpleDateFormat("yyyy/MM/dd");
-    String start = sf.format(startDate);
+    Result cmdResult = misc.exportLogsPreprocessing(temporaryFolder.getRoot().getCanonicalPath(), new String[]{ GROUP1 }, null,
+        LOG_LEVEL, false, false, start, end, 1);
 
-    Date enddate = new Date(System.currentTimeMillis() + 2 * 60 * 60 * 1000);
-    String end = sf.format(enddate);
+    System.out.println(getTestMethodName() + " command result =" + cmdResult);
 
-    String logLevel = LogWriterImpl.levelToString(LogWriterImpl.INFO_LEVEL);
-
-    MiscellaneousCommands misc = new MiscellaneousCommands();
-    getCache();
-    String[] groups = new String[1];
-    groups[0] = "Group1";
-
-    Result cmdResult = misc.exportLogsPreprocessing("./testExportLogsForGroup" + dir, groups, null,
-        logLevel, false, false, start, end, 1);
-
-    getLogWriter().info("testExportLogsForGroup command result =" + cmdResult);
-    if (cmdResult != null) {
-      String cmdStringRsult = commandResultToString((CommandResult) cmdResult);
-      getLogWriter().info("testExportLogsForGroup cmdStringRsult=" + cmdStringRsult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-    } else {
-      fail("testExportLogsForGroup failed as did not get CommandResult");
-    }
-    FileUtil.delete(new File("testExportLogsForGroup" + dir));
+    assertThat(cmdResult).isNotNull();
+    assertThat(cmdResult.getStatus()).isEqualTo(OK);
   }
 
   @Test
   public void testExportLogsForMember() throws IOException {
     setUpJmxManagerOnVm0ThenConnect(null);
 
-    Date startDate = new Date(System.currentTimeMillis() - 2 * 60 * 1000);
-    SimpleDateFormat sf = new SimpleDateFormat("yyyy/MM/dd");
-    String start = sf.format(startDate);
-
-    Date enddate = new Date(System.currentTimeMillis() + 2 * 60 * 60 * 1000);
-    String end = sf.format(enddate);
-
     final VM vm1 = Host.getHost(0).getVM(1);
-    final String vm1MemberId = (String) vm1.invoke(() -> getMemberId());
-    String dir = getCurrentTimeString();
+    final String vm1MemberId = vm1.invoke(this::getMemberId);
 
-    String logLevel = LogWriterImpl.levelToString(LogWriterImpl.INFO_LEVEL);
+    Result cmdResult = misc.exportLogsPreprocessing(temporaryFolder.getRoot().getCanonicalPath(), null,
+        vm1MemberId, LOG_LEVEL, false, false, start, end, 1);
 
-    MiscellaneousCommands misc = new MiscellaneousCommands();
-    getCache();
+    System.out.println(getTestMethodName() + " command result =" + cmdResult);
 
-    Result cmdResult = misc.exportLogsPreprocessing("./testExportLogsForMember" + dir, null,
-        vm1MemberId, logLevel, false, false, start, end, 1);
-
-    getLogWriter().info("testExportLogsForMember command result =" + cmdResult);
-
-    if (cmdResult != null) {
-      String cmdStringRsult = commandResultToString((CommandResult) cmdResult);
-      getLogWriter().info("testExportLogsForMember cmdStringRsult=" + cmdStringRsult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-    } else {
-      fail("testExportLogsForMember failed as did not get CommandResult");
-    }
-    FileUtil.delete(new File("testExportLogsForMember" + dir));
+    assertThat(cmdResult).isNotNull();
+    assertThat(cmdResult.getStatus()).isEqualTo(OK);
   }
+
+  private String getMemberId() {
+    return getCache().getDistributedSystem().getDistributedMember().getId();
+  }
+
 }

@@ -14,8 +14,10 @@
  */
 package org.apache.geode.management.internal.cli.commands;
 
+import static org.apache.geode.management.cli.Result.Status.OK;
 import static org.apache.geode.test.dunit.Assert.*;
 import static org.apache.geode.test.dunit.LogWriterUtils.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +37,7 @@ import org.apache.geode.test.dunit.SerializableRunnable;
 import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.junit.categories.DistributedTest;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -42,100 +45,50 @@ import org.junit.experimental.categories.Category;
  * Dunit class for testing gemfire function commands : export logs
  */
 @Category(DistributedTest.class)
-public class MiscellaneousCommandsExportLogsPart2DUnitTest extends CliCommandTestBase {
+public class MiscellaneousCommandsExportLogsPart2DUnitTest extends ExportLogsTestBase {
 
-  private static final long serialVersionUID = 1L;
+  private transient MiscellaneousCommands misc;
+  private String start;
+  private String end;
 
-  void setupForExportLogs() {
-    final VM vm1 = Host.getHost(0).getVM(1);
-    setUpJmxManagerOnVm0ThenConnect(null);
-
-    vm1.invoke(new SerializableRunnable() {
-      public void run() {
-        // no need to close cache as it will be closed as part of teardown2
-        Cache cache = getCache();
-
-        RegionFactory<Integer, Integer> dataRegionFactory =
-            cache.createRegionFactory(RegionShortcut.PARTITION);
-        Region region = dataRegionFactory.create("testRegion");
-        for (int i = 0; i < 5; i++) {
-          region.put("key" + (i + 200), "value" + (i + 200));
-        }
-      }
-    });
+  @Before
+  public void setUpJmxManagerInVM0() {
+    setUpJmxManagerOnVm0ThenConnect(null); // jmx manager in VM-0
   }
 
-  String getCurrentTimeString() {
-    SimpleDateFormat sf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS_z");
-    Date startDate = new Date(System.currentTimeMillis());
-    String formattedStartDate = sf.format(startDate);
-    return ("_" + formattedStartDate);
+  @Before
+  public void setUpCacheInLocalVM() {
+    start = sf.format(new Date(System.currentTimeMillis() - ONE_MINUTE));
+    end = sf.format(new Date(System.currentTimeMillis() + ONE_HOUR));
+    getCache();
+    misc = new MiscellaneousCommands();
   }
+
 
   @Test
   public void testExportLogsForLogLevel() throws IOException {
-    setupForExportLogs();
-
-    Date startDate = new Date(System.currentTimeMillis() - 60 * 1000);
-    SimpleDateFormat sf = new SimpleDateFormat("yyyy/MM/dd");
-    String start = sf.format(startDate);
-
-    Date enddate = new Date(System.currentTimeMillis() + 60 * 1000);
-    String end = sf.format(enddate);
-    String dir = getCurrentTimeString();
-
     String logLevel = LogWriterImpl.levelToString(LogWriterImpl.CONFIG_LEVEL);
 
-    MiscellaneousCommands misc = new MiscellaneousCommands();
-    getCache();
-
-    Result cmdResult = misc.exportLogsPreprocessing("./testExportLogsForLogLevel" + dir, null, null,
+    Result cmdResult = misc.exportLogsPreprocessing(temporaryFolder.getRoot().getCanonicalPath(), null, null,
         logLevel, false, false, start, end, 1);
 
-    getLogWriter().info("testExportLogsForLogLevel command=" + cmdResult);
+    System.out.println(getTestMethodName() + " command result =" + cmdResult);
 
-    if (cmdResult != null) {
-      String cmdStringRsult = commandResultToString((CommandResult) cmdResult);
-      getLogWriter().info("testExportLogsForLogLevel cmdStringRsult=" + cmdStringRsult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-    } else {
-      fail("testExportLogsForLogLevel failed as did not get CommandResult");
-    }
-    FileUtil.delete(new File("testExportLogsForLogLevel" + dir));
+    assertThat(cmdResult).isNotNull();
+    assertThat(cmdResult.getStatus()).isEqualTo(OK);
   }
 
   @Test
   public void testExportLogsForLogLevelWithUPTOLOGLEVEL() throws IOException {
-    setupForExportLogs();
-
-    Date startDate = new Date(System.currentTimeMillis() - 2 * 60 * 1000);
-    SimpleDateFormat sf = new SimpleDateFormat("yyyy/MM/dd");
-    String start = sf.format(startDate);
-
-    Date enddate = new Date(System.currentTimeMillis() + 2 * 60 * 60 * 1000);
-    String end = sf.format(enddate);
-    String dir = getCurrentTimeString();
-
     String logLevel = LogWriterImpl.levelToString(LogWriterImpl.SEVERE_LEVEL);
 
-    MiscellaneousCommands misc = new MiscellaneousCommands();
-    getCache();
-
     Result cmdResult =
-        misc.exportLogsPreprocessing("./testExportLogsForLogLevelWithUPTOLOGLEVEL" + dir, null,
+        misc.exportLogsPreprocessing(temporaryFolder.getRoot().getCanonicalPath(), null,
             null, logLevel, true, false, start, end, 1);
 
-    getLogWriter().info("testExportLogsForLogLevelWithUPTOLOGLEVEL command=" + cmdResult);
+    System.out.println(getTestMethodName() + " command result =" + cmdResult);
 
-    if (cmdResult != null) {
-      String cmdStringRsult = commandResultToString((CommandResult) cmdResult);
-      getLogWriter()
-          .info("testExportLogsForLogLevelWithUPTOLOGLEVEL cmdStringRsult=" + cmdStringRsult);
-
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-    } else {
-      fail("testExportLogsForLogLevelWithUPTOLOGLEVEL failed as did not get CommandResult");
-    }
-    FileUtil.delete(new File("testExportLogsForLogLevelWithUPTOLOGLEVEL" + dir));
+    assertThat(cmdResult).isNotNull();
+    assertThat(cmdResult.getStatus()).isEqualTo(OK);
   }
 }
