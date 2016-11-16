@@ -68,9 +68,9 @@ public class MiscellaneousCommandsExportLogsPart1DUnitTest extends ExportLogsTes
   public void testExportLogs() throws IOException {
     Result
         cmdResult =
-        misc.exportLogsPreprocessing(temporaryFolder.getRoot().getCanonicalPath(), null, null,
+        misc.exportLogs(temporaryFolder.getRoot().getCanonicalPath(), null, null,
             LOG_LEVEL,
-            false, false, start, end, 1);
+            false, false, start, end);
 
     System.out.println(getTestMethodName() + " command result =" + cmdResult);
 
@@ -84,8 +84,8 @@ public class MiscellaneousCommandsExportLogsPart1DUnitTest extends ExportLogsTes
 
     Result
         cmdResult =
-        misc.exportLogsPreprocessing(temporaryFolder.getRoot().getCanonicalPath(), null, null,
-            LOG_LEVEL, false, true, start, end, 1);
+        misc.exportLogs(temporaryFolder.getRoot().getCanonicalPath(), null, null,
+            LOG_LEVEL, false, true, start, end);
     System.out.println(getTestMethodName() + " command result =" + cmdResult);
 
     assertThat(cmdResult).isNotNull();

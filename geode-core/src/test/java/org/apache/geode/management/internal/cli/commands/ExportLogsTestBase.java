@@ -118,6 +118,15 @@ public abstract class ExportLogsTestBase extends JUnit4CacheTestCase {
     return shell;
   }
 
+  protected HeadlessGfsh setUpJmxManagerOnVmThenConnect(final int vm, final Properties props) {
+    Object[] result = setUpJMXManagerOnVM(vm, props);
+    this.jmxHost = (String) result[0];
+    this.jmxPort = (Integer) result[1];
+    this.httpPort = (Integer) result[2];
+    connect(this.jmxHost, this.jmxPort, this.httpPort, getDefaultShell());
+    return shell;
+  }
+
   protected Object[] setUpJMXManagerOnVM(int vm, final Properties props) {
     return setUpJMXManagerOnVM(vm, props, null);
   }

@@ -149,7 +149,7 @@ public class LogFileFunction implements Function, InternalEntity {
           }
 
         } catch (Exception e) {
-          context.getResultSender().lastResult(e.getMessage());
+          context.getResultSender().sendException(e);
         }
       }
     });
@@ -168,7 +168,7 @@ public class LogFileFunction implements Function, InternalEntity {
                 .getMemberId());
       }
     } catch (Exception e) {
-      context.getResultSender().lastResult(e.getMessage());
+      context.getResultSender().lastResult(e.getMessage()); // TODO: use e instead of getMessage and sendException instead of lastResult
     } finally {
       if (waiting.isAlive()) {
         waiting.interrupt();

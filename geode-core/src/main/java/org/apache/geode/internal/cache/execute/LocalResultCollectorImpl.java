@@ -56,7 +56,7 @@ public final class LocalResultCollectorImpl implements LocalResultCollector {
       return;
     }
     if (!this.endResultRecieved) {
-      if (resultOfSingleExecution instanceof Throwable) {
+      if (resultOfSingleExecution instanceof Throwable) { // TODO: MemberFunctionResultSender gave us getMessage instead of Throwable
         Throwable t = (Throwable) resultOfSingleExecution;
         if (this.execution.isIgnoreDepartedMembers()) {
           if (t.getCause() != null) {

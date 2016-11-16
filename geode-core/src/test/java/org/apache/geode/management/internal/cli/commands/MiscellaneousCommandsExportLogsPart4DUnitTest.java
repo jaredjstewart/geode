@@ -42,7 +42,6 @@ import java.util.Date;
 @Category(DistributedTest.class)
 public class MiscellaneousCommandsExportLogsPart4DUnitTest extends ExportLogsTestBase {
 
-
   private static final String LOG_LINE = "some unique line to test for";
 
   private transient MiscellaneousCommands misc;
@@ -66,8 +65,8 @@ public class MiscellaneousCommandsExportLogsPart4DUnitTest extends ExportLogsTes
 
     getHost(0).getVM(0).invoke(() -> getCache().getLogger().info(LOG_LINE));
 
-    Result cmdResult = misc.exportLogsPreprocessing(temporaryFolder.getRoot().getCanonicalPath(), null,
-        null, LOG_LEVEL, false, false, start, end, 1);
+    Result cmdResult = misc.exportLogs(temporaryFolder.getRoot().getCanonicalPath(), null,
+        null, LOG_LEVEL, false, false, start, end);
 
     System.out.println(getTestMethodName() + " command result =" + cmdResult);
 
@@ -91,8 +90,8 @@ public class MiscellaneousCommandsExportLogsPart4DUnitTest extends ExportLogsTes
   @Test
   public void testExportLogsForTimeRangeForOnlyStartTime() throws IOException {
     Result cmdResult =
-        misc.exportLogsPreprocessing(temporaryFolder.getRoot().getCanonicalPath(), null,
-            null, LOG_LEVEL, false, false, start, null, 1);
+        misc.exportLogs(temporaryFolder.getRoot().getCanonicalPath(), null,
+            null, LOG_LEVEL, false, false, start, null);
 
     System.out.println(getTestMethodName() + " command result =" + cmdResult);
 
