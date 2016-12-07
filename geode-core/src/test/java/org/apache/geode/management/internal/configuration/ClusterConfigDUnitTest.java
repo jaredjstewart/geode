@@ -1,18 +1,16 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements. See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The ASF licenses this file to You under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package org.apache.geode.management.internal.configuration;
@@ -27,7 +25,6 @@ import static org.apache.geode.distributed.ConfigurationProperties.LOG_FILE_SIZE
 import static org.apache.geode.distributed.ConfigurationProperties.USE_CLUSTER_CONFIGURATION;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.geode.cache.Cache;
 import org.apache.geode.distributed.internal.InternalLocator;
 import org.apache.geode.distributed.internal.SharedConfiguration;
@@ -35,9 +32,9 @@ import org.apache.geode.internal.ClassPathLoader;
 import org.apache.geode.internal.JarClassLoader;
 import org.apache.geode.management.internal.configuration.domain.Configuration;
 import org.apache.geode.management.internal.configuration.utils.ZipUtils;
-import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
-import org.apache.geode.test.dunit.rules.LocatorServerStartupRule;
+import org.apache.geode.test.dunit.rules.DUnitClusterMember;
+import org.apache.geode.test.dunit.rules.ModifiedLocatorServerStartupRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.junit.Before;
 import org.junit.Rule;
@@ -51,149 +48,164 @@ import java.util.Properties;
 
 @Category(DistributedTest.class)
 public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
-  // cluster: {maxLogFileSize: 5000, regions: regionForCluster }, group1: { regions:
+  private static final String EXPORTED_CLUSTER_CONFIG_ZIP_FILENAME = "cluster_config.zip";
+  private static final String[] CONFIG_NAMES = new String[] {"cluster", "group1", "group2"};
 
-  private static final ExpectedConfiguration
-      EXPECTED_CLUSTER_CONFIG =
-      new ExpectedConfiguration("5000",
-          new String[]{"regionForCluster"},
-          new String[]{"cluster.jar"});
-  private static final ExpectedConfiguration
-      EXPECTED_GROUP1_CONFIG =
-      new ExpectedConfiguration("6000",
-          new String[]{"regionForCluster", "regionForGroup1"},
-          new String[]{"cluster.jar", "group1.jar"});
-  private static final ExpectedConfiguration
-      EXPECTED_GROUP2_CONFIG =
-      new ExpectedConfiguration("7000",
-          new String[]{"regionForCluster", "regionForGroup2"},
-          new String[]{"cluster.jar", "group2.jar"});
-  private static final ExpectedConfiguration
-      EXPECTED_GROUP1and2_CONFIG =
-      new ExpectedConfiguration("7000",
-          new String[]{"regionForCluster", "regionForGroup1", "regionForGroup2"},
-          new String[]{"cluster.jar", "group1.jar", "group2.jar"});
+  private static final ExpectedConfig NO_GROUP =
+      new ExpectedConfig().maxLogFileSize("5000").regions("regionForCluster").jars("cluster.jar");
 
-  private static final String[] CONFIG_NAMES = new String[]{"cluster", "group1", "group2"};
+  private static final ExpectedConfig GROUP1 = new ExpectedConfig().maxLogFileSize("6000")
+      .regions("regionForCluster", "regionForGroup1").jars("cluster.jar", "group1.jar");
+
+  private static final ExpectedConfig GROUP2 = new ExpectedConfig().maxLogFileSize("7000")
+      .regions("regionForCluster", "regionForGroup2").jars("cluster.jar", "group2.jar");
+
+  private static final ExpectedConfig GROUP1_AND_2 = new ExpectedConfig().maxLogFileSize("7000")
+      .regions("regionForCluster", "regionForGroup1", "regionForGroup2")
+      .jars("cluster.jar", "group1.jar", "group2.jar");
 
 
-  private static class ExpectedConfiguration {
-    public String maxLogFileSize;
-    public String[] regions;
-    public String[] jars;
-
-    public ExpectedConfiguration(String maxLogFileSize, String[] regions, String[] jars) {
-      this.maxLogFileSize = maxLogFileSize;
-      this.regions = regions;
-      this.jars = jars;
-    }
-  }
-
-
-  private static final String EXPORTED_CLUSTER_CONFIG_ZIP = "cluster_config.zip";
-  private String locatorString = null;
+  private String locatorString;
 
   @Rule
-  public LocatorServerStartupRule lsRule = new LocatorServerStartupRule();
+  public ModifiedLocatorServerStartupRule lsRule = new ModifiedLocatorServerStartupRule();
 
   @Before
-  // starts up locator-0 with --load-cluster-coniguration-from-dir and verify it's loaded
-  public void before() throws Exception {
-    File locator0Dir = lsRule.getRootFolder().newFolder("locator-0");
-    // unzip the cluster_config.zip into the tempFolder/locator-0
-    // the content is tempFolder/locator-0/cluster_config/cluster...
-    ZipUtils.unzip(getClass().getResource(EXPORTED_CLUSTER_CONFIG_ZIP).getPath(),
-        locator0Dir.getCanonicalPath());
+  public void setupFirstLocatorWithClusterConfigFromDirectory() throws Exception {
+    File locatorDir = lsRule.getRootFolder().newFolder("locator-0");
 
-    // start the locator with --load-from-configuration-dir=true
-    Properties locator0Props = new Properties();
-    locator0Props.setProperty(LOAD_CLUSTER_CONFIGURATION_FROM_DIR, "true");
-    locator0Props.setProperty(CLUSTER_CONFIGURATION_DIR,
-        locator0Dir.getCanonicalPath());
-    locator0Props.setProperty(ENABLE_CLUSTER_CONFIGURATION, "true");
-    VM locator0 = lsRule.startLocatorVM(0, locator0Props);
-    verifyConfigFilesExistOnLocator(lsRule.getWorkingDir(0));
-    locatorString = "localhost[" + lsRule.getPort(0) + "]";
+    // The unzip should yield a directory structure like:
+    // tempFolder/locator-0/cluster_config/cluster/cluster.xml
+    // tempFolder/locator-0/cluster_config/cluster/cluster.properties
+    // tempFolder/locator-0/cluster_config/cluster/cluster.jar
+    // tempFolder/locator-0/cluster_config/group1/ ...
+    // tempFolder/locator-0/cluster_config/group2/ ...
+    ZipUtils.unzip(getClass().getResource(EXPORTED_CLUSTER_CONFIG_ZIP_FILENAME).getPath(),
+        locatorDir.getCanonicalPath());
 
-    locator0.invoke(() -> {
-      InternalLocator locator = LocatorServerStartupRule.locatorStarter.locator;
-      verifyConfigExistInLocatorInternalRegion(locator.getSharedConfiguration());
-    });
+    Properties locatorProps = new Properties();
+    locatorProps.setProperty(ENABLE_CLUSTER_CONFIGURATION, "true");
+    locatorProps.setProperty(LOAD_CLUSTER_CONFIGURATION_FROM_DIR, "true");
+    locatorProps.setProperty(CLUSTER_CONFIGURATION_DIR, locatorDir.getCanonicalPath());
 
-    verifyConfigFilesExistOnLocator(lsRule.getWorkingDir(0));
+    DUnitClusterMember firstLocator = lsRule.startLocatorVM(0, locatorProps);
+    locatorString = "localhost[" + firstLocator.getPort() + "]";
+
+    verifyLocatorConfigExistsInFileSystem(firstLocator.getWorkingDir());
+    firstLocator.invoke(this::verifyLocatorConfigExistsInInternalRegion);
   }
 
   @Test
-  // verify another locator starts up and sc is loaded to this locator.
-  public void testLocatorStartup() throws IOException {
-    // start another locator and verify it gets the same cc as the first one.
-    Properties locator1Props = new Properties();
-    locator1Props.setProperty(LOCATORS, locatorString);
-    locator1Props.setProperty(ENABLE_CLUSTER_CONFIGURATION, "true");
-    VM locator1 = lsRule.startLocatorVM(1, locator1Props);
+  public void secondLocatorLoadsClusterConfigFromFirstLocator() throws IOException {
+    Properties secondLocatorProps = new Properties();
+    secondLocatorProps.setProperty(LOCATORS, locatorString);
+    secondLocatorProps.setProperty(ENABLE_CLUSTER_CONFIGURATION, "true");
+    DUnitClusterMember secondLocator = lsRule.startLocatorVM(1, secondLocatorProps);
 
-    locator1.invoke(() -> {
-      InternalLocator locator = LocatorServerStartupRule.locatorStarter.locator;
-      verifyConfigExistInLocatorInternalRegion(locator.getSharedConfiguration());
-    });
-
-    verifyConfigFilesExistOnLocator(lsRule.getWorkingDir(1));
+    verifyLocatorConfig(secondLocator);
   }
 
   @Test
-  // verify another server starts up and sc is loaded to this server
-  public void testServerStarup() throws Exception {
-    // start the server and verify the sc is applied correctly
+  public void serverWithZeroOrOneGroupsLoadCorrectConfigFromLocator() throws Exception {
     Properties serverProps = new Properties();
     serverProps.setProperty(LOCATORS, locatorString);
     serverProps.setProperty(USE_CLUSTER_CONFIGURATION, "true");
-    VM serverWithNoGroup = lsRule.startServerVM(1, serverProps);
 
-    // verify cluster config is applied
-    serverWithNoGroup.invoke(() -> this.verifyClusterConfig(EXPECTED_CLUSTER_CONFIG, lsRule.getWorkingDir(1)));
+    DUnitClusterMember serverWithNoGroup = lsRule.startServerVM(1, serverProps);
+    verifyServerConfig(NO_GROUP, serverWithNoGroup);
 
     serverProps.setProperty(GROUPS, "group1");
-    VM serverForGroup1 = lsRule.startServerVM(2, serverProps);
-    serverForGroup1.invoke(() -> this.verifyClusterConfig(EXPECTED_GROUP1_CONFIG, lsRule.getWorkingDir(2)));
+    DUnitClusterMember serverForGroup1 = lsRule.startServerVM(2, serverProps);
+    verifyServerConfig(GROUP1, serverForGroup1);
 
     serverProps.setProperty(GROUPS, "group2");
-    VM serverForGroup2 = lsRule.startServerVM(3, serverProps);
-    serverForGroup2.invoke(() -> this.verifyClusterConfig(EXPECTED_GROUP2_CONFIG, lsRule.getWorkingDir(3)));
+    DUnitClusterMember serverForGroup2 = lsRule.startServerVM(3, serverProps);
+    verifyServerConfig(GROUP2, serverForGroup2);
   }
 
   @Test
-  // verify another server starts up and sc is loaded to this server
-  public void testServerWithMultipleGroups() throws Exception {
-    // start the server and verify the sc is applied correctly
+  public void oneServerWithMultipleGroupsLoadsCorrectConfigFromLocator() throws Exception {
     Properties serverProps = new Properties();
     serverProps.setProperty(LOCATORS, locatorString);
     serverProps.setProperty(USE_CLUSTER_CONFIGURATION, "true");
     serverProps.setProperty(GROUPS, "group1,group2");
-    VM serverWithNoGroup = lsRule.startServerVM(1, serverProps);
+    DUnitClusterMember serverWithNoGroup = lsRule.startServerVM(1, serverProps);
 
-    serverWithNoGroup.invoke(() -> this.verifyClusterConfig(EXPECTED_GROUP1and2_CONFIG, lsRule.getWorkingDir(1)));
+    serverWithNoGroup.invoke(() -> this.verifyServerConfig(GROUP1_AND_2, serverWithNoGroup));
   }
 
-  private void verifyClusterConfig(ExpectedConfiguration expectedConfiguration, File workingDir)
-      throws ClassNotFoundException {
-    verifyConfigInMemory(expectedConfiguration);
-    verifyJarFilesExistOnServer(workingDir, expectedConfiguration.jars);
+  private void verifyLocatorConfig(DUnitClusterMember locator) {
+    verifyLocatorConfigExistsInFileSystem(locator.getWorkingDir());
+    locator.invoke(this::verifyLocatorConfigExistsInInternalRegion);
   }
 
-  private void verifyConfigInMemory(ExpectedConfiguration expectedConfiguration)
+  private void verifyServerConfig(ExpectedConfig expectedConfig, DUnitClusterMember server)
       throws ClassNotFoundException {
-    Cache cache = LocatorServerStartupRule.serverStarter.cache;
-    for (String region : expectedConfiguration.regions) {
+    verifyServerJarFilesExistInFileSystem(server.getWorkingDir(), expectedConfig.jars);
+    server.invoke(() -> this.verifyServerConfigInMemory(expectedConfig));
+  }
+
+  private void verifyLocatorConfigExistsInFileSystem(File workingDir) {
+    File clusterConfigDir = new File(workingDir, "cluster_config");
+    assertThat(clusterConfigDir).exists();
+
+    for (String configName : CONFIG_NAMES) {
+      File configDir = new File(clusterConfigDir, configName);
+      assertThat(configDir).exists();
+
+      File jar = new File(configDir, configName + ".jar");
+      File properties = new File(configDir, configName + ".properties");
+      File xml = new File(configDir, configName + ".xml");
+      assertThat(configDir.listFiles()).contains(jar, properties, xml);
+    }
+  }
+
+  private void verifyLocatorConfigExistsInInternalRegion() throws Exception {
+    InternalLocator internalLocator = ModifiedLocatorServerStartupRule.locatorStarter.locator;
+    SharedConfiguration sc = internalLocator.getSharedConfiguration();
+
+    for (String configName : CONFIG_NAMES) {
+      Configuration config = sc.getConfiguration(configName);
+      assertThat(config).isNotNull();
+    }
+  }
+
+  private void verifyServerConfigInMemory(ExpectedConfig expectedConfig)
+      throws ClassNotFoundException {
+    Cache cache = ModifiedLocatorServerStartupRule.serverStarter.cache;
+    for (String region : expectedConfig.regions) {
       assertThat(cache.getRegion(region)).isNotNull();
     }
     Properties props = cache.getDistributedSystem().getProperties();
-    assertThat(props.getProperty(LOG_FILE_SIZE_LIMIT))
-        .isEqualTo(expectedConfiguration.maxLogFileSize);
+    assertThat(props.getProperty(LOG_FILE_SIZE_LIMIT)).isEqualTo(expectedConfig.maxLogFileSize);
 
-    for (String jar : expectedConfiguration.jars) {
+    for (String jar : expectedConfig.jars) {
       JarClassLoader jarClassLoader = findJarClassLoader(jar);
       assertThat(jarClassLoader).isNotNull();
-      assertThat(jarClassLoader.loadClass(getNameOfClassInJar(jar))).isNotNull();
+      assertThat(jarClassLoader.loadClass(nameOfClassContainedInJar(jar))).isNotNull();
+    }
+  }
+
+  private void verifyServerJarFilesExistInFileSystem(File workingDir, String[] jarNames) {
+    assertThat(workingDir.listFiles()).isNotEmpty();
+
+    for (String jarName : jarNames) {
+      assertThat(workingDir.listFiles()).filteredOn((File file) -> file.getName().contains(jarName))
+          .isNotEmpty();
+    }
+  }
+
+  private String nameOfClassContainedInJar(String jarName) {
+    switch (jarName) {
+      case "cluster.jar":
+        return "Cluster";
+      case "group1.jar":
+        return "Group1";
+      case "group2.ar":
+        return "Group2";
+      default:
+        throw new IllegalArgumentException(
+            EXPORTED_CLUSTER_CONFIG_ZIP_FILENAME + " does not contain a jar named " + jarName);
     }
   }
 
@@ -208,40 +220,24 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
     return null;
   }
 
-  private static void verifyConfigExistInLocatorInternalRegion(SharedConfiguration sc) throws Exception {
-    for (String configName : CONFIG_NAMES) {
-      Configuration config = sc.getConfiguration(configName);
-      assertThat(config).isNotNull();
+  private static class ExpectedConfig {
+    public String maxLogFileSize;
+    public String[] regions;
+    public String[] jars;
+
+    public ExpectedConfig maxLogFileSize(String maxLogFileSize) {
+      this.maxLogFileSize = maxLogFileSize;
+      return this;
     }
-  }
 
-  private void verifyConfigFilesExistOnLocator(File workingDir) {
-    File cluster_config_dir = new File(workingDir, "cluster_config");
-    assertThat(cluster_config_dir).exists();
-
-    for (String configName : CONFIG_NAMES) {
-      File configDir = new File(cluster_config_dir, configName);
-      assertThat(configDir).exists();
-
-      File jar = new File(configDir, configName + ".jar");
-      File properties = new File(configDir, configName + ".properties");
-      File xml = new File(configDir, configName + ".xml");
-      assertThat(configDir.listFiles()).contains(jar, properties, xml);
+    public ExpectedConfig regions(String... regions) {
+      this.regions = regions;
+      return this;
     }
-  }
 
-  private void verifyJarFilesExistOnServer(File workingDir, String[] jarNames) {
-    assertThat(workingDir.listFiles()).isNotEmpty();
-
-    for (String jarName : jarNames) {
-      assertThat(workingDir.listFiles())
-          .filteredOn((File file) -> file.getName().contains(jarName))
-          .isNotEmpty();
+    public ExpectedConfig jars(String... jars) {
+      this.jars = jars;
+      return this;
     }
-  }
-
-  private String getNameOfClassInJar(String jarName) {
-    //We expect e.g. cluster.jar to contain a class named Cluster
-    return StringUtils.capitalize(jarName.replace(".jar", ""));
   }
 }

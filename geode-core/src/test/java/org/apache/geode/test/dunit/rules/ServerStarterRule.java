@@ -66,7 +66,7 @@ public class ServerStarterRule extends ExternalResource implements Serializable 
     if (!properties.containsKey(NAME)) {
       properties.setProperty(NAME, this.getClass().getName());
     }
-    if(!properties.containsKey(LOCATORS)) {
+    if (!properties.containsKey(LOCATORS)) {
       if (locatorPort > 0) {
         properties.setProperty(LOCATORS, "localhost[" + locatorPort + "]");
       } else {
