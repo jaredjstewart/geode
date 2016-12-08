@@ -32,11 +32,10 @@ import org.apache.geode.internal.JarClassLoader;
 import org.apache.geode.management.internal.configuration.domain.Configuration;
 import org.apache.geode.management.internal.configuration.utils.ZipUtils;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
+import org.apache.geode.test.dunit.rules.LocatorServerStartupRule;
 import org.apache.geode.test.dunit.rules.Member;
-import org.apache.geode.test.dunit.rules.ModifiedLocatorServerStartupRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -69,7 +68,7 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
   private String locatorString;
 
   @Rule
-  public ModifiedLocatorServerStartupRule lsRule = new ModifiedLocatorServerStartupRule();
+  public LocatorServerStartupRule lsRule = new LocatorServerStartupRule();
 
   @Before
   public void setupFirstLocatorWithClusterConfigFromDirectory() throws Exception {
@@ -162,7 +161,7 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
   }
 
   private void verifyLocatorConfigExistsInInternalRegion() throws Exception {
-    InternalLocator internalLocator = ModifiedLocatorServerStartupRule.locatorStarter.locator;
+    InternalLocator internalLocator = LocatorServerStartupRule.locatorStarter.locator;
     SharedConfiguration sc = internalLocator.getSharedConfiguration();
 
     for (String configName : CONFIG_NAMES) {
@@ -173,7 +172,7 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
 
   private void verifyServerConfigInMemory(ExpectedConfig expectedConfig)
       throws ClassNotFoundException {
-    Cache cache = ModifiedLocatorServerStartupRule.serverStarter.cache;
+    Cache cache = LocatorServerStartupRule.serverStarter.cache;
     for (String region : expectedConfig.regions) {
       assertThat(cache.getRegion(region)).isNotNull();
     }

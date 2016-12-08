@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.Serializable;
 
 /**
- * A server or locator inside a DUnit test.
+ * A server or locator inside a DUnit {@link VM}.
  */
 public class Member implements Serializable {
   private VM vm;
@@ -38,6 +38,7 @@ public class Member implements Serializable {
 
   /**
    * The VM object is an RMI stub which lets us execute code in the JVM of this member.
+   * 
    * @return the {@link VM}
    */
   public VM getVM() {
@@ -53,8 +54,8 @@ public class Member implements Serializable {
   }
 
   /**
-   * Invokes the {@code run} method of a {@par Runnable} in the {@code VM} of this member.
-    */
+   * Invokes {@code runnable.run()} in the {@code VM} of this member.
+   */
   public void invoke(final SerializableRunnableIF runnable) {
     this.vm.invoke(runnable);
   }

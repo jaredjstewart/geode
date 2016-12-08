@@ -20,7 +20,9 @@ import static org.junit.Assert.*;
 
 import java.util.Properties;
 
+import org.apache.geode.test.dunit.rules.LocatorServerStartupRule;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -29,7 +31,6 @@ import org.apache.geode.distributed.DistributedSystem;
 import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.test.dunit.IgnoredException;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
-import org.apache.geode.test.dunit.rules.LocatorServerStartupRule;
 import org.apache.geode.test.dunit.rules.ServerStarterRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
@@ -69,7 +70,7 @@ public class SecurityWithoutClusterConfigDUnitTest extends JUnit4DistributedTest
 
     // initial security properties should only contain initial set of values
     ServerStarterRule serverStarter = new ServerStarterRule(props);
-    serverStarter.startServer(lsRule.getPort(0));
+    serverStarter.startServer(lsRule.getMember(0).getPort());
     DistributedSystem ds = serverStarter.cache.getDistributedSystem();
     assertEquals(3, ds.getSecurityProperties().size());
 

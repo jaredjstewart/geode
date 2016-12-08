@@ -89,8 +89,8 @@ public class ConnectToLocatorSSLDUnitTest extends JUnit4DistributedTestCase {
     OutputStream out = new FileOutputStream(securityPropsFile);
     securityProps.store(out, "");
 
-    GfshShellConnectionRule gfshConnector =
-        new GfshShellConnectionRule(lsRule.getPort(0), GfshShellConnectionRule.PortType.locator);
+    GfshShellConnectionRule gfshConnector = new GfshShellConnectionRule(
+        lsRule.getMember(0).getPort(), GfshShellConnectionRule.PortType.locator);
 
     // when we connect too soon, we would get "Failed to retrieve RMIServer stub:
     // javax.naming.CommunicationException [Root exception is java.rmi.NoSuchObjectException: no

@@ -35,11 +35,12 @@ import java.util.Properties;
 /**
  * This is a rule to start up a server in your current VM. It's useful for your Integration Tests.
  *
- * If you need a rule to start a server/locator in different VM for Distribution tests, You should
- * use LocatorServerStartupRule
- *
- * You may choose to use this class not as a rule or use it in your own rule, (see
- * LocatorServerStartupRule) you will need to call startServer and after() manually in that case.
+ * If you need a rule to start a server/locator in different VMs for Distributed tests, You should
+ * use {@link LocatorServerStartupRule}.
+ *<p>
+ * You may choose to use this class not as a rule or use it in your own rule (see
+ * {@link LocatorServerStartupRule}), in which case you will need to call startLocator() and after() manually.
+ *</p>
  */
 public class ServerStarterRule extends ExternalResource implements Serializable {
 
