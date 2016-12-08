@@ -15,7 +15,6 @@
 
 package org.apache.geode.management.internal.configuration;
 
-
 import static org.apache.geode.distributed.ConfigurationProperties.CLUSTER_CONFIGURATION_DIR;
 import static org.apache.geode.distributed.ConfigurationProperties.ENABLE_CLUSTER_CONFIGURATION;
 import static org.apache.geode.distributed.ConfigurationProperties.GROUPS;
@@ -76,11 +75,11 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
   public void setupFirstLocatorWithClusterConfigFromDirectory() throws Exception {
     File locatorDir = lsRule.getRootFolder().newFolder("locator-0");
 
-    // The unzip should yield a directory structure like:
+    // The unzip should yield a cluster config directory structure like:
     // tempFolder/locator-0/cluster_config/cluster/cluster.xml
     // tempFolder/locator-0/cluster_config/cluster/cluster.properties
     // tempFolder/locator-0/cluster_config/cluster/cluster.jar
-    // tempFolder/locator-0/cluster_config/group1/ ...
+    // tempFolder/locator-0/cluster_config/group1/ {group1.xml, group1.properties, group1.jar}
     // tempFolder/locator-0/cluster_config/group2/ ...
     ZipUtils.unzip(getClass().getResource(EXPORTED_CLUSTER_CONFIG_ZIP_FILENAME).getPath(),
         locatorDir.getCanonicalPath());

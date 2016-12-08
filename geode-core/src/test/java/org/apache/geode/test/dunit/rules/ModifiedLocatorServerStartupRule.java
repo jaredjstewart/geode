@@ -35,101 +35,87 @@ import java.util.Properties;
 
 
 /**
- * this rule can help you start up locator/server in different VMs you can multiple members/servers
- * combination
+ * A rule to help you start locators and servers inside of a <a href="https://cwiki.apache.org/confluence/display/GEODE/Distributed-Unit-Tests">DUnit
+ * test</a>. This rule will start Servers and Locators inside of the four remote {@link VM}s created
+ * by the DUnit framework.
  */
 public class ModifiedLocatorServerStartupRule extends ExternalResource implements Serializable {
 
-  // these are only availabe in each VM
+  /**
+   * This is only available in each Locator/Server VM, not in the controller (test) VM.
+   */
   public static ServerStarterRule serverStarter;
+
+  /**
+   * This is only available in each Locator/Server VM, not in the controller (test) VM.
+   */
   public static LocatorStarterRule locatorStarter;
 
-  // these are available in test vm
-  private Host host = getHost(0);
-
-  private Member[] members = new Member[4];
-
   private TemporaryFolder temporaryFolder = new SerializableTemporaryFolder();
+  private Member[] members;
 
   @Before
   public void before() throws IOException {
     temporaryFolder.create();
-    System.out.println ("[Jared]Temporary folder:  " + temporaryFolder.getRoot().getCanonicalPath());
-    Invoke.invokeInEveryVM("Stop each VM", () -> stop());
+    Invoke.invokeInEveryVM("Stop each VM", this::stop);
+    members = new Member[4];
   }
 
   @After
   public void after() {
     temporaryFolder.delete();
-    Invoke.invokeInEveryVM("Stop each VM", () -> stop());
+    Invoke.invokeInEveryVM("Stop each VM", this::stop);
   }
 
   /**
-   * Returns getHost(0).getVM(0) as a locator instance with the given configuration properties.
-   *
-   * @param locatorProperties
+   * Starts a locator instance with the given configuration properties inside
+   * {@code getHost(0).getVM(index)}.
    *
    * @return VM locator vm
-   *
-   * @throws IOException
    */
   public Member startLocatorVM(int index, Properties locatorProperties)
       throws IOException {
     String name = "locator-" + index;
-    File workingDir = new File(temporaryFolder.getRoot(), name);
-    if (!workingDir.exists()) {
-      temporaryFolder.newFolder(name);
-    }
-    VM locatorVM = host.getVM(index);
     locatorProperties.setProperty(NAME, name);
+    File workingDir = createWorkingDirForMember(name);
+
+    VM locatorVM = getHost(0).getVM(index);
     int locatorPort = locatorVM.invoke(() -> {
       System.setProperty("user.dir", workingDir.getCanonicalPath());
-      System.out.println ("[Jared] Setting current dir to " + workingDir.getCanonicalPath());
       locatorStarter = new LocatorStarterRule(locatorProperties);
       locatorStarter.startLocator();
       return locatorStarter.locator.getPort();
     });
-    Member locator = new Member(locatorVM, locatorPort, workingDir);
-    members[index] = locator;
-    return locator;
+    members[index] = new Member(locatorVM, locatorPort, workingDir);
+    return members[index];
   }
 
   /**
    * starts a cache server that does not connect to a locator
-   *
    * @return VM node vm
    */
-
   public Member startServerVM(int index, Properties properties) throws IOException {
     return startServerVM(index, properties, 0);
   }
 
   /**
-   * starts a cache server that connect to the locator running at the given port.
-   * 
-   * @param index
-   * @param properties
-   * @param locatorPort
-   * @return
+   * Starts a cache server that connect to the locator running at the given port.
    */
   public Member startServerVM(int index, Properties properties, int locatorPort)
       throws IOException {
     String name = "server-" + index;
-    VM nodeVM = host.getVM(index);
-    File workingDir = new File(temporaryFolder.getRoot(), name);
-    if (!workingDir.exists()) {
-      temporaryFolder.newFolder(name);
-    }
     properties.setProperty(NAME, name);
-    int port = nodeVM.invoke(() -> {
+    File workingDir = createWorkingDirForMember(name);
+
+    VM serverVM = getHost(0).getVM(index);
+    int port = serverVM.invoke(() -> {
       System.setProperty("user.dir", workingDir.getCanonicalPath());
       serverStarter = new ServerStarterRule(properties);
       serverStarter.startServer(locatorPort);
       return serverStarter.server.getPort();
     });
-    Member server = new Member(nodeVM, port, workingDir);
-    members[index] = server;
-    return server;
+    members[index] = new Member(serverVM, port, workingDir);
+    return members[index];
   }
 
   public Member getMember(int index) {
@@ -147,6 +133,15 @@ public class ModifiedLocatorServerStartupRule extends ExternalResource implement
     if (locatorStarter != null) {
       locatorStarter.after();
     }
+  }
+
+  private File createWorkingDirForMember(String dirName) throws IOException {
+    File workingDir = new File(temporaryFolder.getRoot(), dirName);
+    if (!workingDir.exists()) {
+      temporaryFolder.newFolder(dirName);
+    }
+
+    return workingDir;
   }
 
 }

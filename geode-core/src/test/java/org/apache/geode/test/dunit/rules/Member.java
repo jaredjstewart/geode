@@ -22,6 +22,9 @@ import org.apache.geode.test.dunit.VM;
 import java.io.File;
 import java.io.Serializable;
 
+/**
+ * A server or locator inside a DUnit test.
+ */
 public class Member implements Serializable {
   private VM vm;
   private int port;
@@ -33,6 +36,10 @@ public class Member implements Serializable {
     this.workingDir = workingDir;
   }
 
+  /**
+   * The VM object is an RMI stub which lets us execute code in the JVM of this member.
+   * @return the {@link VM}
+   */
   public VM getVM() {
     return vm;
   }
@@ -45,7 +52,9 @@ public class Member implements Serializable {
     return workingDir;
   }
 
-  // This shortens calls like this.getVM().invoke() down to this.invoke()
+  /**
+   * Invokes the {@code run} method of a {@par Runnable} in the {@code VM} of this member.
+    */
   public void invoke(final SerializableRunnableIF runnable) {
     this.vm.invoke(runnable);
   }
