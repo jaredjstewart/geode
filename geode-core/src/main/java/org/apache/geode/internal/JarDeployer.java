@@ -606,6 +606,7 @@ public class JarDeployer implements Serializable {
     int tryCount = 0;
     do {
       try {
+        System.out.println ("[Jared]Deploy directory is " + deployDirectory.getCanonicalPath());
         if (this.deployDirectory.canWrite()) {
           return;
         }

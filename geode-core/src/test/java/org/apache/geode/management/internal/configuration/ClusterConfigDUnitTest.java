@@ -33,16 +33,18 @@ import org.apache.geode.internal.JarClassLoader;
 import org.apache.geode.management.internal.configuration.domain.Configuration;
 import org.apache.geode.management.internal.configuration.utils.ZipUtils;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
-import org.apache.geode.test.dunit.rules.DUnitClusterMember;
+import org.apache.geode.test.dunit.rules.Member;
 import org.apache.geode.test.dunit.rules.ModifiedLocatorServerStartupRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Properties;
 
@@ -88,7 +90,7 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
     locatorProps.setProperty(LOAD_CLUSTER_CONFIGURATION_FROM_DIR, "true");
     locatorProps.setProperty(CLUSTER_CONFIGURATION_DIR, locatorDir.getCanonicalPath());
 
-    DUnitClusterMember firstLocator = lsRule.startLocatorVM(0, locatorProps);
+    Member firstLocator = lsRule.startLocatorVM(0, locatorProps);
     locatorString = "localhost[" + firstLocator.getPort() + "]";
 
     verifyLocatorConfigExistsInFileSystem(firstLocator.getWorkingDir());
@@ -100,7 +102,7 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
     Properties secondLocatorProps = new Properties();
     secondLocatorProps.setProperty(LOCATORS, locatorString);
     secondLocatorProps.setProperty(ENABLE_CLUSTER_CONFIGURATION, "true");
-    DUnitClusterMember secondLocator = lsRule.startLocatorVM(1, secondLocatorProps);
+    Member secondLocator = lsRule.startLocatorVM(1, secondLocatorProps);
 
     verifyLocatorConfig(secondLocator);
   }
@@ -111,15 +113,15 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
     serverProps.setProperty(LOCATORS, locatorString);
     serverProps.setProperty(USE_CLUSTER_CONFIGURATION, "true");
 
-    DUnitClusterMember serverWithNoGroup = lsRule.startServerVM(1, serverProps);
+    Member serverWithNoGroup = lsRule.startServerVM(1, serverProps);
     verifyServerConfig(NO_GROUP, serverWithNoGroup);
 
     serverProps.setProperty(GROUPS, "group1");
-    DUnitClusterMember serverForGroup1 = lsRule.startServerVM(2, serverProps);
+    Member serverForGroup1 = lsRule.startServerVM(2, serverProps);
     verifyServerConfig(GROUP1, serverForGroup1);
 
     serverProps.setProperty(GROUPS, "group2");
-    DUnitClusterMember serverForGroup2 = lsRule.startServerVM(3, serverProps);
+    Member serverForGroup2 = lsRule.startServerVM(3, serverProps);
     verifyServerConfig(GROUP2, serverForGroup2);
   }
 
@@ -129,17 +131,17 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
     serverProps.setProperty(LOCATORS, locatorString);
     serverProps.setProperty(USE_CLUSTER_CONFIGURATION, "true");
     serverProps.setProperty(GROUPS, "group1,group2");
-    DUnitClusterMember serverWithNoGroup = lsRule.startServerVM(1, serverProps);
+    Member serverWithNoGroup = lsRule.startServerVM(1, serverProps);
 
     serverWithNoGroup.invoke(() -> this.verifyServerConfig(GROUP1_AND_2, serverWithNoGroup));
   }
 
-  private void verifyLocatorConfig(DUnitClusterMember locator) {
+  private void verifyLocatorConfig(Member locator) {
     verifyLocatorConfigExistsInFileSystem(locator.getWorkingDir());
     locator.invoke(this::verifyLocatorConfigExistsInInternalRegion);
   }
 
-  private void verifyServerConfig(ExpectedConfig expectedConfig, DUnitClusterMember server)
+  private void verifyServerConfig(ExpectedConfig expectedConfig, Member server)
       throws ClassNotFoundException {
     verifyServerJarFilesExistInFileSystem(server.getWorkingDir(), expectedConfig.jars);
     server.invoke(() -> this.verifyServerConfigInMemory(expectedConfig));
@@ -201,7 +203,7 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
         return "Cluster";
       case "group1.jar":
         return "Group1";
-      case "group2.ar":
+      case "group2.jar":
         return "Group2";
       default:
         throw new IllegalArgumentException(
@@ -220,7 +222,7 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
     return null;
   }
 
-  private static class ExpectedConfig {
+  private static class ExpectedConfig implements Serializable {
     public String maxLogFileSize;
     public String[] regions;
     public String[] jars;

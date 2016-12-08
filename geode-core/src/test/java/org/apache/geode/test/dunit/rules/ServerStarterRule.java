@@ -25,6 +25,7 @@ import static org.apache.geode.distributed.ConfigurationProperties.NAME;
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.CacheFactory;
 import org.apache.geode.cache.server.CacheServer;
+import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.junit.rules.ExternalResource;
 
 import java.io.Serializable;
@@ -86,7 +87,6 @@ public class ServerStarterRule extends ExternalResource implements Serializable 
     CacheFactory cf = new CacheFactory(properties);
     cf.setPdxReadSerialized(pdxPersistent);
     cf.setPdxPersistent(pdxPersistent);
-
     cache = cf.create();
     server = cache.addCacheServer();
     server.setPort(0);
@@ -104,9 +104,13 @@ public class ServerStarterRule extends ExternalResource implements Serializable 
 
   @Override
   public void after() {
-    if (cache != null)
+    if (cache != null) {
       cache.close();
-    if (server != null)
+      cache = null;
+    }
+    if (server != null) {
       server.stop();
+      server = null;
+    }
   }
 }

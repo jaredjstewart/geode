@@ -47,13 +47,14 @@ public class ModifiedLocatorServerStartupRule extends ExternalResource implement
   // these are available in test vm
   private Host host = getHost(0);
 
-  private DUnitClusterMember[] clusterMembers = new DUnitClusterMember[4];
+  private Member[] members = new Member[4];
 
   private TemporaryFolder temporaryFolder = new SerializableTemporaryFolder();
 
   @Before
   public void before() throws IOException {
     temporaryFolder.create();
+    System.out.println ("[Jared]Temporary folder:  " + temporaryFolder.getRoot().getCanonicalPath());
     Invoke.invokeInEveryVM("Stop each VM", () -> stop());
   }
 
@@ -72,7 +73,7 @@ public class ModifiedLocatorServerStartupRule extends ExternalResource implement
    *
    * @throws IOException
    */
-  public DUnitClusterMember startLocatorVM(int index, Properties locatorProperties)
+  public Member startLocatorVM(int index, Properties locatorProperties)
       throws IOException {
     String name = "locator-" + index;
     File workingDir = new File(temporaryFolder.getRoot(), name);
@@ -83,12 +84,13 @@ public class ModifiedLocatorServerStartupRule extends ExternalResource implement
     locatorProperties.setProperty(NAME, name);
     int locatorPort = locatorVM.invoke(() -> {
       System.setProperty("user.dir", workingDir.getCanonicalPath());
+      System.out.println ("[Jared] Setting current dir to " + workingDir.getCanonicalPath());
       locatorStarter = new LocatorStarterRule(locatorProperties);
       locatorStarter.startLocator();
       return locatorStarter.locator.getPort();
     });
-    DUnitClusterMember locator = new DUnitClusterMember(locatorVM, locatorPort, workingDir);
-    clusterMembers[index] = locator;
+    Member locator = new Member(locatorVM, locatorPort, workingDir);
+    members[index] = locator;
     return locator;
   }
 
@@ -98,7 +100,7 @@ public class ModifiedLocatorServerStartupRule extends ExternalResource implement
    * @return VM node vm
    */
 
-  public DUnitClusterMember startServerVM(int index, Properties properties) throws IOException {
+  public Member startServerVM(int index, Properties properties) throws IOException {
     return startServerVM(index, properties, 0);
   }
 
@@ -110,10 +112,10 @@ public class ModifiedLocatorServerStartupRule extends ExternalResource implement
    * @param locatorPort
    * @return
    */
-  public DUnitClusterMember startServerVM(int index, Properties properties, int locatorPort)
+  public Member startServerVM(int index, Properties properties, int locatorPort)
       throws IOException {
     String name = "server-" + index;
-    VM nodeVM = getNodeVM(index);
+    VM nodeVM = host.getVM(index);
     File workingDir = new File(temporaryFolder.getRoot(), name);
     if (!workingDir.exists()) {
       temporaryFolder.newFolder(name);
@@ -125,24 +127,13 @@ public class ModifiedLocatorServerStartupRule extends ExternalResource implement
       serverStarter.startServer(locatorPort);
       return serverStarter.server.getPort();
     });
-    DUnitClusterMember server = new DUnitClusterMember(nodeVM, port, workingDir);
-    clusterMembers[index] = server;
+    Member server = new Member(nodeVM, port, workingDir);
+    members[index] = server;
     return server;
   }
 
-
-  public DUnitClusterMember getClusterMember(int index) {
-    return clusterMembers[index];
-  }
-
-  /**
-   * this will simply returns the node
-   *
-   * @param index
-   * @return
-   */
-  public VM getNodeVM(int index) {
-    return host.getVM(index);
+  public Member getMember(int index) {
+    return members[index];
   }
 
   public TemporaryFolder getRootFolder() {

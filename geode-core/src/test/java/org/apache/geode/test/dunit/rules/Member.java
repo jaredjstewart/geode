@@ -22,12 +22,12 @@ import org.apache.geode.test.dunit.VM;
 import java.io.File;
 import java.io.Serializable;
 
-public class DUnitClusterMember implements Serializable {
+public class Member implements Serializable {
   private VM vm;
   private int port;
   private File workingDir;
 
-  public DUnitClusterMember(VM vm, int port, File workingDir) {
+  public Member(VM vm, int port, File workingDir) {
     this.vm = vm;
     this.port = port;
     this.workingDir = workingDir;
@@ -44,7 +44,6 @@ public class DUnitClusterMember implements Serializable {
   public File getWorkingDir() {
     return workingDir;
   }
-
 
   // This shortens calls like this.getVM().invoke() down to this.invoke()
   public void invoke(final SerializableRunnableIF runnable) {
