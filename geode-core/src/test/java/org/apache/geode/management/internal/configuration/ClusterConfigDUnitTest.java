@@ -96,6 +96,15 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
 
   @Test
   public void testStartServerWithSingleGroup() throws Exception {
+     final ExpectedConfig NO_GROUP =
+        new ExpectedConfig().maxLogFileSize("5000").regions("regionForCluster").jars("cluster.jar");
+
+   final ExpectedConfig GROUP1 = new ExpectedConfig().maxLogFileSize("6000")
+        .regions("regionForCluster", "regionForGroup1").jars("cluster.jar", "group1.jar");
+
+    final ExpectedConfig GROUP2 = new ExpectedConfig().maxLogFileSize("7000")
+        .regions("regionForCluster", "regionForGroup2").jars("cluster.jar", "group2.jar");
+
     Member locator = startLocatorWithLoadCCFromDir();
 
     Member serverWithNoGroup = lsRule.startServerVM(1, serverProps, locator.getPort());
@@ -112,6 +121,9 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
 
   @Test
   public void testStartServerWithMultipleGroup() throws Exception {
+  final ExpectedConfig GROUP1_AND_2 = new ExpectedConfig().maxLogFileSize("7000")
+        .regions("regionForCluster", "regionForGroup1", "regionForGroup2")
+        .jars("cluster.jar", "group1.jar", "group2.jar");
     Member locator = startLocatorWithLoadCCFromDir();
 
     serverProps.setProperty(GROUPS, "group1,group2");
@@ -137,6 +149,18 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
 
   @Test
   public void testImportClusterConfig() throws Exception {
+      final ExpectedConfig NO_GROUP =
+        new ExpectedConfig().maxLogFileSize("5000").regions("regionForCluster").jars("cluster.jar");
+
+      final ExpectedConfig GROUP1 = new ExpectedConfig().maxLogFileSize("6000")
+        .regions("regionForCluster", "regionForGroup1").jars("cluster.jar", "group1.jar");
+
+
+      final ExpectedConfig GROUP1_AND_2 = new ExpectedConfig().maxLogFileSize("7000")
+        .regions("regionForCluster", "regionForGroup1", "regionForGroup2")
+        .jars("cluster.jar", "group1.jar", "group2.jar");
+
+
     String zipFilePath = getClass().getResource(EXPORTED_CLUSTER_CONFIG_ZIP_FILENAME).getPath();
     // set up the locator/servers
     Member locator = lsRule.startLocatorVM(0, locatorProps);
@@ -358,20 +382,6 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
 
 
   public static final String EXPORTED_CLUSTER_CONFIG_ZIP_FILENAME = "cluster_config.zip";
-  public static final String[] CONFIG_NAMES = new String[] {"cluster", "group1", "group2"};
-
-  public static final ExpectedConfig NO_GROUP =
-      new ExpectedConfig().maxLogFileSize("5000").regions("regionForCluster").jars("cluster.jar");
-
-  public static final ExpectedConfig GROUP1 = new ExpectedConfig().maxLogFileSize("6000")
-      .regions("regionForCluster", "regionForGroup1").jars("cluster.jar", "group1.jar");
-
-  public static final ExpectedConfig GROUP2 = new ExpectedConfig().maxLogFileSize("7000")
-      .regions("regionForCluster", "regionForGroup2").jars("cluster.jar", "group2.jar");
-
-  public static final ExpectedConfig GROUP1_AND_2 = new ExpectedConfig().maxLogFileSize("7000")
-      .regions("regionForCluster", "regionForGroup1", "regionForGroup2")
-      .jars("cluster.jar", "group1.jar", "group2.jar");
 
 
   public static void verifyInitialLocatorConfigInFileSystem(Member member) {
@@ -386,6 +396,8 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
   }
 
   public static void verifyClusterConfigZipLoadedInLocator(Member locator) {
+    final String[] CONFIG_NAMES = new String[] {"cluster", "group1", "group2"};
+
     // verify loaded in memeory
     locator.invoke(() -> {
       InternalLocator internalLocator = LocatorServerStartupRule.locatorStarter.locator;
