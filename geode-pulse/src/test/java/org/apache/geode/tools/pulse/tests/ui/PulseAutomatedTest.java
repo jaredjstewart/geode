@@ -15,7 +15,7 @@
  */
 /**
  * This test class contains automated tests for Pulse application related to 1. Different grid data
- * validations for example - Topology, Server Group, Redundancy Zone 2. Data Browser 3.
+ * validations for example - Topology, Server GroupConfig, Redundancy Zone 2. Data Browser 3.
  *
  * @since GemFire 2014-04-02
  */
@@ -642,7 +642,7 @@ public class PulseAutomatedTest extends PulseBase {
     assertMemberSortingByHeapUsage();
   }
 
-  // --- Server Group view
+  // --- Server GroupConfig view
 
   @Test
   public void testHotSpotOptPrsntOnServerGroupView() {

@@ -748,7 +748,7 @@ public class WanCommandCreateDestroyGatewaySenderDUnitTest extends WANCommandTes
    * doDestroyAndVerifyGatewaySender helper command.
    *
    * @param id if of the Gateway Sender
-   * @param group Group for the GatewaySender
+   * @param group GroupConfig for the GatewaySender
    * @param member Distributed Member for memeber id.
    * @param testName testName for the logging
    * @param vms list of vms where to verify the destroyed gateway sender

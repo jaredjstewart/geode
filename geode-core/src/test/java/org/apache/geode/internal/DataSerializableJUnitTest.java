@@ -1845,7 +1845,7 @@ public class DataSerializableJUnitTest implements Serializable {
     DataSerializer.writeObject(o, getDataOutput());
     InternalDataSerializer.unregister(id);
 
-    ThreadGroup group = new ThreadGroup("Group") {
+    ThreadGroup group = new ThreadGroup("GroupConfig") {
       public void uncaughtException(Thread t, Throwable e) {
         if (e instanceof VirtualMachineError) {
           SystemFailure.setFailure((VirtualMachineError) e); // don't throw
@@ -1903,7 +1903,7 @@ public class DataSerializableJUnitTest implements Serializable {
     DataSerializer.writeObject(o, getDataOutput());
     InternalInstantiator.unregister(c, id);
 
-    ThreadGroup group = new ThreadGroup("Group") {
+    ThreadGroup group = new ThreadGroup("GroupConfig") {
       public void uncaughtException(Thread t, Throwable e) {
         if (e instanceof VirtualMachineError) {
           SystemFailure.setFailure((VirtualMachineError) e); // don't throw

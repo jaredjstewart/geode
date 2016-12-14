@@ -341,7 +341,7 @@ public final class PulseTestUtils {
     clickElementUsingXpath(PulseTestLocators.TopologyView.radioButtonXpath);
   }
 
-  // ------ Topology / Server Group / Redundancy Group - Tree View
+  // ------ Topology / Server GroupConfig / Redundancy GroupConfig - Tree View
 
   public static void navigateToTopologyTreeView() {
     navigateToToplogyView();
@@ -358,7 +358,7 @@ public final class PulseTestUtils {
     clickElementUsingXpath(PulseTestLocators.RedundancyZone.radioButtonXpath);
   }
 
-  // ------ Topology / Server Group / Redundancy Group - Grid View
+  // ------ Topology / Server GroupConfig / Redundancy GroupConfig - Grid View
 
   public static void navigateToTopologyGridView() {
     clickElementUsingXpath(PulseTestLocators.TopNavigation.clusterViewLinkXpath);

@@ -70,7 +70,7 @@ public class AsyncIndexUpdaterThreadShutdownJUnitTest {
 
     // Get Asynchronous index updater thread group from Distributed System.
     ThreadGroup indexUpdaterThreadGroup =
-        LoggingThreadGroup.getThreadGroup("QueryMonitor Thread Group");
+        LoggingThreadGroup.getThreadGroup("QueryMonitor Thread GroupConfig");
 
     assertEquals(0, indexUpdaterThreadGroup.activeCount());
 
@@ -106,7 +106,7 @@ public class AsyncIndexUpdaterThreadShutdownJUnitTest {
 
     // Get Asynchronous index updater thread group from Distributed System.
     ThreadGroup indexUpdaterThreadGroup =
-        LoggingThreadGroup.getThreadGroup("QueryMonitor Thread Group");
+        LoggingThreadGroup.getThreadGroup("QueryMonitor Thread GroupConfig");
 
     assertEquals(0, indexUpdaterThreadGroup.activeCount());
 

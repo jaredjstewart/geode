@@ -309,7 +309,7 @@ public class CompiledJunctionInternalsJUnitTest {
   /**
    * Tests that the organized operands work correctly whether it is multiple GroupJunctions as part
    * of AllGroupJunction or a RangeJunction and GroupJunction. Since where previously it used to be
-   * only Group can now be Group or Range , the source code needs to ensure that it does not type
+   * only GroupConfig can now be GroupConfig or Range , the source code needs to ensure that it does not type
    * cast wrongly a RangeJunction into a GroupJunction. Instead the source code should only type
    * cast it to AbstractGroupOrRangeJunction Case p.status = active and p.type = type1 and emp.id
    * >10 and p.id > 10 and p.id > 15
@@ -375,7 +375,7 @@ public class CompiledJunctionInternalsJUnitTest {
   /**
    * Tests that the organized operands work correctly whether it is multiple GroupJunctions as part
    * of AllGroupJunction or a RangeJunction and GroupJunction. Since where previously it used to be
-   * only Group can now be Group or Range , the source code needs to ensure that it does not type
+   * only GroupConfig can now be GroupConfig or Range , the source code needs to ensure that it does not type
    * cast wrongly a RangeJunction into a GroupJunction. Instead the source code should only type
    * cast it to AbstractGroupOrRangeJunction Case p.status = active and p.type = type1 and emp.id
    * >10 and p.id > 10 and p.id > 15
@@ -456,7 +456,7 @@ public class CompiledJunctionInternalsJUnitTest {
   }
 
   /** ********************************************************************** */
-  // Asif: Since this is a single region & part fropm Group Junction
+  // Asif: Since this is a single region & part fropm GroupConfig Junction
   // no other filter is there , we shoudl get a SingleGroupJucntion as
   // filter operand of CompiledJunction & not iter operand in Compiled
   // Juncion
@@ -548,9 +548,9 @@ public class CompiledJunctionInternalsJUnitTest {
           operands.get(0) == cv[3]);
       assertTrue(operands.get(1) instanceof GroupJunction);
       List temp1 = ((GroupJunction) operands.get(1)).getOperands();
-      assertTrue("The number & nature of CompiledComparison of Group Junction not as expected",
+      assertTrue("The number & nature of CompiledComparison of GroupConfig Junction not as expected",
           temp1.get(0) == cv[0]);
-      assertTrue("The number & nature of CompiledComparison of Group Junction not as expected",
+      assertTrue("The number & nature of CompiledComparison of GroupConfig Junction not as expected",
           temp1.get(1) == cv[1]);
       assertNotNull("The iter operand of OO is null", oo.iterateOperand);
       assertTrue("IterOperand of OO not as expectd", oo.iterateOperand == cv[2]);
@@ -608,7 +608,7 @@ public class CompiledJunctionInternalsJUnitTest {
           oo.filterOperand instanceof GroupJunction);
       GroupJunction temp = (GroupJunction) oo.filterOperand;
       List operands = temp.getOperands();
-      assertTrue("No. of conditions in Group Junction not as expected of size 3",
+      assertTrue("No. of conditions in GroupConfig Junction not as expected of size 3",
           operands.size() == 3);
       assertNull("The iter operand of OO should have bee null", oo.iterateOperand);
     } catch (Exception e) {
@@ -686,7 +686,7 @@ public class CompiledJunctionInternalsJUnitTest {
   // one group is filter evaluatable , we will have a GroupJunction as a filter
   // operand.
   // Since there are two filter operands, the iter operands belonging to the
-  // other Group ( which
+  // other GroupConfig ( which
   // is not filter evaluatable , should get added to the iter operands of
   // CompiledJunction
   // So the iter operand of CompiledJunction should
@@ -1001,7 +1001,7 @@ public class CompiledJunctionInternalsJUnitTest {
   }
 
 
-  // Tests for plain creation of RangeJunction ( single or within a Group or CompositeGroup or
+  // Tests for plain creation of RangeJunction ( single or within a GroupConfig or CompositeGroup or
   // AllGroup )
   // which is agnostic of whether the RangeJunction is of type AND or OR
   //////////////////////////////////////////////////////////////////////////////////////

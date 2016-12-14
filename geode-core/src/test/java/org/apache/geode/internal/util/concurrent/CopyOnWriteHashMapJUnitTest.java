@@ -13,7 +13,7 @@
  * the License.
  */
 /*
- * Written by Doug Lea with assistance from members of JCP JSR-166 Expert Group and released to the
+ * Written by Doug Lea with assistance from members of JCP JSR-166 Expert GroupConfig and released to the
  * public domain, as explained at http://creativecommons.org/licenses/publicdomain Other
  * contributors include Andrew Wright, Jeffrey Hayes, Pat Fisher, Mike Judd.
  */
