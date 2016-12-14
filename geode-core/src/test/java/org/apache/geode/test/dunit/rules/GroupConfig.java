@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GroupConfig implements Serializable {
   public String name;
@@ -55,6 +57,12 @@ public class GroupConfig implements Serializable {
     return copy;
   }
 
+  public GroupConfig configFiles(String... configFiles) {
+    GroupConfig copy = new GroupConfig(this);
+    copy.configFiles.addAll(Arrays.asList(configFiles));
+    return copy;
+  }
+
   public GroupConfig removeJar(String jar) {
     GroupConfig copy = new GroupConfig(this);
     copy.jars.remove(jar);
@@ -79,6 +87,11 @@ public class GroupConfig implements Serializable {
   public Set<String> getConfigFiles() {
     return Collections.unmodifiableSet(this.configFiles);
   }
+
+  public Set<String> getAllFiles() {
+    return Collections.unmodifiableSet(Stream.concat(this.jars.stream(), this.configFiles.stream()).collect(Collectors.toSet()));
+  }
+
   public Set<String> getRegions() {
     return Collections.unmodifiableSet(this.regions);
   }
