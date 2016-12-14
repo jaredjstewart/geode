@@ -371,9 +371,7 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
     properties.setProperty(CLUSTER_CONFIGURATION_DIR, locatorDir.getCanonicalPath());
 
     Member locator = lsRule.startLocatorVM(0, properties);
-//    verifyClusterConfigZipLoadedInLocator(locator);
     verifyLocatorConfig(CONFIG_FROM_ZIP, locator);
-
 
     return locator;
   }
@@ -382,50 +380,7 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
     return JarDeployer.JAR_PREFIX + jarName + "#1";
   }
 
-
   public static final String EXPORTED_CLUSTER_CONFIG_ZIP_FILENAME = "cluster_config.zip";
-
-
-  public static void verifyInitialLocatorConfigInFileSystem(Member member) {
-    File clusterConfigDir = new File(member.getWorkingDir(), "cluster_config");
-    assertThat(clusterConfigDir).exists();
-    File configDir = new File(clusterConfigDir, "cluster");
-    assertThat(configDir).exists();
-    File properties = new File(configDir, "cluster.properties");
-    assertThat(properties).exists();
-    File xml = new File(configDir, "cluster.xml");
-    assertThat(xml).exists();
-  }
-
-  public static void verifyClusterConfigZipLoadedInLocator(Member locator) {
-    final String[] CONFIG_NAMES = new String[] {"cluster", "group1", "group2"};
-
-    // verify loaded in memeory
-    locator.invoke(() -> {
-      InternalLocator internalLocator = LocatorServerStartupRule.locatorStarter.locator;
-      SharedConfiguration sc = internalLocator.getSharedConfiguration();
-
-      for (String configName : CONFIG_NAMES) {
-        Configuration config = sc.getConfiguration(configName);
-        assertThat(config.getJarNames()).contains(configName + ".jar");
-        assertThat(config).isNotNull();
-      }
-    });
-
-    // verify loaded into the file system
-    File clusterConfigDir = new File(locator.getWorkingDir(), "cluster_config");
-    assertThat(clusterConfigDir).exists();
-
-    for (String configName : CONFIG_NAMES) {
-      File configDir = new File(clusterConfigDir, configName);
-      assertThat(configDir).exists();
-
-      File jar = new File(configDir, configName + ".jar");
-      File properties = new File(configDir, configName + ".properties");
-      File xml = new File(configDir, configName + ".xml");
-      assertThat(configDir.listFiles()).contains(jar, properties, xml);
-    }
-  }
 
   public static void verifyServerConfig(ExpectedConfig expectedConfig, Member server)
       throws ClassNotFoundException {
@@ -449,9 +404,6 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
           .exists();
     }
   }
-
-
-
 
   public static void verifyLocatorConfigNotExist(String configName, Member locator){
     // verify info not in memeory
