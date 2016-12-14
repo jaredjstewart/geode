@@ -536,14 +536,11 @@ public class ClusterConfigDUnitTest extends JUnit4DistributedTestCase {
   public static void verifyServerConfig(MemberConfig expectedConfig, Member server)
       throws ClassNotFoundException {
       verifyServerJarFilesExistInFileSystem(server.getWorkingDir(), expectedConfig);
-    server.invoke(() -> verifyServerConfigInMemory(expectedConfig));
+      server.invoke(() -> verifyServerConfigInMemory(expectedConfig));
   }
 
   private static void verifyServerJarFilesExistInFileSystem(File workingDir, MemberConfig groupConfig) {
-    Set<String> expectedJarNames = new HashSet<>();
-    for (String jarName : groupConfig.getJarNames()) {
-      expectedJarNames.add(getServerJarName(jarName));
-    }
+    Set<String> expectedJarNames = groupConfig.getJarNames().stream().map(ClusterConfigDUnitTest::getServerJarName).collect( Collectors.toSet());
     Set<String> actualJarNames = Arrays.stream(workingDir.list((dir, filename) -> filename.contains(".jar"))).collect(Collectors.toSet());
     assertThat(actualJarNames).isEqualTo(expectedJarNames);
   }
