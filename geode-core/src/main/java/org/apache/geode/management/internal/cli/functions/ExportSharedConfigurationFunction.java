@@ -14,12 +14,8 @@
  */
 package org.apache.geode.management.internal.cli.functions;
 
-import java.io.File;
-import java.util.UUID;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-
 import org.apache.geode.cache.execute.FunctionAdapter;
 import org.apache.geode.cache.execute.FunctionContext;
 import org.apache.geode.distributed.internal.InternalLocator;
@@ -27,6 +23,9 @@ import org.apache.geode.distributed.internal.SharedConfiguration;
 import org.apache.geode.internal.InternalEntity;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.configuration.utils.ZipUtils;
+
+import java.io.File;
+import java.util.UUID;
 
 public class ExportSharedConfigurationFunction extends FunctionAdapter implements InternalEntity {
 
@@ -45,6 +44,7 @@ public class ExportSharedConfigurationFunction extends FunctionAdapter implement
 
       String targetFilePath = FilenameUtils.concat(sc.getSharedConfigurationDirPath(), zipFileName);
       try {
+        //Todo: write the xml and properties file to the configDir
         ZipUtils.zip(sc.getSharedConfigurationDirPath(), targetFilePath);
         File zippedSharedConfig = new File(targetFilePath);
         byte[] zippedConfigData = FileUtils.readFileToByteArray(zippedSharedConfig);

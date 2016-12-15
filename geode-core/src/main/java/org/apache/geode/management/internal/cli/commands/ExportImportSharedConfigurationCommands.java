@@ -14,14 +14,6 @@
  */
 package org.apache.geode.management.internal.cli.commands;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.geode.cache.execute.ResultCollector;
 import org.apache.geode.distributed.DistributedMember;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
@@ -44,10 +36,17 @@ import org.apache.geode.management.internal.cli.result.TabularResultData;
 import org.apache.geode.management.internal.security.ResourceOperation;
 import org.apache.geode.security.ResourcePermission.Operation;
 import org.apache.geode.security.ResourcePermission.Resource;
-
 import org.springframework.shell.core.annotation.CliAvailabilityIndicator;
 import org.springframework.shell.core.annotation.CliCommand;
 import org.springframework.shell.core.annotation.CliOption;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /****
  * Commands for the shared configuration
@@ -127,10 +126,10 @@ public class ExportImportSharedConfigurationCommands extends AbstractCommandsSup
       mandatory = true, help = CliStrings.IMPORT_SHARED_CONFIG__ZIP__HELP) String zip) {
 
     GemFireCacheImpl cache = GemFireCacheImpl.getInstance();
+    Set<DistributedMember>  servers = CliUtil.getAllNormalMembers(cache);
 
-    if (!CliUtil.getAllNormalMembers(cache).isEmpty()) {
-      return ResultBuilder
-          .createGemFireErrorResult(CliStrings.IMPORT_SHARED_CONFIG__CANNOT__IMPORT__MSG);
+    for(DistributedMember server: servers){
+      // run a function to check if there is data hosted in the region, if yes, error out.
     }
 
     Set<DistributedMember> locators = new HashSet<DistributedMember>(
@@ -154,40 +153,30 @@ public class ExportImportSharedConfigurationCommands extends AbstractCommandsSup
     TabularResultData errorTable = ResultBuilder.createTabularResultData();
 
     boolean success = false;
-    boolean copySuccess = false;
 
-    ResultCollector<?, ?> rc =
-        CliUtil.executeFunction(importSharedConfigurationFunction, args, locators);
-    List<CliFunctionResult> functionResults =
-        CliFunctionResult.cleanResults((List<CliFunctionResult>) rc.getResult());
+    ResultCollector<?, ?> rc = null;
+    List<CliFunctionResult> functionResults = null;
 
-    for (CliFunctionResult functionResult : functionResults) {
-      if (!functionResult.isSuccessful()) {
-        errorTable.accumulate(CliStrings.LOCATOR_HEADER, functionResult.getMemberIdOrName());
-        errorTable.accumulate(CliStrings.ERROR__MSG__HEADER, functionResult.getMessage());
-      } else {
-        copySuccess = true;
-      }
-    }
-
-    if (!copySuccess) {
-      errorTable.setStatus(Result.Status.ERROR);
-      return ResultBuilder.buildResult(errorTable);
-    }
-
-    errorTable = ResultBuilder.createTabularResultData();
-
+    // only run importSharedConfigurationFunction on one locator
     for (DistributedMember locator : locators) {
-      rc = CliUtil.executeFunction(loadSharedConfiguration, args, locator);
+      rc = CliUtil.executeFunction(importSharedConfigurationFunction, args, locator);
       functionResults = (List<CliFunctionResult>) rc.getResult();
       CliFunctionResult functionResult = functionResults.get(0);
       if (functionResult.isSuccessful()) {
         success = true;
         infoData.addLine(functionResult.getMessage());
         break;
-      } else {
-        errorTable.accumulate(CliStrings.LOCATOR_HEADER, functionResult.getMemberIdOrName());
-        errorTable.accumulate(CliStrings.ERROR__MSG__HEADER, functionResult.getMessage());
+      }
+    }
+
+    if(success) {
+      for (DistributedMember server : servers) {
+        // run a function to reload the cc on the server
+        // this function should (part of GemfireCacheImpl.initialize):
+        // 1 request cc from a locator,
+        // 2, apply runtimeProperties
+        // 3. reload the cache.xml
+        // 4. deploy the jars
       }
     }
 

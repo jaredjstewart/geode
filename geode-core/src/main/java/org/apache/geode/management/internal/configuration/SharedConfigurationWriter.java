@@ -14,13 +14,6 @@
  */
 package org.apache.geode.management.internal.configuration;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-
-import org.apache.logging.log4j.Logger;
-
 import org.apache.geode.cache.execute.Function;
 import org.apache.geode.cache.execute.ResultCollector;
 import org.apache.geode.distributed.DistributedMember;
@@ -34,6 +27,12 @@ import org.apache.geode.management.internal.configuration.functions.AddXmlEntity
 import org.apache.geode.management.internal.configuration.functions.DeleteJarFunction;
 import org.apache.geode.management.internal.configuration.functions.DeleteXmlEntityFunction;
 import org.apache.geode.management.internal.configuration.functions.ModifyPropertiesFunction;
+import org.apache.logging.log4j.Logger;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 
 /***
  * Class for writing configuration changes to the Shared Configuration at the Locator(s). This class
@@ -109,7 +108,7 @@ public class SharedConfigurationWriter {
     args[0] = jarNames;
     args[1] = jarBytes;
     args[2] = groups;
-    return saveConfigChangesAllLocators(saveJarFunction, args);
+    return saveConfigChanges(saveJarFunction, args);
   }
 
   // /****
@@ -122,7 +121,7 @@ public class SharedConfigurationWriter {
     Object[] args = new Object[3];
     args[0] = jarNames;
     args[1] = groups;
-    return saveConfigChangesAllLocators(deleteJarFunction, args);
+    return saveConfigChanges(deleteJarFunction, args);
   }
 
 

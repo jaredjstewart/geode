@@ -107,6 +107,7 @@ public final class DeployCommands extends AbstractCommandsSupport implements Com
         return e.getResult();
       }
 
+      // this deploys the jars to all the matching servers
       ResultCollector<?, ?> resultCollector = CliUtil.executeFunction(this.deployFunction,
           new Object[] {jarNames, jarBytes}, targetMembers);
 
@@ -133,8 +134,6 @@ public final class DeployCommands extends AbstractCommandsSupport implements Com
         }
       }
 
-
-
       if (!accumulatedData) {
         // This really should never happen since if a JAR file is already deployed a result is
         // returned indicating that.
@@ -142,10 +141,10 @@ public final class DeployCommands extends AbstractCommandsSupport implements Com
       }
 
       Result result = ResultBuilder.buildResult(tabularData);
-      if (tabularData.getStatus().equals(Status.OK)) {
-        result.setCommandPersisted(
-            (new SharedConfigurationWriter()).addJars(jarNames, jarBytes, groups));
-      }
+      // should update the cc even if there is no running server
+      result.setCommandPersisted(
+          (new SharedConfigurationWriter()).addJars(jarNames, jarBytes, groups));
+
       return result;
     } catch (NotAuthorizedException e) {
       // for NotAuthorizedException, will catch this later in the code
@@ -217,11 +216,11 @@ public final class DeployCommands extends AbstractCommandsSupport implements Com
         return ResultBuilder.createInfoResult(CliStrings.UNDEPLOY__NO_JARS_FOUND_MESSAGE);
       }
 
+      // should update cc even if there is no running servers
       Result result = ResultBuilder.buildResult(tabularData);
-      if (tabularData.getStatus().equals(Status.OK)) {
-        result.setCommandPersisted((new SharedConfigurationWriter())
-            .deleteJars(jars == null ? null : jars.split(","), groups));
-      }
+      result.setCommandPersisted((new SharedConfigurationWriter())
+          .deleteJars(jars == null ? null : jars.split(","), groups));
+
       return result;
     } catch (VirtualMachineError e) {
       SystemFailure.initiateFailure(e);

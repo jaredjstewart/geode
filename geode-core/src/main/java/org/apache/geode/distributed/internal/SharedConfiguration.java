@@ -43,8 +43,6 @@ import org.apache.geode.internal.cache.xmlcache.CacheXmlGenerator;
 import org.apache.geode.internal.lang.StringUtils;
 import org.apache.geode.internal.logging.LogService;
 import org.apache.geode.management.internal.cli.CliUtil;
-import org.apache.geode.management.internal.cli.functions.ImportSharedConfigurationArtifactsFunction;
-import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.configuration.callbacks.ConfigurationChangeListener;
 import org.apache.geode.management.internal.configuration.domain.Configuration;
 import org.apache.geode.management.internal.configuration.domain.SharedConfigurationStatus;
@@ -54,7 +52,6 @@ import org.apache.geode.management.internal.configuration.messages.Configuration
 import org.apache.geode.management.internal.configuration.messages.ConfigurationResponse;
 import org.apache.geode.management.internal.configuration.messages.SharedConfigurationStatusResponse;
 import org.apache.geode.management.internal.configuration.utils.XmlUtils;
-import org.apache.geode.management.internal.configuration.utils.ZipUtils;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -67,14 +64,12 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -181,12 +176,15 @@ public class SharedConfiguration {
 
         if (configuration == null) {
           configuration = new Configuration(group);
-          writeConfig(configuration);
+          //writeConfig(configuration);
         }
-        configuration.addJarNames(jarNames);
-        configRegion.put(group, configuration);
         String groupDir = FilenameUtils.concat(configDirPath, group);
         writeJarFiles(groupDir, jarNames, jarBytes);
+
+        // update the record after writing the jars to the file system, since the listener
+        // will need the jars on file to upload to other locators.
+        configuration.addJarNames(jarNames);
+        configRegion.put(group, configuration);
       }
     } catch (Exception e) {
       success = false;
@@ -219,7 +217,7 @@ public class SharedConfiguration {
       XmlUtils.addNewNode(doc, xmlEntity);
       configuration.setCacheXmlContent(XmlUtils.prettyXml(doc));
       configRegion.put(group, configuration);
-      writeConfig(configuration);
+      //writeConfig(configuration);
     }
   }
 
@@ -248,33 +246,9 @@ public class SharedConfiguration {
 
         Map<String, Configuration> sharedConfigMap = this.readSharedConfigurationFromDisk();
         final DM dm = cache.getDistributedSystem().getDistributionManager();
-
-        if (dm.getNormalDistributionManagerIds().isEmpty()) {
-          Set<DistributedMember> locatorsWithSC = new HashSet<DistributedMember>(
-              dm.getAllHostedLocatorsWithSharedConfiguration().keySet());
-
-          // Send the config to other locators which host the shared configuration.
-          if (!locatorsWithSC.isEmpty()) {
-            final ImportSharedConfigurationArtifactsFunction fn =
-                new ImportSharedConfigurationArtifactsFunction();
-            final Date date = new Date();
-            String zipFileName = CliStrings.format(CliStrings.EXPORT_SHARED_CONFIG__FILE__NAME,
-                new Timestamp(date.getTime()).toString());
-            try {
-              ZipUtils.zip(getSharedConfigurationDirPath(), zipFileName);
-              File zipFile = new File(zipFileName);
-              byte[] zipBytes = FileUtils.readFileToByteArray(zipFile);
-              Object[] args = new Object[] {zipFileName, zipBytes};
-              // Make sure we wait for the result. The fn also does a clear on the config
-              // region so there is a race with the clear below.
-              CliUtil.executeFunction(fn, args, locatorsWithSC).getResult();
-            } catch (Exception e) {
-              logger.error(e.getMessage(), e);
-            }
-          }
-        }
         // Clear the configuration region and load the configuration read from the 'shared_config'
         // directory
+        // on region entry create/update, it will upload the jars to all other locators
         configRegion.clear();
         configRegion.putAll(sharedConfigMap);
       } finally {
@@ -284,21 +258,9 @@ public class SharedConfiguration {
       // Write out the existing configuration into the 'shared_config' directory
       // And get deployed jars from other locators.
       lockSharedConfiguration();
-      putSecurityPropsIntoClusterConfig(configRegion);
-
       try {
-        Set<Entry<String, Configuration>> configEntries = configRegion.entrySet();
-
-        for (Entry<String, Configuration> configEntry : configEntries) {
-          Configuration configuration = configEntry.getValue();
-          try {
-            this.writeConfig(configuration);
-          } catch (Exception e) {
-            logger.info(e.getMessage(), e);
-          }
-        }
-        logger.info("Completed writing the shared configuration to 'cluster_config' directory");
-        this.getAllJarsFromOtherLocators();
+        // on region entry create/update, it should download missing jars from other locators
+        putSecurityPropsIntoClusterConfig(configRegion);
       } finally {
         unlockSharedConfiguration();
       }
@@ -400,7 +362,7 @@ public class SharedConfiguration {
           XmlUtils.deleteNode(doc, xmlEntity);
           configuration.setCacheXmlContent(XmlUtils.prettyXml(doc));
           configRegion.put(group, configuration);
-          writeConfig(configuration);
+          //writeConfig(configuration);
         }
       }
     }
@@ -436,7 +398,7 @@ public class SharedConfiguration {
       // Change the xml content of the configuration and put it the config region
       configuration.setCacheXmlContent(XmlUtils.prettyXml(doc));
       configRegion.put(group, configuration);
-      writeConfig(configuration);
+      //writeConfig(configuration);
     }
   }
 
@@ -569,7 +531,7 @@ public class SharedConfiguration {
       }
       configuration.getGemfireProperties().putAll(properties);
       configRegion.put(group, configuration);
-      writeConfig(configuration);
+      //writeConfig(configuration);
     }
   }
 

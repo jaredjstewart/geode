@@ -38,19 +38,27 @@ public class ConfigurationChangeListener extends CacheListenerAdapter<String, Co
   @Override
   public void afterUpdate(EntryEvent<String, Configuration> event) {
     super.afterUpdate(event);
-    writeToFileSystem(event);
+    uploadDownloadJars(event);
   }
 
   @Override
   public void afterCreate(EntryEvent<String, Configuration> event) {
     super.afterCreate(event);
-    writeToFileSystem(event);
+    uploadDownloadJars(event);
   }
 
-  private void writeToFileSystem(EntryEvent<String, Configuration> event) {
+  // when a new jar is added, if it exist in the current locator, upload to other locators,
+  // otherwise, download from other locators.
+  // when a jar is removed, remove it from all the locators' file system
+  private void uploadDownloadJars(EntryEvent<String, Configuration> event) {
+    String group = event.getKey();
     Configuration newConfig = (Configuration) event.getNewValue();
+    Configuration oldConfig = (Configuration) event.getOldValue();
+    if(oldConfig!=null){
+
+    }
     try {
-      sharedConfig.writeConfig(newConfig);
+
     } catch (Exception e) {
       logger.info(
           "Exception occurred while writing the configuration changes to the filesystem: {}",
