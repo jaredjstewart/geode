@@ -48,6 +48,7 @@ import org.apache.geode.management.internal.configuration.domain.Configuration;
 import org.apache.geode.management.internal.configuration.domain.SharedConfigurationStatus;
 import org.apache.geode.management.internal.configuration.domain.XmlEntity;
 import org.apache.geode.management.internal.configuration.functions.GetAllJarsFunction;
+import org.apache.geode.management.internal.configuration.functions.GetJarFunction;
 import org.apache.geode.management.internal.configuration.messages.ConfigurationRequest;
 import org.apache.geode.management.internal.configuration.messages.ConfigurationResponse;
 import org.apache.geode.management.internal.configuration.messages.SharedConfigurationStatusResponse;
@@ -64,12 +65,14 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -109,13 +112,14 @@ public class SharedConfiguration {
 
   private final String configDirPath;
   private final String configDiskDirName;
-  private final String configDiskDirPath;;
+  private final String configDiskDirPath;
 
   private final Set<PersistentMemberPattern> newerSharedConfigurationLocatorInfo =
       new HashSet<PersistentMemberPattern>();
   private final AtomicReference<SharedConfigurationStatus> status =
       new AtomicReference<SharedConfigurationStatus>();
   private static final GetAllJarsFunction getAllJarsFunction = new GetAllJarsFunction();
+  private static final GetJarFunction getJarFunction = new GetJarFunction();
   private static final JarFileFilter jarFileFilter = new JarFileFilter();
 
   private GemFireCacheImpl cache;
@@ -176,7 +180,7 @@ public class SharedConfiguration {
 
         if (configuration == null) {
           configuration = new Configuration(group);
-          //writeConfig(configuration);
+          createConfigDirIfNecessary(configuration.getConfigName());
         }
         String groupDir = FilenameUtils.concat(configDirPath, group);
         writeJarFiles(groupDir, jarNames, jarBytes);
@@ -217,7 +221,7 @@ public class SharedConfiguration {
       XmlUtils.addNewNode(doc, xmlEntity);
       configuration.setCacheXmlContent(XmlUtils.prettyXml(doc));
       configRegion.put(group, configuration);
-      //writeConfig(configuration);
+//      writeConfig(configuration);
     }
   }
 
@@ -425,6 +429,22 @@ public class SharedConfiguration {
     }
   }
 
+  public byte[] getJarBytesFromThisLocator(String group, String jarName) throws Exception {
+    Configuration configuration = getConfiguration(group);
+
+    //TODO: Should we check  like this, or just check jar.exists below()?
+    if (configuration == null || !configuration.getJarNames().contains(jarName)) {
+      return null;
+    }
+
+    File jar = getJarOnThisLocaotr(group, jarName);
+    return FileUtils.readFileToByteArray(jar);
+  }
+
+  public File getJarOnThisLocaotr(String groupName, String jarName) {
+    return new File(configDirPath).toPath().resolve(groupName).resolve(jarName).toFile();
+  }
+
   public Object[] getAllJars(Set<String> groups) throws Exception {
     Set<String> jarsAdded = new HashSet<String>();
     Object[] jars = new Object[2];
@@ -589,26 +609,23 @@ public class SharedConfiguration {
   }
 
   /**
-   * Writes the contents of the {@link Configuration} to the file system
+   * Creates a directory for this configuration if it doesn't already exist.
    */
-  public void writeConfig(final Configuration configuration) throws Exception {
-    File configDir = new File(getSharedConfigurationDirPath());
-    if (!configDir.exists()) {
-      if (!configDir.mkdirs()) {
+  private void createConfigDirIfNecessary(final String configName) throws Exception {
+    File clusterConfigDir = new File(getSharedConfigurationDirPath());
+    if (!clusterConfigDir.exists()) {
+      if (!clusterConfigDir.mkdirs()) {
         throw new IOException("Cannot create directory : " + getSharedConfigurationDirPath());
       }
     }
-    String dirPath =
-        FilenameUtils.concat(getSharedConfigurationDirPath(), configuration.getConfigName());
-    File file = new File(dirPath);
-    if (!file.exists()) {
-      if (!file.mkdir()) {
-        throw new IOException("Cannot create directory : " + dirPath);
+    Path configDirPath = clusterConfigDir.toPath().resolve(configName);
+
+    File configDir = configDirPath.toFile();
+    if (!configDir.exists()) {
+      if (!configDir.mkdir()) {
+        throw new IOException("Cannot create directory : " + configDirPath);
       }
     }
-
-    writeProperties(dirPath, configuration);
-    writeCacheXml(dirPath, configuration);
   }
 
   private boolean lockSharedConfiguration() {
@@ -619,6 +636,35 @@ public class SharedConfiguration {
     sharedConfigLockingService.unlock(SHARED_CONFIG_LOCK_NAME);
   }
 
+  public void addJarFromOtherLocators(String groupName, String jarName) throws Exception {
+    logger.info("Getting Jar files from other locators");
+    DM dm = cache.getDistributionManager();
+    DistributedMember me = cache.getMyId();
+    Set<DistributedMember> locators =
+        new HashSet<>(dm.getAllHostedLocatorsWithSharedConfiguration().keySet());
+    locators.remove(me);
+
+    if (locators.isEmpty()) {
+      //TODO: Should this throw an exception instead of just logging?
+      logger.error("No other locators present");
+      return;
+    }
+
+    //TODO: Should we execute this on one locator at a time to avoid ALL of them sending the jar over the wire?
+    ResultCollector<Object, List<Object>> rc = (ResultCollector<Object, List<Object>>) CliUtil
+        .executeFunction(getJarFunction, new Object[]{groupName, jarName}, locators);
+
+    byte[] jarBytes = (byte[]) rc.getResult().stream()
+        .filter(Objects::nonNull)
+        .filter((Object result) -> !(result instanceof Throwable))
+        .findFirst()
+        .orElseThrow(() -> new IllegalStateException("No locators have a deployed jar named " + jarName +" in " + groupName));
+
+    createConfigDirIfNecessary(groupName);
+
+    File jarToWrite = getJarOnThisLocaotr(groupName, jarName);
+    FileUtils.writeByteArrayToFile(jarToWrite, jarBytes);
+  }
   /**
    * Gets the Jar from existing locators in the system
    */

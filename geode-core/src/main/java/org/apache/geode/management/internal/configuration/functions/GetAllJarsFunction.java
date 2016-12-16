@@ -52,6 +52,7 @@ public class GetAllJarsFunction extends FunctionAdapter implements InternalEntit
       }
     }
 
+    //TODO: How does this not throw an IllegalStateException?
     context.getResultSender().lastResult(null);
   }
 
