@@ -87,7 +87,7 @@ public class ConfigurationChangeListener extends CacheListenerAdapter<String, Co
     }
 
     for(String jarRemoved: jarsRemoved){
-        File jar = sharedConfig.getJarOnThisLocaotr(group,jarRemoved);
+        File jar = sharedConfig.getPathToJarOnThisLocator(group,jarRemoved).toFile();
         if (jar.exists()) {
           try {
             FileUtils.forceDelete(jar);
@@ -105,7 +105,7 @@ public class ConfigurationChangeListener extends CacheListenerAdapter<String, Co
   }
 
   private boolean jarExistsInFilesystem(String groupName, String jarName) {
-    return sharedConfig.getJarOnThisLocaotr(groupName, jarName).exists();
+    return sharedConfig.getPathToJarOnThisLocator(groupName, jarName).toFile().exists();
   }
 
 }

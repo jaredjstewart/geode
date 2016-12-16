@@ -141,10 +141,10 @@ public final class DeployCommands extends AbstractCommandsSupport implements Com
       }
 
       Result result = ResultBuilder.buildResult(tabularData);
-      // should update the cc even if there is no running server
-      result.setCommandPersisted(
-          (new SharedConfigurationWriter()).addJars(jarNames, jarBytes, groups));
-
+      if (tabularData.getStatus().equals(Status.OK)) {
+        result.setCommandPersisted(
+            (new SharedConfigurationWriter()).addJars(jarNames, jarBytes, groups));
+      }
       return result;
     } catch (NotAuthorizedException e) {
       // for NotAuthorizedException, will catch this later in the code
@@ -216,11 +216,11 @@ public final class DeployCommands extends AbstractCommandsSupport implements Com
         return ResultBuilder.createInfoResult(CliStrings.UNDEPLOY__NO_JARS_FOUND_MESSAGE);
       }
 
-      // should update cc even if there is no running servers
       Result result = ResultBuilder.buildResult(tabularData);
-      result.setCommandPersisted((new SharedConfigurationWriter())
-          .deleteJars(jars == null ? null : jars.split(","), groups));
-
+      if (tabularData.getStatus().equals(Status.OK)) {
+        result.setCommandPersisted((new SharedConfigurationWriter())
+            .deleteJars(jars == null ? null : jars.split(","), groups));
+      }
       return result;
     } catch (VirtualMachineError e) {
       SystemFailure.initiateFailure(e);

@@ -14,6 +14,8 @@
  */
 package org.apache.geode.management.internal.cli.commands;
 
+import com.google.common.primitives.Booleans;
+
 import org.apache.geode.cache.execute.ResultCollector;
 import org.apache.geode.distributed.DistributedMember;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
@@ -29,6 +31,7 @@ import org.apache.geode.management.internal.cli.functions.ImportSharedConfigurat
 import org.apache.geode.management.internal.cli.functions.LoadSharedConfigurationFunction;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.cli.remote.CommandExecutionContext;
+import org.apache.geode.management.internal.cli.result.ErrorResultData;
 import org.apache.geode.management.internal.cli.result.FileResult;
 import org.apache.geode.management.internal.cli.result.InfoResultData;
 import org.apache.geode.management.internal.cli.result.ResultBuilder;
@@ -46,6 +49,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /****
@@ -126,10 +131,10 @@ public class ExportImportSharedConfigurationCommands extends AbstractCommandsSup
       mandatory = true, help = CliStrings.IMPORT_SHARED_CONFIG__ZIP__HELP) String zip) {
 
     GemFireCacheImpl cache = GemFireCacheImpl.getInstance();
-    Set<DistributedMember>  servers = CliUtil.getAllNormalMembers(cache);
 
-    for(DistributedMember server: servers){
-      // run a function to check if there is data hosted in the region, if yes, error out.
+    if (!CliUtil.getAllNormalMembers(cache).isEmpty()) {
+      return ResultBuilder
+          .createGemFireErrorResult(CliStrings.IMPORT_SHARED_CONFIG__CANNOT__IMPORT__MSG);
     }
 
     Set<DistributedMember> locators = new HashSet<DistributedMember>(
@@ -149,44 +154,30 @@ public class ExportImportSharedConfigurationCommands extends AbstractCommandsSup
 
     Object[] args = new Object[] {zipFileName, zipBytes};
 
-    InfoResultData infoData = ResultBuilder.createInfoResultData();
-    TabularResultData errorTable = ResultBuilder.createTabularResultData();
 
-    boolean success = false;
+    Optional<CliFunctionResult> functionResult = locators.stream()
+        .map((DistributedMember locator) -> importSharedConfigurationFromLocator(locator, args))
+        .filter(CliFunctionResult::isSuccessful)
+        .findFirst();
 
-    ResultCollector<?, ?> rc = null;
-    List<CliFunctionResult> functionResults = null;
-
-    // only run importSharedConfigurationFunction on one locator
-    for (DistributedMember locator : locators) {
-      rc = CliUtil.executeFunction(importSharedConfigurationFunction, args, locator);
-      functionResults = (List<CliFunctionResult>) rc.getResult();
-      CliFunctionResult functionResult = functionResults.get(0);
-      if (functionResult.isSuccessful()) {
-        success = true;
-        infoData.addLine(functionResult.getMessage());
-        break;
-      }
-    }
-
-    if(success) {
-      for (DistributedMember server : servers) {
-        // run a function to reload the cc on the server
-        // this function should (part of GemfireCacheImpl.initialize):
-        // 1 request cc from a locator,
-        // 2, apply runtimeProperties
-        // 3. reload the cache.xml
-        // 4. deploy the jars
-      }
-    }
-
-    if (success) {
+    if (functionResult.isPresent()) {
+      InfoResultData infoData = ResultBuilder.createInfoResultData();
+      infoData.addLine(functionResult.get().getMessage());
       result = ResultBuilder.buildResult(infoData);
     } else {
-      errorTable.setStatus(Result.Status.ERROR);
-      result = ResultBuilder.buildResult(errorTable);
+      ErrorResultData errorData = ResultBuilder.createErrorResultData();
+      errorData.addLine("Import failed");
+      result = ResultBuilder.buildResult(errorData);
     }
+
     return result;
+  }
+
+  private CliFunctionResult importSharedConfigurationFromLocator(DistributedMember locator, Object[] args) {
+    ResultCollector rc = CliUtil.executeFunction(importSharedConfigurationFunction, args, locator);
+    List<CliFunctionResult> results = (List<CliFunctionResult>) rc.getResult();
+
+    return results.get(0);
   }
 
 

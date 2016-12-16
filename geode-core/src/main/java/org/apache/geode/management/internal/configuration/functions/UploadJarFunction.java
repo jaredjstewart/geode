@@ -26,7 +26,7 @@ import org.apache.geode.internal.InternalEntity;
 
 import java.io.IOException;
 
-public class GetJarFunction implements Function, InternalEntity {
+public class UploadJarFunction implements Function, InternalEntity {
 
   private static final long serialVersionUID = 1L;
 
@@ -59,7 +59,7 @@ public class GetJarFunction implements Function, InternalEntity {
 
   @Override
   public String getId() {
-    return GetJarFunction.class.getName();
+    return UploadJarFunction.class.getName();
   }
 
 }
