@@ -66,6 +66,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -164,7 +165,7 @@ public class SharedConfiguration {
    * Add jar information into the shared configuration and save the jars in the file system
    * @return true on success
    */
-  public boolean addJars(String[] jarNames, byte[][] jarBytes, String[] groups) {
+  public boolean addJarsToThisLocator(String[] jarNames, byte[][] jarBytes, String[] groups) {
     boolean success = true;
     try {
       if (groups == null) {
@@ -308,12 +309,11 @@ public class SharedConfiguration {
             configResponse.addConfiguration(configuration);
           }
 
-          Object[] jars = getAllJars(groups);
-          if (jars != null) {
-            String[] jarNames = (String[]) jars[0];
-            byte[][] jarBytes = (byte[][]) jars[1];
-            configResponse.addJarsToBeDeployed(jarNames, jarBytes);
-          }
+          Map<String, byte[]> jarNamesToJarBytes = getAllJarsFromThisLocator(groups);
+          String[] jarNames = jarNamesToJarBytes.keySet().stream().toArray(String[]::new);
+          byte[][] jarBytes = jarNamesToJarBytes.values().toArray(new byte[jarNames.length][]);
+
+          configResponse.addJarsToBeDeployed(jarNames, jarBytes);
           configResponse.setFailedToGetSharedConfig(false);
           return configResponse;
         }
@@ -323,7 +323,6 @@ public class SharedConfiguration {
 
     }
     configResponse.setFailedToGetSharedConfig(true);
-
     return configResponse;
   }
 
@@ -438,47 +437,26 @@ public class SharedConfiguration {
     return new File(configDirPath).toPath().resolve(groupName).resolve(jarName);
   }
 
-  public Object[] getAllJars(Set<String> groups) throws Exception {
-    Set<String> jarsAdded = new HashSet<String>();
-    Object[] jars = new Object[2];
+  public Map<String, byte[]> getAllJarsFromThisLocator(Set<String> groups) throws Exception {
+    Map<String, byte[]> jarNamesToJarBytes = new HashMap<>();
 
     for (String group : groups) {
-      Configuration configuration = getConfiguration(group);
-      if (configuration != null) {
-        jarsAdded.addAll(configuration.getJarNames());
-      }
-    }
-    int numJars = jarsAdded.size();
-    jarsAdded.clear();
-
-    if (numJars > 0) {
-      String[] jarNames = new String[numJars];
-      byte[][] jarBytes = new byte[numJars][];
-      int ctr = 0;
-
-      for (String group : groups) {
-        Configuration configuration = getConfiguration(group);
-        if (configuration != null) {
-          Set<String> jarNameSet = configuration.getJarNames();
-          for (String jarName : jarNameSet) {
-            String groupDirPath = FilenameUtils.concat(configDirPath, group);
-            if (!jarsAdded.contains(jarName)) {
-              String jarFilePath = FilenameUtils.concat(groupDirPath, jarName);
-              jarNames[ctr] = jarName;
-              jarBytes[ctr] = FileUtils.readFileToByteArray(new File(jarFilePath));
-              ctr++;
-            }
-          }
-        }
+      Configuration groupConfig = getConfiguration(group);
+      if (groupConfig == null) {
+        break;
       }
 
-      jars[0] = jarNames;
-      jars[1] = jarBytes;
+      Set<String> jars = groupConfig.getJarNames();
+      for (String jar : jars) {
+        byte[] jarBytes = getJarBytesFromThisLocator(group, jar);
+        jarNamesToJarBytes.put(jar, jarBytes);
+      }
     }
-    return jars;
+
+    return jarNamesToJarBytes;
   }
 
-  public Configuration getConfiguration(String groupName) throws Exception {
+  public Configuration getConfiguration(String groupName) {
     Configuration configuration = getConfigurationRegion().get(groupName);
     return configuration;
   }
@@ -555,25 +533,15 @@ public class SharedConfiguration {
     try {
       Region<String, Configuration> configRegion = getConfigurationRegion();
       if (groups == null) {
-        Set<String> groupSet = configRegion.keySet();
-        groups = groupSet.toArray(new String[groupSet.size()]);
+        groups = configRegion.keySet().stream().toArray(String[]::new);
       }
       for (String group : groups) {
-        Configuration configuration = (Configuration) configRegion.get(group);
-        if (configuration != null) {
-          String dirPath =
-              FilenameUtils.concat(getSharedConfigurationDirPath(), configuration.getConfigName());
-          removeJarFiles(dirPath, jarNames);
+        Configuration configuration = configRegion.get(group);
+        if (configuration == null) {
+          break;
         }
-      }
-      for (String group : groups) {
-        Configuration configuration = (Configuration) configRegion.get(group);
-        if (configuration != null) {
-          if (!configuration.getJarNames().isEmpty()) {
-            configuration.removeJarNames(jarNames);
-            configRegion.put(group, configuration);
-          }
-        }
+        configuration.removeJarNames(jarNames);
+        configRegion.put(group, configuration);
       }
     } catch (Exception e) {
       logger.info("Exception occurred while deleting the jar files", e);
@@ -599,7 +567,7 @@ public class SharedConfiguration {
   /**
    * Creates a directory for this configuration if it doesn't already exist.
    */
-  private void createConfigDirIfNecessary(final String configName) throws Exception {
+  private File createConfigDirIfNecessary(final String configName) throws Exception {
     File clusterConfigDir = new File(getSharedConfigurationDirPath());
     if (!clusterConfigDir.exists()) {
       if (!clusterConfigDir.mkdirs()) {
@@ -614,6 +582,20 @@ public class SharedConfiguration {
         throw new IOException("Cannot create directory : " + configDirPath);
       }
     }
+
+    return configDir;
+  }
+
+  public void writeConfig(final Configuration configuration) throws Exception {
+    File configDir = createConfigDirIfNecessary(configuration.getConfigName());
+
+    File propsFile = new File(configDir, configuration.getPropertiesFileName());
+    BufferedWriter bw = new BufferedWriter(new FileWriter(propsFile));
+    configuration.getGemfireProperties().store(bw, null);
+    bw.close();
+
+    File xmlFile = new File(configDir, configuration.getCacheXmlFileName());
+    FileUtils.writeStringToFile(xmlFile, configuration.getCacheXmlContent(), "UTF-8");
   }
 
   private boolean lockSharedConfiguration() {
@@ -641,7 +623,6 @@ public class SharedConfiguration {
         .orElseThrow(() -> new IllegalStateException(
             "No locators have a deployed jar named " + jarName + " in " + groupName));
 
-
     File jarToWrite = getPathToJarOnThisLocator(groupName, jarName).toFile();
     FileUtils.writeByteArrayToFile(jarToWrite, jarBytes);
   }
@@ -668,7 +649,7 @@ public class SharedConfiguration {
    * configuration data.
    * @return {@link Region} ConfigurationRegion
    */
-  private Region<String, Configuration> getConfigurationRegion() throws Exception {
+  private Region<String, Configuration> getConfigurationRegion() {
     Region<String, Configuration> configRegion = cache.getRegion(CONFIG_REGION_NAME);
 
     try {
@@ -709,7 +690,7 @@ public class SharedConfiguration {
       if (configRegion == null) {
         this.status.set(SharedConfigurationStatus.STOPPED);
       }
-      throw new Exception("Error occurred while initializing cluster configuration", e);
+      throw new RuntimeException("Error occurred while initializing cluster configuration", e);
     }
 
     return configRegion;
@@ -787,42 +768,6 @@ public class SharedConfiguration {
   }
 
   /**
-   * Removes the jar files from the given directory
-   * @param dirPath Path of the configuration directory
-   * @param jarNames Names of the jar files
-   */
-  private void removeJarFiles(final String dirPath, final String[] jarNames) throws IOException {
-    if (jarNames != null) {
-      for (int i = 0; i < jarNames.length; i++) {
-        File jarFile = new File(FilenameUtils.concat(dirPath, jarNames[i]));
-        if (jarFile.exists()) {
-          FileUtils.forceDelete(jarFile);
-        }
-      }
-    } else {
-      File dir = new File(dirPath);
-      String[] jarFileNames = dir.list(jarFileFilter);
-      if (jarFileNames.length != 0) {
-        File jarFileToBeDeleted;
-        for (String jarFileName : jarFileNames) {
-          String fullPath = FilenameUtils.concat(dirPath, jarFileName);
-          jarFileToBeDeleted = new File(fullPath);
-          FileUtils.forceDelete(jarFileToBeDeleted);
-        }
-      }
-    }
-  }
-
-  /**
-   * Writes the cache.xml to the file , based on Configuration
-   */
-  private void writeCacheXml(final String dirPath, final Configuration configuration)
-      throws IOException {
-    String fullPath = FilenameUtils.concat(dirPath, configuration.getCacheXmlFileName());
-    FileUtils.writeStringToFile(new File(fullPath), configuration.getCacheXmlContent(), "UTF-8");
-  }
-
-  /**
    * Writes the
    * @param dirPath target directory , where the jar files are to be written
    * @param jarNames Array containing the name of the jar files.
@@ -839,17 +784,6 @@ public class SharedConfiguration {
         logger.info(e);
       }
     }
-  }
-
-  /**
-   * Writes the properties to the file based on the {@link Configuration}
-   */
-  private void writeProperties(final String dirPath, final Configuration configuration)
-      throws IOException {
-    String fullPath = FilenameUtils.concat(dirPath, configuration.getPropertiesFileName());
-    BufferedWriter bw = new BufferedWriter(new FileWriter(fullPath));
-    configuration.getGemfireProperties().store(bw, "");
-    bw.close();
   }
 
   /**

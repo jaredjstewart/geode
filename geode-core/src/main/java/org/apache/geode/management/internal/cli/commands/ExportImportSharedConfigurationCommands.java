@@ -18,6 +18,7 @@ import com.google.common.primitives.Booleans;
 
 import org.apache.geode.cache.execute.ResultCollector;
 import org.apache.geode.distributed.DistributedMember;
+import org.apache.geode.distributed.internal.membership.InternalDistributedMember;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.lang.StringUtils;
 import org.apache.geode.management.cli.CliMetaData;
@@ -78,47 +79,39 @@ public class ExportImportSharedConfigurationCommands extends AbstractCommandsSup
 
       @CliOption(key = {CliStrings.EXPORT_SHARED_CONFIG__DIR},
           help = CliStrings.EXPORT_SHARED_CONFIG__DIR__HELP) String dir) {
-    Result result;
 
-    InfoResultData infoData = ResultBuilder.createInfoResultData();
-    TabularResultData errorTable = ResultBuilder.createTabularResultData();
     GemFireCacheImpl cache = GemFireCacheImpl.getInstance();
-    Set<DistributedMember> locators = new HashSet<DistributedMember>(
-        cache.getDistributionManager().getAllHostedLocatorsWithSharedConfiguration().keySet());
-    byte[] byteData;
-    boolean success = false;
+    Set<? extends DistributedMember> locators =
+        cache.getDistributionManager().getAllHostedLocatorsWithSharedConfiguration().keySet();
 
-    if (!locators.isEmpty()) {
-      for (DistributedMember locator : locators) {
-        ResultCollector<?, ?> rc =
-            CliUtil.executeFunction(exportSharedConfigurationFunction, null, locator);
-        @SuppressWarnings("unchecked")
-        List<CliFunctionResult> results = (List<CliFunctionResult>) rc.getResult();
-        CliFunctionResult functionResult = results.get(0);
+    Optional<CliFunctionResult> functionResult = locators.stream()
+        .map((DistributedMember locator) -> exportSharedConfigurationFromLocator(locator, null))
+        .filter(CliFunctionResult::isSuccessful)
+        .findFirst();
 
-        if (functionResult.isSuccessful()) {
-          byteData = functionResult.getByteData();
-          infoData.addAsFile(zipFileName, byteData, InfoResultData.FILE_TYPE_BINARY,
-              CliStrings.EXPORT_SHARED_CONFIG__DOWNLOAD__MSG, false);
-          success = true;
-          break;
-        } else {
-          errorTable.accumulate(CliStrings.LOCATOR_HEADER, functionResult.getMemberIdOrName());
-          errorTable.accumulate(CliStrings.ERROR__MSG__HEADER, functionResult.getMessage());
-        }
-      }
-      if (success) {
-        result = ResultBuilder.buildResult(infoData);
-      } else {
-        errorTable.setStatus(Result.Status.ERROR);
-        result = ResultBuilder.buildResult(errorTable);
-      }
+    Result result;
+    if (functionResult.isPresent()) {
+      InfoResultData infoData = ResultBuilder.createInfoResultData();
+      byte[] byteData = functionResult.get().getByteData();
+      infoData.addAsFile(zipFileName, byteData, InfoResultData.FILE_TYPE_BINARY,
+          CliStrings.EXPORT_SHARED_CONFIG__DOWNLOAD__MSG, false);
+      result = ResultBuilder.buildResult(infoData);
     } else {
-      result = ResultBuilder.createGemFireErrorResult(
-          CliStrings.SHARED_CONFIGURATION_NO_LOCATORS_WITH_SHARED_CONFIGURATION);
+      ErrorResultData errorData = ResultBuilder.createErrorResultData();
+      errorData.addLine("Export failed");
+      result = ResultBuilder.buildResult(errorData);
     }
+
     return result;
   }
+
+  private CliFunctionResult exportSharedConfigurationFromLocator(DistributedMember locator, Object[] args) {
+    ResultCollector rc = CliUtil.executeFunction(exportSharedConfigurationFunction, args, locator);
+    List<CliFunctionResult> results = (List<CliFunctionResult>) rc.getResult();
+
+    return results.get(0);
+  }
+
 
   @CliCommand(value = {CliStrings.IMPORT_SHARED_CONFIG},
       help = CliStrings.IMPORT_SHARED_CONFIG__HELP)
@@ -137,8 +130,8 @@ public class ExportImportSharedConfigurationCommands extends AbstractCommandsSup
           .createGemFireErrorResult(CliStrings.IMPORT_SHARED_CONFIG__CANNOT__IMPORT__MSG);
     }
 
-    Set<DistributedMember> locators = new HashSet<DistributedMember>(
-        cache.getDistributionManager().getAllHostedLocatorsWithSharedConfiguration().keySet());
+    Set<? extends DistributedMember> locators =
+        cache.getDistributionManager().getAllHostedLocatorsWithSharedConfiguration().keySet();
 
     if (locators.isEmpty()) {
       return ResultBuilder.createGemFireErrorResult(CliStrings.NO_LOCATORS_WITH_SHARED_CONFIG);
