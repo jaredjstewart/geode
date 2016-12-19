@@ -114,7 +114,7 @@ public class ClusterConfig implements Serializable {
       Set<String> actualFiles =
           toSetIgnoringHiddenFiles(new File(clusterConfigDir, configGroup.name).list());
 
-      Set<String> expectedFiles = configGroup.getJars();
+      Set<String> expectedFiles = configGroup.getAllFiles();
       assertThat(actualFiles).isEqualTo(expectedFiles);
     }
   }

@@ -635,12 +635,10 @@ public class SharedConfiguration {
     List<byte[]> result = rc.getResult();
 
     // we should only get one byte[] back in the list
-    byte[] jarBytes = result.stream()
+    return result.stream()
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
-
-    return jarBytes;
   }
 
   /**
