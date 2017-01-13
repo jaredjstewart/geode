@@ -26,17 +26,23 @@ import org.apache.geode.test.dunit.rules.GfshShellConnectionRule;
 import org.apache.geode.test.dunit.rules.Locator;
 import org.apache.geode.test.dunit.rules.LocatorServerStartupRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
-import org.apache.geode.tools.pulse.tests.rules.WebDriverRule;
+import org.apache.http.Consts;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.cookie.ClientCookie;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
@@ -44,9 +50,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.openqa.selenium.Cookie;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 @Category(DistributedTest.class)
@@ -59,6 +67,7 @@ public class PulseDataExportTest extends JUnit4DistributedTestCase {
   private org.apache.geode.test.dunit.rules.Server server;
   private GfshShellConnectionRule gfshConnector;
   private HttpClient httpClient;
+  private CookieStore cookieStore;
 
 
   @Before
@@ -83,26 +92,40 @@ public class PulseDataExportTest extends JUnit4DistributedTestCase {
     region.put("key1", "value1");
     region.put("key2", "value2");
     region.put("key3", "value3");
-
-    httpClient = HttpClientBuilder.create().build();
+    cookieStore = new BasicCookieStore();
+    httpClient = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).build();
   }
 
 
   @Test
   public void dataBrowserExportWorksAsExpected() throws Throwable {
-    HttpGet dataExportGET = buildDataExportRequest();
+    getAuthenticatedJSESSIONID();
     HttpContext authenticatedHttpContext = buildAuthenticatedHttpContext();
+
+    HttpGet dataExportGET = buildDataExportGET();
 
     HttpResponse response = httpClient.execute(dataExportGET, authenticatedHttpContext);
     assertThat(response.getStatusLine().getStatusCode()).describedAs(response.toString())
         .isEqualTo(200);
 
     String responseBody = EntityUtils.toString(response.getEntity(), "UTF-8");
-    assertThat(responseBody).isEqualTo(
+    assertThat(responseBody).describedAs(response.toString()).isEqualTo(
         "{\"result\":[[\"java.lang.String\",\"value1\"],[\"java.lang.String\",\"value2\"],[\"java.lang.String\",\"value3\"]]}");
   }
 
-  private HttpGet buildDataExportRequest() throws URISyntaxException {
+  private HttpPost buildLoginPOST() throws URISyntaxException {
+    HttpPost httpPost = new HttpPost("http://localhost:7070/pulse/login");
+
+    List<NameValuePair> formData = new ArrayList<>();
+    formData.add(new BasicNameValuePair("username", "admin"));
+    formData.add(new BasicNameValuePair("password", "admin"));
+
+    httpPost.setEntity(new UrlEncodedFormEntity(formData, Consts.UTF_8));
+
+    return httpPost;
+  }
+
+  private HttpGet buildDataExportGET() throws URISyntaxException {
     URIBuilder builder = new URIBuilder();
     builder.setScheme("http").setHost("localhost").setPort(7070).setPath("/pulse/dataBrowserExport")
         .setParameter("query", "select * from /regionA a order by a");
@@ -111,27 +134,26 @@ public class PulseDataExportTest extends JUnit4DistributedTestCase {
 
   private HttpContext buildAuthenticatedHttpContext() throws Throwable {
     HttpContext localContext = new BasicHttpContext();
-    CookieStore cookieStore = new BasicCookieStore();
-    BasicClientCookie cookie = new BasicClientCookie("JSESSIONID", getAuthenticatedJSESSIONID());
-    cookie.setDomain("localhost");
-    cookie.setAttribute(ClientCookie.DOMAIN_ATTR, "true");
-    cookie.setPath("/");
-    cookieStore.addCookie(cookie);
     localContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
 
     return localContext;
   }
 
-  public String getAuthenticatedJSESSIONID() throws Throwable {
-    WebDriverRule webDriverRule =
-        new WebDriverRule("admin", "admin", "http://localhost:7070/pulse/");
-    webDriverRule.before();
+  public void getAuthenticatedJSESSIONID() throws Throwable {
+    HttpResponse loginResponse = httpClient.execute(buildLoginPOST());
+    assertThat(loginResponse.getStatusLine().getStatusCode()).describedAs(loginResponse.toString())
+        .isEqualTo(302);
 
-    Cookie loginCookie = webDriverRule.getDriver().manage().getCookieNamed("JSESSIONID");
-    webDriverRule.after();
+    String JSESSIONIDFromSetCookieHeader = Arrays.stream(loginResponse.getHeaders("SET-COOKIE"))
+        .map(Header::getValue).filter(setCookie -> setCookie.contains("JSESSIONID")).findAny()
+        .orElseThrow(() -> new AssertionError(
+            "No JSESSIONID cookie was set in the login response: " + loginResponse.toString()));
 
-    assertThat(loginCookie.getValue()).isNotEmpty();
-    return loginCookie.getValue();
+    Cookie JESSIONIDFromCookieStore = cookieStore.getCookies().stream()
+        .filter(cookie -> cookie.getName().equalsIgnoreCase("JSESSIONID")).findFirst()
+        .orElseThrow(() -> new AssertionError("No JSESSIONID cookie was set in the cookie store"));
+
+    assertThat(JSESSIONIDFromSetCookieHeader).contains(JESSIONIDFromCookieStore.getValue());
   }
 
 }
