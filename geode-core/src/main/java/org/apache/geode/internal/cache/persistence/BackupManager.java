@@ -21,8 +21,8 @@ import org.apache.geode.distributed.internal.DM;
 import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.distributed.internal.MembershipListener;
 import org.apache.geode.distributed.internal.membership.InternalDistributedMember;
+import org.apache.geode.internal.DeployedJar;
 import org.apache.geode.internal.FileUtil;
-import org.apache.geode.internal.JarClassLoader;
 import org.apache.geode.internal.JarDeployer;
 import org.apache.geode.internal.cache.DiskStoreImpl;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
@@ -286,14 +286,14 @@ public class BackupManager implements MembershipListener {
        */
       deployer.suspendAll();
 
-      List<JarClassLoader> jarList = deployer.findJarClassLoaders();
+      List<DeployedJar> jarList = deployer.findDeployedJars();
       if (!jarList.isEmpty()) {
         File userBackupDir = new File(backupDir, USER_FILES);
         if (!userBackupDir.exists()) {
           userBackupDir.mkdir();
         }
 
-        for (JarClassLoader loader : jarList) {
+        for (DeployedJar loader : jarList) {
           File source = new File(loader.getFileCanonicalPath());
           File dest = new File(userBackupDir, source.getName());
           FileUtil.copy(source, dest);

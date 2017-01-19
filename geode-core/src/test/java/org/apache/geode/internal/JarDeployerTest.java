@@ -51,36 +51,36 @@ public class JarDeployerTest {
   public void setup() {
     System.setProperty("user.dir", temporaryFolder.getRoot().getAbsolutePath());
     classBuilder = new ClassBuilder();
-    ClassPathLoader.setLatestToDefault();
+    ClassPathLoader.setLatestToDefault(temporaryFolder.getRoot());
   }
 
   @Test
   public void testDeployFileAndChange() throws IOException, ClassNotFoundException {
-    final JarDeployer jarDeployer = new JarDeployer();
+    final JarDeployer jarDeployer = ClassPathLoader.getLatest().getJarDeployer();
 
     // First deploy of the JAR file
     byte[] jarBytes = this.classBuilder.createJarFromName("ClassA");
-    JarClassLoader jarClassLoader =
+    DeployedJar deployedJar =
         jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
-    File deployedJar = new File(jarClassLoader.getFileCanonicalPath());
 
-    assertThat(deployedJar).exists();
-    assertThat(deployedJar.getName()).contains("#1");
-    assertThat(deployedJar.getName()).doesNotContain("#2");
+    assertThat(deployedJar.getFile()).exists();
+    assertThat(deployedJar.getFile().getName()).contains(".v1.");
+    assertThat(deployedJar.getFile().getName()).doesNotContain(".v2.");
+    assertThat(jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar").getName()).contains(".v2.");
 
     assertThat(ClassPathLoader.getLatest().forName("ClassA")).isNotNull();
 
-    assertThat(doesFileMatchBytes(deployedJar, jarBytes));
+    assertThat(doesFileMatchBytes(deployedJar.getFile(), jarBytes));
 
     // Now deploy an updated JAR file and make sure that the next version of the JAR file
     // was created and the first one was deleted.
     jarBytes = this.classBuilder.createJarFromName("ClassB");
-    JarClassLoader newJarClassLoader =
+    DeployedJar newJarClassLoader =
         jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
     File nextDeployedJar = new File(newJarClassLoader.getFileCanonicalPath());
 
     assertThat(nextDeployedJar.exists());
-    assertThat(nextDeployedJar.getName()).contains("#2");
+    assertThat(nextDeployedJar.getName()).contains(".v2.");
     assertThat(doesFileMatchBytes(nextDeployedJar, jarBytes));
 
     assertThat(ClassPathLoader.getLatest().forName("ClassB")).isNotNull();
@@ -89,24 +89,24 @@ public class JarDeployerTest {
         .isExactlyInstanceOf(ClassNotFoundException.class);
 
 
-    assertThat(jarDeployer.findSortedOldVersionsOfJar("JarDeployerDUnit.jar")).hasSize(1);
+    assertThat(jarDeployer.findSortedOldVersionsOfJar("JarDeployerDUnit.jar")).hasSize(2);
     assertThat(jarDeployer.findDistinctDeployedJars()).hasSize(1);
   }
 
   @Test
   public void testDeployNoUpdateWhenNoChange() throws IOException, ClassNotFoundException {
-    final JarDeployer jarDeployer = new JarDeployer();
+    final JarDeployer jarDeployer = ClassPathLoader.getLatest().getJarDeployer();
 
     // First deploy of the JAR file
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDNUWNC");
-    JarClassLoader jarClassLoader =
-        jarDeployer.deploy(new String[] {"JarDeployerDUnit2.jar"}, new byte[][] {jarBytes})[0];
+    DeployedJar jarClassLoader =
+        jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
     File deployedJar = new File(jarClassLoader.getFileCanonicalPath());
 
     assertThat(deployedJar).exists();
-    assertThat(deployedJar.getName()).contains("#1");
-    JarClassLoader newJarClassLoader =
-        jarDeployer.deploy(new String[] {"JarDeployerDUnit2.jar"}, new byte[][] {jarBytes})[0];
+    assertThat(deployedJar.getName()).contains(".v1.");
+    DeployedJar newJarClassLoader =
+        jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
     assertThat(newJarClassLoader).isNull();
   }
 
@@ -115,7 +115,9 @@ public class JarDeployerTest {
     final File alternateDir = new File(temporaryFolder.getRoot(), "JarDeployerDUnit");
     FileUtil.delete(alternateDir);
 
-    final JarDeployer jarDeployer = new JarDeployer(alternateDir);
+    ClassPathLoader.setLatestToDefault(alternateDir);
+    final JarDeployer jarDeployer = ClassPathLoader.getLatest().getJarDeployer();
+
     final CyclicBarrier barrier = new CyclicBarrier(2);
     final byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDTID");
 
@@ -163,28 +165,28 @@ public class JarDeployerTest {
 
   @Test
   public void testVersionNumberCreation() throws IOException, ClassNotFoundException {
-    JarDeployer jarDeployer = new JarDeployer();
+    final JarDeployer jarDeployer = ClassPathLoader.getLatest().getJarDeployer();
 
-    File versionedName = jarDeployer.getNextVersionJarFile("myJar.jar");
-    assertThat(versionedName.getName()).isEqualTo(JarDeployer.JAR_PREFIX + "myJar.jar" + "#1");
+    File versionedName = jarDeployer.getNextVersionedJarFile("myJar.jar");
+    assertThat(versionedName.getName()).isEqualTo(JarDeployer.JAR_PREFIX + "myJar.v1.jar");
 
     byte[] jarBytes = this.classBuilder.createJarFromName("ClassA");
-    JarClassLoader jarClassLoader =
+    DeployedJar jarClassLoader =
         jarDeployer.deploy(new String[] {"myJar.jar"}, new byte[][] {jarBytes})[0];
     File deployedJar = new File(jarClassLoader.getFileCanonicalPath());
 
-    assertThat(deployedJar.getName()).isEqualTo(JarDeployer.JAR_PREFIX + "myJar.jar" + "#1");
-    assertThat(jarDeployer.getNextVersionJarFile(deployedJar.getName()).getName())
-        .isEqualTo(JarDeployer.JAR_PREFIX + "myJar.jar" + "#2");
+    assertThat(deployedJar.getName()).isEqualTo(JarDeployer.JAR_PREFIX + "myJar.v1.jar");
+    assertThat(jarDeployer.getNextVersionedJarFile("myJar.jar").getName())
+        .isEqualTo(JarDeployer.JAR_PREFIX + "myJar.v2.jar");
 
   }
 
   @Test
   public void testVersionNumberMatcher() throws IOException {
+    final JarDeployer jarDeployer = ClassPathLoader.getLatest().getJarDeployer();
 
-    JarDeployer jarDeployer = new JarDeployer();
     int version = jarDeployer.extractVersionFromFilename(
-        temporaryFolder.newFile(JarDeployer.JAR_PREFIX + "MyJar.jar" + "#1"));
+        temporaryFolder.newFile(JarDeployer.JAR_PREFIX + "MyJar.v1.jar").getName());
 
     assertThat(version).isEqualTo(1);
   }

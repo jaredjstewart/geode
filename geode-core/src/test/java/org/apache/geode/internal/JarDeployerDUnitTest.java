@@ -62,7 +62,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
   @Override
   public final void preTearDownCacheTestCase() throws Exception {
     JarDeployer jarDeployer = new JarDeployer();
-    for (JarClassLoader jarClassLoader : jarDeployer.findJarClassLoaders()) {
+    for (DeployedJar jarClassLoader : jarDeployer.findDeployedJars()) {
       if (jarClassLoader.getJarName().startsWith("JarDeployerDUnit")) {
         jarDeployer.undeploy(jarClassLoader.getJarName());
       }
@@ -85,7 +85,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     final VM vm = Host.getHost(0).getVM(0);
 
     // Deploy the Class JAR file
-    final File jarFile1 = jarDeployer.getNextVersionJarFile("JarDeployerDUnit.jar");
+    final File jarFile1 = jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar");
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDELA");
     jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
@@ -142,7 +142,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     final VM vm = Host.getHost(0).getVM(0);
 
     // Deploy the JAR file
-    final File jarFile1 = jarDeployer.getNextVersionJarFile("JarDeployerDUnit.jar");
+    final File jarFile1 = jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar");
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDSLA");
     jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
@@ -206,7 +206,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     final VM vm = Host.getHost(0).getVM(0);
 
     // Deploy the JAR file
-    final File jarFile1 = jarDeployer.getNextVersionJarFile("JarDeployerDUnit.jar");
+    final File jarFile1 = jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar");
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitUSL");
     jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
@@ -256,7 +256,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     final File currentDir = new File(".").getAbsoluteFile();
     final VM vm = Host.getHost(0).getVM(0);
 
-    final File jarFile1 = jarDeployer.getNextVersionJarFile("JarDeployerDUnit.jar");
+    final File jarFile1 = jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar");
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDUBAVMA");
     jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
@@ -266,7 +266,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
       fail("JAR file not correctly added to Classpath");
     }
 
-    final File jarFile2 = jarDeployer.getNextVersionJarFile(jarFile1.getName());
+    final File jarFile2 = jarDeployer.getNextVersionedJarFile(jarFile1.getName());
     final byte[] vmJarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDUBAVMB");
     vm.invoke(new SerializableRunnable() {
       @Override
@@ -304,7 +304,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     }
 
     // Make sure the second deploy didn't create a 3rd version of the JAR file.
-    final File jarFile3 = jarDeployer.getNextVersionJarFile(jarFile2.getName());
+    final File jarFile3 = jarDeployer.getNextVersionedJarFile(jarFile2.getName());
     if (jarFile3.exists()) {
       fail("JAR file should not have been created: " + jarFile3.getName());
     }
@@ -312,10 +312,10 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
 
   @Test
   public void testLoadPreviouslyDeployedJars() throws IOException {
-    final File parentJarFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitAParent.jar#1");
-    final File usesJarFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitUses.jar#1");
+    final File parentJarFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitAParent.v1.jar");
+    final File usesJarFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitUses.v1.jar");
     final File functionJarFile =
-        new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitFunction.jar#1");
+        new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitFunction.v1.jar");
 
     // Write out a JAR files.
     StringBuffer stringBuffer = new StringBuffer();
@@ -392,7 +392,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     final JarDeployer jarDeployer =
         new JarDeployer(distributedSystem.getConfig().getDeployWorkingDir());
 
-    File jarFile = jarDeployer.getNextVersionJarFile("JarDeployerDUnit.jar");
+    File jarFile = jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar");
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDTAC");
     jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
@@ -495,7 +495,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     vm.invoke(new SerializableRunnable() {
       @Override
       public void run() {
-        File invalidFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitIJF.jar#3");
+        File invalidFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitIJF.v3.jar");
         try {
           RandomAccessFile randomAccessFile = new RandomAccessFile(invalidFile, "rw");
           randomAccessFile.write("GARBAGE".getBytes(), 0, 7);

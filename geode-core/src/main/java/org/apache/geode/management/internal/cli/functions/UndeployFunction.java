@@ -28,7 +28,7 @@ import org.apache.geode.cache.execute.Function;
 import org.apache.geode.cache.execute.FunctionContext;
 import org.apache.geode.distributed.DistributedMember;
 import org.apache.geode.internal.InternalEntity;
-import org.apache.geode.internal.JarClassLoader;
+import org.apache.geode.internal.DeployedJar;
 import org.apache.geode.internal.JarDeployer;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.logging.LogService;
@@ -63,10 +63,10 @@ public class UndeployFunction implements Function, InternalEntity {
 
       String[] undeployedJars = new String[0];
       if (jarFilenameList == null || jarFilenameList.equals("")) {
-        final List<JarClassLoader> jarClassLoaders = jarDeployer.findJarClassLoaders();
+        final List<DeployedJar> jarClassLoaders = jarDeployer.findDeployedJars();
         undeployedJars = new String[jarClassLoaders.size() * 2];
         int index = 0;
-        for (JarClassLoader jarClassLoader : jarClassLoaders) {
+        for (DeployedJar jarClassLoader : jarClassLoaders) {
           undeployedJars[index++] = jarClassLoader.getJarName();
           try {
             undeployedJars[index++] = jarDeployer.undeploy(jarClassLoader.getJarName());

@@ -27,7 +27,7 @@ import org.apache.geode.cache.execute.Function;
 import org.apache.geode.cache.execute.FunctionContext;
 import org.apache.geode.distributed.DistributedMember;
 import org.apache.geode.internal.InternalEntity;
-import org.apache.geode.internal.JarClassLoader;
+import org.apache.geode.internal.DeployedJar;
 import org.apache.geode.internal.JarDeployer;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.logging.LogService;
@@ -62,7 +62,7 @@ public class DeployFunction implements Function, InternalEntity {
       }
 
       List<String> deployedList = new ArrayList<String>();
-      JarClassLoader[] jarClassLoaders = jarDeployer.deploy(jarFilenames, jarBytes);
+      DeployedJar[] jarClassLoaders = jarDeployer.deploy(jarFilenames, jarBytes);
       for (int i = 0; i < jarFilenames.length; i++) {
         deployedList.add(jarFilenames[i]);
         if (jarClassLoaders[i] != null) {
