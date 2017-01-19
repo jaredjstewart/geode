@@ -45,13 +45,13 @@ import java.util.regex.Pattern;
 public class JarDeployer implements Serializable {
   private static final long serialVersionUID = 1L;
   private static final Logger logger = LogService.getLogger();
-  public static final String JAR_PREFIX = "vf.gf#";
-  public static final String JAR_PREFIX_FOR_REGEX = "^vf\\.gf#";
+  public static final String JAR_PREFIX = "vf.gf.";
+  public static final String JAR_PREFIX_FOR_REGEX = "^vf\\.gf\\.";
   private static final Lock lock = new ReentrantLock();
 
   // Split a versioned filename into its name and version
   public static final Pattern versionedPattern =
-      Pattern.compile(JAR_PREFIX_FOR_REGEX + "(.*)#(\\d++)$");
+      Pattern.compile(JAR_PREFIX_FOR_REGEX + "(.*)\\.v(\\d++).jar$");
 
   private final File deployDirectory;
 
@@ -133,11 +133,10 @@ public class JarDeployer implements Serializable {
 
   /**
    * Deploy the given JAR files.
-   * 
    * @param jarNames Array of names of the JAR files to deploy.
    * @param jarBytes Array of contents of the JAR files to deploy.
    * @return An array of newly created JAR class loaders. Entries will be null for an JARs that were
-   *         already deployed.
+   * already deployed.
    * @throws IOException When there's an error saving the JAR file to disk
    */
   public JarClassLoader[] deploy(final String jarNames[], final byte[][] jarBytes)
@@ -171,7 +170,6 @@ public class JarDeployer implements Serializable {
 
   /**
    * Deploy the given JAR file without registering functions.
-   * 
    * @param jarName Name of the JAR file to deploy.
    * @param jarBytes Contents of the JAR file to deploy.
    * @return The newly created JarClassLoader or null if the JAR was already deployed
@@ -279,7 +277,6 @@ public class JarDeployer implements Serializable {
 
   /**
    * Undeploy the given JAR file.
-   * 
    * @param jarName The name of the JAR file to undeploy
    * @return The path to the location on disk where the JAR file had been deployed
    * @throws IOException If there's a problem deleting the file
@@ -305,7 +302,6 @@ public class JarDeployer implements Serializable {
 
   /**
    * Get a list of all currently deployed JarClassLoaders.
-   * 
    * @return The list of JarClassLoaders
    */
   public List<JarClassLoader> findJarClassLoaders() {
@@ -341,18 +337,18 @@ public class JarDeployer implements Serializable {
 
   /**
    * Figure out the next version of a JAR file
-   * 
    * @param latestVersionedJarName The previous most recent version of the JAR file or original name
-   *        if there wasn't one
+   * if there wasn't one
    * @return The file that represents the next version
    */
   protected File getNextVersionJarFile(final String latestVersionedJarName) {
     String newFileName;
     final Matcher matcher = versionedPattern.matcher(latestVersionedJarName);
     if (matcher.find()) {
-      newFileName = JAR_PREFIX + matcher.group(1) + "#" + (Integer.parseInt(matcher.group(2)) + 1);
+      newFileName =
+          JAR_PREFIX + matcher.group(1) + ".v" + (Integer.parseInt(matcher.group(2)) + 1) + ".jar";
     } else {
-      newFileName = JAR_PREFIX + latestVersionedJarName + "#1";
+      newFileName = JAR_PREFIX + removeJarExtension(latestVersionedJarName) + ".v1.jar";
     }
 
     if (logger.isDebugEnabled()) {
@@ -365,7 +361,6 @@ public class JarDeployer implements Serializable {
    * Attempt to write the given bytes to the given file. If this VM is able to successfully write
    * the contents to the file, or another VM writes the exact same contents, then the write is
    * considered to be successful.
-   * 
    * @param file File of the JAR file to deploy.
    * @param jarBytes Contents of the JAR file to deploy.
    * @return True if the file was successfully written, false otherwise
@@ -398,7 +393,6 @@ public class JarDeployer implements Serializable {
    * method first checks to see if the file is actively being written by checking the length over
    * time. If it appears that the file is actively being written, then it loops waiting for that to
    * complete before doing the comparison.
-   * 
    * @param file File to compare
    * @param bytes Bytes to compare
    * @return True if there's an exact match, false otherwise
@@ -525,7 +519,6 @@ public class JarDeployer implements Serializable {
 
   /**
    * Find the version number that's embedded in the name of this file
-   * 
    * @param file File to get the version number from
    * @return The version number embedded in the filename
    */
@@ -558,13 +551,13 @@ public class JarDeployer implements Serializable {
   /**
    * Find all versions of the JAR file that are currently on disk and return them sorted from newest
    * (highest version) to oldest
-   * 
    * @param jarFilename Name of the JAR file that we want old versions of
    * @return Sorted array of files that are older versions of the given JAR
    */
   protected File[] findSortedOldVersionsOfJar(final String jarFilename) {
     // Find all matching files
-    final Pattern pattern = Pattern.compile(JAR_PREFIX_FOR_REGEX + jarFilename + "#\\d++$");
+    final Pattern pattern =
+        Pattern.compile(JAR_PREFIX_FOR_REGEX + removeJarExtension(jarFilename) + "\\.v\\d++\\.jar$");
     final File[] oldJarFiles = this.deployDirectory.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(final File file, final String name) {
@@ -585,6 +578,14 @@ public class JarDeployer implements Serializable {
     return oldJarFiles;
   }
 
+  protected String removeJarExtension(String jarName) {
+    if (jarName != null && jarName.endsWith(".jar")) {
+      return jarName.replaceAll("\\.jar$", "");
+    } else {
+      return jarName;
+    }
+  }
+
   private JarClassLoader findJarClassLoader(final String jarName) {
     Collection<ClassLoader> classLoaders = ClassPathLoader.getLatest().getClassLoaders();
     for (ClassLoader classLoader : classLoaders) {
@@ -598,7 +599,6 @@ public class JarDeployer implements Serializable {
 
   /**
    * Make sure that the deploy directory is writable.
-   * 
    * @throws IOException If the directory isn't writable
    */
   private void verifyWritableDeployDirectory() throws IOException {

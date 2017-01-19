@@ -312,10 +312,10 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
 
   @Test
   public void testLoadPreviouslyDeployedJars() throws IOException {
-    final File parentJarFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitAParent.jar#1");
-    final File usesJarFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitUses.jar#1");
+    final File parentJarFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitAParent.v1.jar");
+    final File usesJarFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitUses.v1.jar");
     final File functionJarFile =
-        new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitFunction.jar#1");
+        new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitFunction.v1.jar");
 
     // Write out a JAR files.
     StringBuffer stringBuffer = new StringBuffer();
@@ -495,7 +495,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     vm.invoke(new SerializableRunnable() {
       @Override
       public void run() {
-        File invalidFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitIJF.jar#3");
+        File invalidFile = new File(JarDeployer.JAR_PREFIX + "JarDeployerDUnitIJF.v3.jar");
         try {
           RandomAccessFile randomAccessFile = new RandomAccessFile(invalidFile, "rw");
           randomAccessFile.write("GARBAGE".getBytes(), 0, 7);
