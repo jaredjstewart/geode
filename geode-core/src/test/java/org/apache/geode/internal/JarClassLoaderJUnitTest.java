@@ -14,8 +14,26 @@
  */
 package org.apache.geode.internal;
 
-import static org.apache.geode.distributed.ConfigurationProperties.*;
-import static org.junit.Assert.*;
+import static org.apache.geode.distributed.ConfigurationProperties.MCAST_PORT;
+import static org.apache.geode.internal.JarDeployer.JAR_PREFIX;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import org.apache.geode.cache.CacheFactory;
+import org.apache.geode.cache.execute.Function;
+import org.apache.geode.cache.execute.FunctionContext;
+import org.apache.geode.cache.execute.FunctionService;
+import org.apache.geode.cache.execute.ResultSender;
+import org.apache.geode.internal.cache.InternalCache;
+import org.apache.geode.internal.cache.execute.FunctionContextImpl;
+import org.apache.geode.test.junit.categories.IntegrationTest;
+import org.junit.After;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -36,20 +54,6 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Pattern;
-
-import org.junit.After;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
-import org.apache.geode.cache.CacheFactory;
-import org.apache.geode.cache.execute.Function;
-import org.apache.geode.cache.execute.FunctionContext;
-import org.apache.geode.cache.execute.FunctionService;
-import org.apache.geode.cache.execute.ResultSender;
-import org.apache.geode.internal.cache.InternalCache;
-import org.apache.geode.internal.cache.execute.FunctionContextImpl;
-import org.apache.geode.test.junit.categories.IntegrationTest;
 
 /**
  * TODO: Need to fix this testDeclarableFunctionsWithParms and testClassOnClasspath on Windows:
@@ -57,10 +61,8 @@ import org.apache.geode.test.junit.categories.IntegrationTest;
 @Category(IntegrationTest.class)
 public class JarClassLoaderJUnitTest {
 
-  private static final String JAR_PREFIX = "vf.gf#";
 
   private final ClassBuilder classBuilder = new ClassBuilder();
-  final Pattern pattern = Pattern.compile("^" + JAR_PREFIX + "JarClassLoaderJUnit.*#\\d++$");
 
   private InternalCache cache;
 
@@ -100,8 +102,8 @@ public class JarClassLoaderJUnitTest {
 
   @Test
   public void testClassOnClasspath() throws IOException {
-    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#1");
-    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#2");
+    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.v1.jar");
+    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnit.v2.jar");
     ClassPathLoader classPathLoader = ClassPathLoader.createWithDefaults(false);
 
     // Deploy the first JAR file and make sure the class is on the Classpath
@@ -160,8 +162,8 @@ public class JarClassLoaderJUnitTest {
 
   @Test
   public void testFunctions() throws IOException, ClassNotFoundException {
-    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#1");
-    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#2");
+    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.v1.jar");
+    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnit.v2.jar");
     ClassPathLoader classPathLoader = ClassPathLoader.createWithDefaults(false);
 
     // Test creating a JAR file with a function
@@ -231,7 +233,7 @@ public class JarClassLoaderJUnitTest {
    */
   @Test
   public void testAbstractFunction() throws IOException, ClassNotFoundException {
-    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#1");
+    final File jarFile1 = new File( "JarClassLoaderJUnit.jar");
 
     Properties properties = new Properties();
     properties.setProperty(MCAST_PORT, "0");
@@ -265,7 +267,7 @@ public class JarClassLoaderJUnitTest {
 
   @Test
   public void testDeclarableFunctionsWithNoCacheXml() throws IOException, ClassNotFoundException {
-    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnitNoXml.jar#1");
+    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnitNoXml.jar");
 
     // Add a Declarable Function without parameters for the class to the Classpath
     StringBuffer stringBuffer = new StringBuffer();
@@ -308,8 +310,8 @@ public class JarClassLoaderJUnitTest {
 
   @Test
   public void testDeclarableFunctionsWithoutParms() throws IOException, ClassNotFoundException {
-    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#1");
-    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#2");
+    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.v1.jar");
+    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnit.v2.jar");
 
     Properties properties = new Properties();
     properties.setProperty(MCAST_PORT, "0");
@@ -389,8 +391,8 @@ public class JarClassLoaderJUnitTest {
 
   @Test
   public void testDeclarableFunctionsWithParms() throws IOException, ClassNotFoundException {
-    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#1");
-    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#2");
+    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.v1.jar");
+    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnit.v2.jar");
 
     Properties properties = new Properties();
     properties.setProperty(MCAST_PORT, "0");
@@ -521,9 +523,9 @@ public class JarClassLoaderJUnitTest {
 
   @Test
   public void testDependencyBetweenJars() throws IOException, ClassNotFoundException {
-    final File parentJarFile = new File(JAR_PREFIX + "JarClassLoaderJUnitParent.jar#1");
-    final File usesJarFile = new File(JAR_PREFIX + "JarClassLoaderJUnitUses.jar#1");
-    final File functionJarFile = new File(JAR_PREFIX + "JarClassLoaderJUnitFunction.jar#1");
+    final File parentJarFile = new File(JAR_PREFIX + "JarClassLoaderJUnitParent.v1.jar");
+    final File usesJarFile = new File(JAR_PREFIX + "JarClassLoaderJUnitUses.v1.jar");
+    final File functionJarFile = new File(JAR_PREFIX + "JarClassLoaderJUnitFunction.v1.jar");
 
     // Write out a JAR files.
     StringBuffer stringBuffer = new StringBuffer();
@@ -591,7 +593,7 @@ public class JarClassLoaderJUnitTest {
 
   @Test
   public void testFindResource() throws IOException, ClassNotFoundException {
-    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnitResource.jar#1");
+    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnitResource.v1.jar");
     ClassPathLoader classPathLoader = ClassPathLoader.createWithDefaults(false);
     final String fileName = "file.txt";
     final String fileContent = "FILE CONTENT";
@@ -614,8 +616,8 @@ public class JarClassLoaderJUnitTest {
 
   @Test
   public void testUpdateClassInJar() throws IOException, ClassNotFoundException {
-    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#1");
-    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnit.jar#2");
+    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnit.v1.jar");
+    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnit.v2.jar");
     ClassPathLoader classPathLoader = ClassPathLoader.createWithDefaults(false);
 
     // First use of the JAR file
@@ -676,8 +678,8 @@ public class JarClassLoaderJUnitTest {
 
   @Test
   public void testMultiThread() throws IOException {
-    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnitA.jar#1");
-    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnitB.jar#1");
+    final File jarFile1 = new File(JAR_PREFIX + "JarClassLoaderJUnitA.v1.jar");
+    final File jarFile2 = new File(JAR_PREFIX + "JarClassLoaderJUnitB.v1.jar");
 
     // Add two JARs to the classpath
     byte[] jarBytes = this.classBuilder.createJarFromName("JarClassLoaderJUnitA");
@@ -748,7 +750,7 @@ public class JarClassLoaderJUnitTest {
     File[] oldJarFiles = dirFile.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(final File file, final String name) {
-        return JarClassLoaderJUnitTest.this.pattern.matcher(name).matches();
+        return name.endsWith(".jar");
       }
     });
 
