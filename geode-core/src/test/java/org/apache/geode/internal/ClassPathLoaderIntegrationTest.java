@@ -79,95 +79,97 @@ public class ClassPathLoaderIntegrationTest {
     fos.close();
   }
 
-  /**
-   * Verifies that <tt>getResource</tt> works with custom loader from {@link ClassPathLoader}.
-   */
-  @Test
-  public void testGetResourceWithCustomLoader() throws Exception {
-    System.out.println("\nStarting ClassPathLoaderTest#testGetResourceWithCustomLoader");
+  //TODO: Jared - reimplement these tests
+//
+//  /**
+//   * Verifies that <tt>getResource</tt> works with custom loader from {@link ClassPathLoader}.
+//   */
+//  @Test
+//  public void testGetResourceWithCustomLoader() throws Exception {
+//    System.out.println("\nStarting ClassPathLoaderTest#testGetResourceWithCustomLoader");
+//
+//    ClassPathLoader dcl = ClassPathLoader.createWithDefaults(false);
+//    dcl = dcl.addOrReplace(new GeneratingClassLoader());
+//
+//    String resourceToGet = "com/nowhere/testGetResourceWithCustomLoader.rsc";
+//    URL url = dcl.getResource(resourceToGet);
+//    assertNotNull(url);
+//
+//    InputStream is = url != null ? url.openStream() : null;
+//    assertNotNull(is);
+//
+//    int totalBytesRead = 0;
+//    byte[] input = new byte[128];
+//
+//    BufferedInputStream bis = new BufferedInputStream(is);
+//    for (int bytesRead = bis.read(input); bytesRead > -1;) {
+//      totalBytesRead += bytesRead;
+//      bytesRead = bis.read(input);
+//    }
+//    bis.close();
+//
+//    assertEquals(TEMP_FILE_BYTES_COUNT, totalBytesRead);
+//  }
 
-    ClassPathLoader dcl = ClassPathLoader.createWithDefaults(false);
-    dcl = dcl.addOrReplace(new GeneratingClassLoader());
-
-    String resourceToGet = "com/nowhere/testGetResourceWithCustomLoader.rsc";
-    URL url = dcl.getResource(resourceToGet);
-    assertNotNull(url);
-
-    InputStream is = url != null ? url.openStream() : null;
-    assertNotNull(is);
-
-    int totalBytesRead = 0;
-    byte[] input = new byte[128];
-
-    BufferedInputStream bis = new BufferedInputStream(is);
-    for (int bytesRead = bis.read(input); bytesRead > -1;) {
-      totalBytesRead += bytesRead;
-      bytesRead = bis.read(input);
-    }
-    bis.close();
-
-    assertEquals(TEMP_FILE_BYTES_COUNT, totalBytesRead);
-  }
-
-  /**
-   * Verifies that <tt>getResources</tt> works with custom loader from {@link ClassPathLoader}.
-   */
-  @Test
-  public void testGetResourcesWithCustomLoader() throws Exception {
-    System.out.println("\nStarting ClassPathLoaderTest#testGetResourceWithCustomLoader");
-
-    ClassPathLoader dcl = ClassPathLoader.createWithDefaults(false);
-    dcl = dcl.addOrReplace(new GeneratingClassLoader());
-
-    String resourceToGet = "com/nowhere/testGetResourceWithCustomLoader.rsc";
-    Enumeration<URL> urls = dcl.getResources(resourceToGet);
-    assertNotNull(urls);
-    assertTrue(urls.hasMoreElements());
-
-    URL url = urls.nextElement();
-    InputStream is = url != null ? url.openStream() : null;
-    assertNotNull(is);
-
-    int totalBytesRead = 0;
-    byte[] input = new byte[128];
-
-    BufferedInputStream bis = new BufferedInputStream(is);
-    for (int bytesRead = bis.read(input); bytesRead > -1;) {
-      totalBytesRead += bytesRead;
-      bytesRead = bis.read(input);
-    }
-    bis.close();
-
-    assertEquals(TEMP_FILE_BYTES_COUNT, totalBytesRead);
-  }
-
-  /**
-   * Verifies that <tt>getResourceAsStream</tt> works with custom loader from
-   * {@link ClassPathLoader}.
-   */
-  @Test
-  public void testGetResourceAsStreamWithCustomLoader() throws Exception {
-    System.out.println("\nStarting ClassPathLoaderTest#testGetResourceAsStreamWithCustomLoader");
-
-    ClassPathLoader dcl = ClassPathLoader.createWithDefaults(false);
-    dcl = dcl.addOrReplace(new GeneratingClassLoader());
-
-    String resourceToGet = "com/nowhere/testGetResourceAsStreamWithCustomLoader.rsc";
-    InputStream is = dcl.getResourceAsStream(resourceToGet);
-    assertNotNull(is);
-
-    int totalBytesRead = 0;
-    byte[] input = new byte[128];
-
-    BufferedInputStream bis = new BufferedInputStream(is);
-    for (int bytesRead = bis.read(input); bytesRead > -1;) {
-      totalBytesRead += bytesRead;
-      bytesRead = bis.read(input);
-    }
-    bis.close();
-
-    assertEquals(TEMP_FILE_BYTES_COUNT, totalBytesRead);
-  }
+//  /**
+//   * Verifies that <tt>getResources</tt> works with custom loader from {@link ClassPathLoader}.
+//   */
+//  @Test
+//  public void testGetResourcesWithCustomLoader() throws Exception {
+//    System.out.println("\nStarting ClassPathLoaderTest#testGetResourceWithCustomLoader");
+//
+//    ClassPathLoader dcl = ClassPathLoader.createWithDefaults(false);
+//    dcl = dcl.addOrReplace(new GeneratingClassLoader());
+//
+//    String resourceToGet = "com/nowhere/testGetResourceWithCustomLoader.rsc";
+//    Enumeration<URL> urls = dcl.getResources(resourceToGet);
+//    assertNotNull(urls);
+//    assertTrue(urls.hasMoreElements());
+//
+//    URL url = urls.nextElement();
+//    InputStream is = url != null ? url.openStream() : null;
+//    assertNotNull(is);
+//
+//    int totalBytesRead = 0;
+//    byte[] input = new byte[128];
+//
+//    BufferedInputStream bis = new BufferedInputStream(is);
+//    for (int bytesRead = bis.read(input); bytesRead > -1;) {
+//      totalBytesRead += bytesRead;
+//      bytesRead = bis.read(input);
+//    }
+//    bis.close();
+//
+//    assertEquals(TEMP_FILE_BYTES_COUNT, totalBytesRead);
+//  }
+//
+//  /**
+//   * Verifies that <tt>getResourceAsStream</tt> works with custom loader from
+//   * {@link ClassPathLoader}.
+//   */
+//  @Test
+//  public void testGetResourceAsStreamWithCustomLoader() throws Exception {
+//    System.out.println("\nStarting ClassPathLoaderTest#testGetResourceAsStreamWithCustomLoader");
+//
+//    ClassPathLoader dcl = ClassPathLoader.createWithDefaults(false);
+//    dcl = dcl.addOrReplace(new GeneratingClassLoader());
+//
+//    String resourceToGet = "com/nowhere/testGetResourceAsStreamWithCustomLoader.rsc";
+//    InputStream is = dcl.getResourceAsStream(resourceToGet);
+//    assertNotNull(is);
+//
+//    int totalBytesRead = 0;
+//    byte[] input = new byte[128];
+//
+//    BufferedInputStream bis = new BufferedInputStream(is);
+//    for (int bytesRead = bis.read(input); bytesRead > -1;) {
+//      totalBytesRead += bytesRead;
+//      bytesRead = bis.read(input);
+//    }
+//    bis.close();
+//
+//    assertEquals(TEMP_FILE_BYTES_COUNT, totalBytesRead);
+//  }
 
   /**
    * Verifies that <tt>getResource</tt> works with TCCL from {@link ClassPathLoader}.
@@ -289,11 +291,10 @@ public class ClassPathLoaderIntegrationTest {
   public void testJarsInExtLib() throws Exception {
     System.out.println("\nStarting ClassPathLoaderTest#testJarsInExtLib");
 
-    File EXT_LIB_DIR = ClassPathLoader.defineEXT_LIB_DIR();
-    EXT_LIB_DIR.mkdir();
+    File EXT_LIB_DIR = ClassPathLoader.getExtLibDir();
 
     File subdir = new File(EXT_LIB_DIR, "cplju");
-    subdir.mkdir();
+    subdir.mkdirs();
 
     final ClassBuilder classBuilder = new ClassBuilder();
 
@@ -322,110 +323,6 @@ public class ClassPathLoaderIntegrationTest {
     Enumeration<URL> urls = classPathLoader.getResources("com/cpljunit1");
     if (!urls.hasMoreElements()) {
       fail("Resources should return one element");
-    }
-  }
-
-  /**
-   * Verifies that the 3rd custom loader will get the resource. Parent cannot find it and TCCL is
-   * broken. This verifies that all custom loaders are checked and that the custom loaders are all
-   * checked before TCCL.
-   */
-  @Test
-  public void testGetResourceAsStreamWithMultipleCustomLoaders() throws Exception {
-    System.out
-        .println("\nStarting ClassPathLoaderTest#testGetResourceAsStreamWithMultipleCustomLoaders");
-
-    // create DCL such that the 3rd loader should find the resource
-    // first custom loader becomes parent which won't find anything
-    ClassPathLoader dcl = ClassPathLoader.createWithDefaults(false);
-    dcl = dcl.addOrReplace(new GeneratingClassLoader());
-    dcl = dcl.addOrReplace(new SimpleClassLoader(getClass().getClassLoader()));
-    dcl = dcl.addOrReplace(new NullClassLoader());
-
-    String resourceToGet = "com/nowhere/testGetResourceAsStreamWithMultipleCustomLoaders.rsc";
-
-    ClassLoader cl = Thread.currentThread().getContextClassLoader();
-    try {
-      // set TCCL to throw errors which makes sure we find before checking TCCL
-      Thread.currentThread().setContextClassLoader(new BrokenClassLoader());
-
-      InputStream is = dcl.getResourceAsStream(resourceToGet);
-      assertNotNull(is);
-      is.close();
-    } finally {
-      Thread.currentThread().setContextClassLoader(cl);
-    }
-  }
-
-  /**
-   * Verifies that the 3rd custom loader will get the resource. Parent cannot find it and TCCL is
-   * broken. This verifies that all custom loaders are checked and that the custom loaders are all
-   * checked before TCCL.
-   */
-  @Test
-  public void testGetResourceWithMultipleCustomLoaders() throws Exception {
-    System.out.println("\nStarting ClassPathLoaderTest#testGetResourceWithMultipleCustomLoaders");
-
-    // create DCL such that the 3rd loader should find the resource
-    // first custom loader becomes parent which won't find anything
-    ClassPathLoader dcl = ClassPathLoader.createWithDefaults(false);
-    dcl = dcl.addOrReplace(new GeneratingClassLoader());
-    dcl = dcl.addOrReplace(new SimpleClassLoader(getClass().getClassLoader()));
-    dcl = dcl.addOrReplace(new NullClassLoader());
-
-    String resourceToGet = "com/nowhere/testGetResourceWithMultipleCustomLoaders.rsc";
-
-    ClassLoader cl = Thread.currentThread().getContextClassLoader();
-    try {
-      // set TCCL to throw errors which makes sure we find before checking TCCL
-      Thread.currentThread().setContextClassLoader(new BrokenClassLoader());
-
-      URL url = dcl.getResource(resourceToGet);
-      assertNotNull(url);
-    } finally {
-      Thread.currentThread().setContextClassLoader(cl);
-    }
-  }
-
-  /**
-   * Verifies that the 3rd custom loader will get the resources. Parent cannot find it and TCCL is
-   * broken. This verifies that all custom loaders are checked and that the custom loaders are all
-   * checked before TCCL.
-   */
-  @Test
-  public void testGetResourcesWithMultipleCustomLoaders() throws Exception {
-    System.out.println("\nStarting ClassPathLoaderTest#testGetResourceWithMultipleCustomLoaders");
-
-    // create DCL such that the 3rd loader should find the resource
-    // first custom loader becomes parent which won't find anything
-    ClassPathLoader dcl = ClassPathLoader.createWithDefaults(false);
-    dcl = dcl.addOrReplace(new GeneratingClassLoader());
-    dcl = dcl.addOrReplace(new GeneratingClassLoader2());
-    dcl = dcl.addOrReplace(new SimpleClassLoader(getClass().getClassLoader()));
-    dcl = dcl.addOrReplace(new NullClassLoader());
-
-    String resourceToGet = "com/nowhere/testGetResourceWithMultipleCustomLoaders.rsc";
-
-    ClassLoader cl = Thread.currentThread().getContextClassLoader();
-    try {
-      // set TCCL to throw errors which makes sure we find before checking TCCL
-      Thread.currentThread().setContextClassLoader(new BrokenClassLoader());
-
-      Enumeration<URL> urls = dcl.getResources(resourceToGet);
-      assertNotNull(urls);
-      assertTrue(urls.hasMoreElements());
-
-      URL url = urls.nextElement();
-      assertNotNull(url);
-
-      // Should find two with unique URLs
-      assertTrue("Did not find all resources.", urls.hasMoreElements());
-      URL url2 = urls.nextElement();
-      assertNotNull(url2);
-      assertTrue("Resource URLs should be unique.", !url.equals(url2));
-
-    } finally {
-      Thread.currentThread().setContextClassLoader(cl);
     }
   }
 

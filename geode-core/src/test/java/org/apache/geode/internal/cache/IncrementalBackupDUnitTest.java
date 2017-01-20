@@ -48,7 +48,7 @@ import org.apache.geode.distributed.DistributedMember;
 import org.apache.geode.distributed.DistributedSystem;
 import org.apache.geode.internal.ClassBuilder;
 import org.apache.geode.internal.FileUtil;
-import org.apache.geode.internal.JarClassLoader;
+import org.apache.geode.internal.DeployedJar;
 import org.apache.geode.internal.JarDeployer;
 import org.apache.geode.internal.cache.persistence.BackupManager;
 import org.apache.geode.internal.util.IOUtils;
@@ -1130,7 +1130,7 @@ public class IncrementalBackupDUnitTest extends JUnit4CacheTestCase {
       @Override
       public Object call() throws Exception {
         JarDeployer deployer = new JarDeployer();
-        for (JarClassLoader jarClassLoader : deployer.findJarClassLoaders()) {
+        for (DeployedJar jarClassLoader : deployer.findDeployedJars()) {
           if (jarClassLoader.getJarName().startsWith(jarName)) {
             deployer.undeploy(jarClassLoader.getJarName());
           }
