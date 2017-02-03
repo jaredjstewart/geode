@@ -52,6 +52,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -74,6 +75,9 @@ public class PulseDataExportTest extends JUnit4DistributedTestCase {
 
   @Before
   public void before() throws Exception {
+
+    new File(".");
+
     IgnoredException
         .addIgnoredException("Failed to properly release resources held by the HTTP service:");
     IgnoredException.addIgnoredException("!STOPPED");
