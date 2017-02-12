@@ -18,7 +18,9 @@ package org.apache.geode.test.dunit.rules;
 import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER;
 import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_PORT;
 import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_START;
+import static org.apache.geode.distributed.ConfigurationProperties.LOG_FILE;
 import static org.apache.geode.distributed.ConfigurationProperties.MCAST_PORT;
+import static org.apache.geode.distributed.ConfigurationProperties.NAME;
 import static org.junit.Assert.assertTrue;
 
 import org.awaitility.Awaitility;
@@ -26,6 +28,7 @@ import org.apache.geode.distributed.Locator;
 import org.apache.geode.distributed.internal.InternalLocator;
 import org.junit.rules.ExternalResource;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +57,9 @@ public class LocatorStarterRule extends ExternalResource implements Serializable
   }
 
   public void startLocator() throws Exception {
+    if (!properties.containsKey(NAME)) {
+      properties.put(NAME, "locator");
+    }
     if (!properties.containsKey(MCAST_PORT)) {
       properties.setProperty(MCAST_PORT, "0");
     }
@@ -67,6 +73,11 @@ public class LocatorStarterRule extends ExternalResource implements Serializable
           properties.put(JMX_MANAGER_START, "true");
         }
       }
+    }
+    String name = properties.getProperty(NAME);
+
+    if (!properties.containsKey(LOG_FILE)) {
+      properties.put(LOG_FILE, new File(name + ".log").getCanonicalPath());
     }
     locator = (InternalLocator) Locator.startLocatorAndDS(0, null, properties);
     int locatorPort = locator.getPort();

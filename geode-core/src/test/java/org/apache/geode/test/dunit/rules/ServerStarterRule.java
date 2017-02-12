@@ -19,6 +19,7 @@ import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER;
 import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_PORT;
 import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_START;
 import static org.apache.geode.distributed.ConfigurationProperties.LOCATORS;
+import static org.apache.geode.distributed.ConfigurationProperties.LOG_FILE;
 import static org.apache.geode.distributed.ConfigurationProperties.MCAST_PORT;
 import static org.apache.geode.distributed.ConfigurationProperties.NAME;
 
@@ -28,6 +29,7 @@ import org.apache.geode.cache.server.CacheServer;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.junit.rules.ExternalResource;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Properties;
 
@@ -67,7 +69,7 @@ public class ServerStarterRule extends ExternalResource implements Serializable 
       properties.setProperty(MCAST_PORT, "0");
     }
     if (!properties.containsKey(NAME)) {
-      properties.setProperty(NAME, this.getClass().getName());
+      properties.setProperty(NAME, "Server");
     }
     if (!properties.containsKey(LOCATORS)) {
       if (locatorPort > 0) {
@@ -84,6 +86,11 @@ public class ServerStarterRule extends ExternalResource implements Serializable 
         if (!properties.containsKey(JMX_MANAGER_START))
           properties.put(JMX_MANAGER_START, "true");
       }
+    }
+
+    String name = properties.getProperty(NAME);
+    if (!properties.containsKey(LOG_FILE)) {
+      properties.put(LOG_FILE, new File(name + ".log").getCanonicalPath());
     }
 
     CacheFactory cf = new CacheFactory(properties);
