@@ -230,8 +230,7 @@ public class DeployedJarJUnitTest {
    */
   @Test
   public void testAbstractFunction() throws IOException, ClassNotFoundException {
-    final File jarFile1 = new File("JarClassLoaderJUnit.jar");
-
+    JarDeployer jarDeployer = ClassPathLoader.getLatest().getJarDeployer();
     Properties properties = new Properties();
     properties.setProperty(MCAST_PORT, "0");
     CacheFactory cacheFactory = new CacheFactory(properties);
@@ -246,11 +245,7 @@ public class DeployedJarJUnitTest {
 
     byte[] jarBytes =
         this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-    writeJarBytesToFile(jarFile1, jarBytes);
-    DeployedJar classLoader =
-        new DeployedJar(jarFile1, "JarClassLoaderJUnitFunction.jar", jarBytes);
-    ClassPathLoader.getLatest().addOrReplace(classLoader);
-    classLoader.loadClassesAndRegisterFunctions();
+    jarDeployer.deploy( "JarClassLoaderJUnitFunction.jar", jarBytes);
 
     try {
       ClassPathLoader.getLatest().forName("JarClassLoaderJUnitFunction");

@@ -305,7 +305,7 @@ public class ClassPathLoaderIntegrationTest {
         classBuilder.createJarFromClassContent("com/cpljunit2/ClassPathLoaderJUnit2",
             "package com.cpljunit2; public class ClassPathLoaderJUnit2 {}"));
 
-    ClassPathLoader classPathLoader = ClassPathLoader.createWithDefaults(false);
+    ClassPathLoader classPathLoader = ClassPathLoader.getLatest();
     try {
       classPathLoader.forName("com.cpljunit1.ClassPathLoaderJUnit1");
     } catch (ClassNotFoundException cnfex) {
