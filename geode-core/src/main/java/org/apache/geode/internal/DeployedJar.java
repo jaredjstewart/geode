@@ -190,7 +190,6 @@ public class DeployedJar {
               (jarEntry.getName().length() - 6));
           try {
             Class<?> clazz = ClassPathLoader.getLatest().forName(className);
-//            loadClass(className, true, false);
             Collection<Function> registerableFunctions = getRegisterableFunctionsFromClass(clazz);
             for (Function function : registerableFunctions) {
               FunctionService.registerFunction(function);
