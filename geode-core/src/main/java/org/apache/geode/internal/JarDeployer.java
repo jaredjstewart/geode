@@ -154,7 +154,7 @@ public class JarDeployer implements Serializable {
           DeployedJar oldJar = this.deployedJars.put(deployedJar.getJarName(), deployedJar);
           ClassPathLoader.getLatest().addOrReplace(deployedJar);
           if (oldJar != null) {
-            deployedJar.cleanUp();
+            oldJar.cleanUp();
           }
         }
       }
