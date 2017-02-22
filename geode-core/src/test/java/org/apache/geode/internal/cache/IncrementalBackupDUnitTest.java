@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.geode.internal.ClassPathLoader;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -1064,8 +1065,7 @@ public class IncrementalBackupDUnitTest extends JUnit4CacheTestCase {
     vm0.invoke(new SerializableCallable() {
       @Override
       public Object call() throws Exception {
-        JarDeployer deployer = new JarDeployer();
-        deployer.deploy(new String[] {jarName}, new byte[][] {classBytes});
+        ClassPathLoader.getLatest().deploy(new String[] {jarName}, new byte[][] {classBytes});
         return null;
       }
     });
@@ -1129,10 +1129,9 @@ public class IncrementalBackupDUnitTest extends JUnit4CacheTestCase {
     vm0.invoke(new SerializableCallable() {
       @Override
       public Object call() throws Exception {
-        JarDeployer deployer = new JarDeployer();
-        for (DeployedJar jarClassLoader : deployer.findDeployedJars()) {
+        for (DeployedJar jarClassLoader : ClassPathLoader.getLatest().getJarDeployer().findDeployedJars()) {
           if (jarClassLoader.getJarName().startsWith(jarName)) {
-            deployer.undeploy(jarClassLoader.getJarName());
+            ClassPathLoader.getLatest().undeploy(jarClassLoader.getJarName());
           }
         }
         return null;

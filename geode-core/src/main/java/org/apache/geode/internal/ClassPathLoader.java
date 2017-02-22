@@ -87,6 +87,89 @@ public final class ClassPathLoader {
   private static final AtomicReference<ClassPathLoader> latest =
       new AtomicReference<>();
 
+  private Map<String, DeployedJar> deployedJars = new HashMap<>();
+
+
+
+  public URLClassLoader rebuildClassLoaderForDeployedJars(ClassLoader parent) {
+    URL[] jarUrls = this.deployedJars.values()
+        .stream()
+        .map(DeployedJar::getFileURL).toArray(URL[]::new);
+
+    return new URLClassLoader(jarUrls, parent);
+  }
+
+
+  /**
+   * Deploy the given JAR files.
+   * @param jarNames Array of names of the JAR files to deploy.
+   * @param jarBytes Array of contents of the JAR files to deploy.
+   * @return An array of newly created JAR class loaders. Entries will be null for an JARs that were
+   * already deployed.
+   * @throws IOException When there's an error saving the JAR file to disk
+   */
+  public DeployedJar[] deploy(final String jarNames[], final byte[][] jarBytes)
+      throws IOException, ClassNotFoundException {
+    DeployedJar[] deployedJars = new DeployedJar[jarNames.length];
+
+      for (int i = 0; i < jarNames.length; i++) {
+        if (!DeployedJar.isValidJarContent(jarBytes[i])) {
+          throw new IllegalArgumentException(
+              "File does not contain valid JAR content: " + jarNames[i]);
+        }
+      }
+
+      for (int i = 0; i < jarNames.length; i++) {
+        deployedJars[i] = jarDeployer.deployWithoutRegistering(jarNames[i], jarBytes[i]);
+      }
+
+      for (DeployedJar deployedJar : deployedJars) {
+        if (deployedJar != null) {
+          DeployedJar oldJar = this.deployedJars.put(deployedJar.getJarName(), deployedJar);
+          if (oldJar != null) {
+            oldJar.cleanUp();
+          }
+        }
+      }
+
+    this.classLoaderForDeployedJars = rebuildClassLoaderForDeployedJars(PARENT_CLASSLOADER);
+
+    for (DeployedJar deployedJar : deployedJars) {
+        if (deployedJar != null) {
+          deployedJar.loadClassesAndRegisterFunctions();
+        }
+      }
+
+
+    return deployedJars;
+  }
+
+  public DeployedJar[] deploy(final String jarName, final byte[] jarBytes)
+      throws IOException, ClassNotFoundException {
+
+    return deploy(new String[]{jarName}, new byte[][]{jarBytes});
+  }
+
+  public Map<String, DeployedJar> getDeployedJars() {
+    return Collections.unmodifiableMap(this.deployedJars);
+  }
+  /**
+   * Undeploy the given JAR file.
+   * @param jarName The name of the JAR file to undeploy
+   * @return The path to the location on disk where the JAR file had been deployed
+   * @throws IOException If there's a problem deleting the file
+   */
+  public String undeploy(final String jarName) throws IOException {
+      DeployedJar deployedJar = deployedJars.remove(jarName);
+      if (deployedJar == null) {
+        throw new IllegalArgumentException("JAR not deployed");
+      }
+
+    this.classLoaderForDeployedJars = rebuildClassLoaderForDeployedJars(PARENT_CLASSLOADER);
+    deployedJar.cleanUp();
+      return deployedJar.getFileCanonicalPath();
+  }
+
 
   public ClassPathLoader(boolean excludeTCCL) {
     this.excludeTCCL = excludeTCCL;
@@ -181,21 +264,10 @@ public final class ClassPathLoader {
       logger.trace("adding jar: {}", deployedJar.toString());
     }
 
-    this.classLoaderForDeployedJars = jarDeployer.rebuildClassLoaderForDeployedJars(PARENT_CLASSLOADER);
+    this.classLoaderForDeployedJars = rebuildClassLoaderForDeployedJars(PARENT_CLASSLOADER);
     return this;
   }
-
-
-
-  public void remove(final String jarName) {
-    final boolean isDebugEnabled = logger.isTraceEnabled();
-    if (isDebugEnabled) {
-      logger.trace("removing jar: {}", jarName);
-    }
-
-    this.classLoaderForDeployedJars = jarDeployer.rebuildClassLoaderForDeployedJars(PARENT_CLASSLOADER);
-  }
-
+  
   public URL getResource(final String name) {
     final boolean isDebugEnabled = logger.isTraceEnabled();
     if (isDebugEnabled) {

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.geode.internal.ClassPathLoader;
 import org.apache.logging.log4j.Logger;
 
 import org.apache.geode.UnmodifiableException;
@@ -67,15 +68,12 @@ public class ClusterConfigurationLoader {
     String[] jarFileNames = response.getJarNames();
     byte[][] jarBytes = response.getJars();
 
-    final JarDeployer jarDeployer = new JarDeployer(
-        ((GemFireCacheImpl) cache).getDistributedSystem().getConfig().getDeployWorkingDir());
-
     /******
      * Un-deploy the existing jars, deployed during cache creation, do not delete anything
      */
 
     if (jarFileNames != null && jarBytes != null) {
-      DeployedJar[] jarClassLoaders = jarDeployer.deploy(jarFileNames, jarBytes);
+      DeployedJar[] jarClassLoaders = ClassPathLoader.getLatest().deploy(jarFileNames, jarBytes);
       for (int i = 0; i < jarFileNames.length; i++) {
         if (jarClassLoaders[i] != null) {
           logger.info("Deployed " + (jarClassLoaders[i].getFileCanonicalPath()));

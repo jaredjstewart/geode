@@ -58,7 +58,6 @@ public class JarDeployer implements Serializable {
 
   private final File deployDirectory;
 
-  private Map<String, DeployedJar> deployedJars = new HashMap<>();
 
   public JarDeployer() {
     this.deployDirectory = new File(System.getProperty("user.dir"));
@@ -97,7 +96,7 @@ public class JarDeployer implements Serializable {
             }
 
             DeployedJar latestValidDeployedJar = latestValidDeployedJarOptional.get();
-            deployedJars.put(latestValidDeployedJar.getJarName(), latestValidDeployedJar);
+//            deployedJars.put(latestValidDeployedJar.getJarName(), latestValidDeployedJar);
 
             // Remove any old left-behind versions of this JAR file
             for (File jarFile : jarFiles) {
@@ -108,9 +107,9 @@ public class JarDeployer implements Serializable {
           }
         }
 
-        for (DeployedJar jarClassLoader : deployedJars.values()) {
-          jarClassLoader.loadClassesAndRegisterFunctions();
-        }
+//        for (DeployedJar jarClassLoader : deployedJars.values()) {
+//          jarClassLoader.loadClassesAndRegisterFunctions();
+//        }
       } catch (VirtualMachineError e) {
         SystemFailure.initiateFailure(e);
         throw e;
@@ -124,60 +123,7 @@ public class JarDeployer implements Serializable {
 
   }
 
-  /**
-   * Deploy the given JAR files.
-   * @param jarNames Array of names of the JAR files to deploy.
-   * @param jarBytes Array of contents of the JAR files to deploy.
-   * @return An array of newly created JAR class loaders. Entries will be null for an JARs that were
-   * already deployed.
-   * @throws IOException When there's an error saving the JAR file to disk
-   */
-  public DeployedJar[] deploy(final String jarNames[], final byte[][] jarBytes)
-      throws IOException, ClassNotFoundException {
-    DeployedJar[] deployedJars = new DeployedJar[jarNames.length];
-
-    lock.lock();
-    try {
-      for (int i = 0; i < jarNames.length; i++) {
-        if (!DeployedJar.isValidJarContent(jarBytes[i])) {
-          throw new IllegalArgumentException(
-              "File does not contain valid JAR content: " + jarNames[i]);
-        }
-      }
-
-      for (int i = 0; i < jarNames.length; i++) {
-        deployedJars[i] = deployWithoutRegistering(jarNames[i], jarBytes[i]);
-      }
-
-      for (DeployedJar deployedJar : deployedJars) {
-        if (deployedJar != null) {
-          DeployedJar oldJar = this.deployedJars.put(deployedJar.getJarName(), deployedJar);
-          ClassPathLoader.getLatest().addOrReplace(deployedJar);
-          if (oldJar != null) {
-            oldJar.cleanUp();
-          }
-        }
-      }
-
-      for (DeployedJar deployedJar : deployedJars) {
-        if (deployedJar != null) {
-          deployedJar.loadClassesAndRegisterFunctions();
-        }
-      }
-
-    } finally {
-      lock.unlock();
-    }
-    return deployedJars;
-  }
-
-  public DeployedJar[] deploy(final String jarName, final byte[] jarBytes)
-      throws IOException, ClassNotFoundException {
-
-    return deploy(new String[]{jarName}, new byte[][]{jarBytes});
-  }
-
-  private DeployedJar deployWithoutRegistering(final String jarName, final byte[] jarBytes)
+  public DeployedJar deployWithoutRegistering(final String jarName, final byte[] jarBytes)
       throws IOException {
     final boolean isDebugEnabled = logger.isDebugEnabled();
 
@@ -208,42 +154,20 @@ public class JarDeployer implements Serializable {
     }
   }
 
-  /**
-   * Undeploy the given JAR file.
-   * @param jarName The name of the JAR file to undeploy
-   * @return The path to the location on disk where the JAR file had been deployed
-   * @throws IOException If there's a problem deleting the file
-   */
-  public String undeploy(final String jarName) throws IOException {
-    verifyWritableDeployDirectory();
 
-    lock.lock();
-    try {
-      DeployedJar deployedJar = deployedJars.remove(jarName);
-      if (deployedJar == null) {
-        throw new IllegalArgumentException("JAR not deployed");
-      }
-
-      ClassPathLoader.getLatest().remove(deployedJar.getJarName());
-      deployedJar.cleanUp();
-      return deployedJar.getFileCanonicalPath();
-    } finally {
-      lock.unlock();
-    }
-  }
 
   /**
    * Get a list of all currently deployed jars.
    * @return The list of DeployedJars
    */
   public List<DeployedJar> findDeployedJars() {
-    return this.deployedJars.values()
+    return ClassPathLoader.getLatest().getDeployedJars().values()
         .stream()
         .collect(toList());
   }
 
   public DeployedJar findDeployedJar(String jarName) {
-    return this.deployedJars.get(jarName);
+    return ClassPathLoader.getLatest().getDeployedJars().get(jarName);
   }
 
   /**
@@ -436,14 +360,6 @@ public class JarDeployer implements Serializable {
     } else {
       return jarName;
     }
-  }
-
-  public URLClassLoader rebuildClassLoaderForDeployedJars(ClassLoader parent) {
-    URL[] jarUrls = this.deployedJars.values()
-        .stream()
-        .map(DeployedJar::getFileURL).toArray(URL[]::new);
-
-    return new URLClassLoader(jarUrls, parent);
   }
 
   /**

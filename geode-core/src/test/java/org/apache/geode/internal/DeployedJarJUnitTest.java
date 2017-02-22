@@ -111,7 +111,7 @@ public class DeployedJarJUnitTest {
     byte[] jarBytes =
         this.classBuilder.createJarFromClassContent("com/jcljunit/JarClassLoaderJUnitA",
             "package com.jcljunit; public class JarClassLoaderJUnitA {}");
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnit.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnit.jar", jarBytes);
 
     try {
       ClassPathLoader.getLatest().forName("com.jcljunit.JarClassLoaderJUnitA");
@@ -123,7 +123,7 @@ public class DeployedJarJUnitTest {
     // and the second one is.
     jarBytes = this.classBuilder.createJarFromClassContent("com/jcljunit/JarClassLoaderJUnitB",
         "package com.jcljunit; public class JarClassLoaderJUnitB {}");
-    ClassPathLoader.getLatest().getJarDeployer().deploy( "JarClassLoaderJUnit.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy( "JarClassLoaderJUnit.jar", jarBytes);
 
     try {
       ClassPathLoader.getLatest().forName("com.jcljunit.JarClassLoaderJUnitB");
@@ -177,7 +177,7 @@ public class DeployedJarJUnitTest {
     byte[] jarBytes =
         this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
 
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnit.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnit.jar", jarBytes);
 
     Function function = FunctionService.getFunction("JarClassLoaderJUnitFunction");
     assertNotNull(function);
@@ -190,7 +190,7 @@ public class DeployedJarJUnitTest {
     functionString = functionString.replace("v1", "v2");
     jarBytes =
         this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnit.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnit.jar", jarBytes);
 
     function = FunctionService.getFunction("JarClassLoaderJUnitFunction");
     assertNotNull(function);
@@ -204,12 +204,12 @@ public class DeployedJarJUnitTest {
         functionString.replace("return \"JarClassLoaderJUnitFunction\"", "return null");
     jarBytes = this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction",
         functionNullIdString);
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnit.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnit.jar", jarBytes);
 
     assertNull(FunctionService.getFunction("JarClassLoaderJUnitFunction"));
 
     // Test removing the JAR
-    ClassPathLoader.getLatest().getJarDeployer().undeploy("JarClassLoaderJUnit.jar");
+    ClassPathLoader.getLatest().undeploy("JarClassLoaderJUnit.jar");
     assertNull(FunctionService.getFunction("JarClassLoaderJUnitFunction"));
   }
 
@@ -227,7 +227,7 @@ public class DeployedJarJUnitTest {
 
     byte[] jarBytes =
         this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-    ClassPathLoader.getLatest().getJarDeployer().deploy( "JarClassLoaderJUnitFunction.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy( "JarClassLoaderJUnitFunction.jar", jarBytes);
 
     try {
       ClassPathLoader.getLatest().forName("JarClassLoaderJUnitFunction");
@@ -263,7 +263,7 @@ public class DeployedJarJUnitTest {
     byte[] jarBytes = this.classBuilder
         .createJarFromClassContent("JarClassLoaderJUnitFunctionNoXml", functionString);
 
-    ClassPathLoader.getLatest().getJarDeployer().deploy(jarName, jarBytes);
+    ClassPathLoader.getLatest().deploy(jarName, jarBytes);
 
     try {
       ClassPathLoader.getLatest().forName("JarClassLoaderJUnitFunctionNoXml");
@@ -308,7 +308,7 @@ public class DeployedJarJUnitTest {
 
     byte[] jarBytes =
         this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitFunction.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnitFunction.jar", jarBytes);
 
     try {
       ClassPathLoader.getLatest().forName("JarClassLoaderJUnitFunction");
@@ -345,7 +345,7 @@ public class DeployedJarJUnitTest {
         this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
     writeJarBytesToFile(jarFile2, jarBytes);
 
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitFunction.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnitFunction.jar", jarBytes);
 
     // Check to see if the updated function without parameters executes correctly
     function = FunctionService.getFunction("JarClassLoaderJUnitFunction");
@@ -383,7 +383,7 @@ public class DeployedJarJUnitTest {
 
     byte[] jarBytes =
         this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitFunction.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnitFunction.jar", jarBytes);
 
     try {
       ClassPathLoader.getLatest().forName("JarClassLoaderJUnitFunction");
@@ -432,7 +432,7 @@ public class DeployedJarJUnitTest {
     functionString = functionString.replace("v1", "v2");
     jarBytes =
         this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitFunction.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnitFunction.jar", jarBytes);
 
     // Check to see if the updated functions with parameters execute correctly
     function = FunctionService.getFunction("JarClassLoaderJUnitFunctionA");
@@ -455,7 +455,7 @@ public class DeployedJarJUnitTest {
     functionString = functionString.replace("v2", "v3");
     jarBytes =
         this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitFunction.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnitFunction.jar", jarBytes);
 
     // Check to see if the updated functions with parameters execute correctly
     function = FunctionService.getFunction("JarClassLoaderJUnitFunctionA");
@@ -492,7 +492,7 @@ public class DeployedJarJUnitTest {
     byte[] jarBytes = this.classBuilder.createJarFromClassContent(
         "jcljunit/parent/JarClassLoaderJUnitParent", stringBuffer.toString());
     writeJarBytesToFile(parentJarFile, jarBytes);
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitParent.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnitParent.jar", jarBytes);
 
     stringBuffer = new StringBuffer();
     stringBuffer.append("package jcljunit.uses;");
@@ -503,7 +503,7 @@ public class DeployedJarJUnitTest {
     jarBytes = this.classBuilder.createJarFromClassContent("jcljunit/uses/JarClassLoaderJUnitUses",
         stringBuffer.toString());
     writeJarBytesToFile(usesJarFile, jarBytes);
-    ClassPathLoader.getLatest().getJarDeployer().deploy( "JarClassLoaderJUnitUses.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy( "JarClassLoaderJUnitUses.jar", jarBytes);
 
     stringBuffer = new StringBuffer();
     stringBuffer.append("package jcljunit.function;");
@@ -528,7 +528,7 @@ public class DeployedJarJUnitTest {
         "jcljunit/function/JarClassLoaderJUnitFunction", stringBuffer.toString());
 
 
-    ClassPathLoader.getLatest().getJarDeployer().deploy( "JarClassLoaderJUnitFunction.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy( "JarClassLoaderJUnitFunction.jar", jarBytes);
 
 
     Function function = FunctionService.getFunction("JarClassLoaderJUnitFunction");
@@ -567,7 +567,7 @@ public class DeployedJarJUnitTest {
     // First use of the JAR file
     byte[] jarBytes = this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitTestClass",
         "public class JarClassLoaderJUnitTestClass { public Integer getValue5() { return new Integer(5); } }");
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitUpdate.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnitUpdate.jar", jarBytes);
 
     try {
       Class<?> clazz = ClassPathLoader.getLatest().forName("JarClassLoaderJUnitTestClass");
@@ -592,7 +592,7 @@ public class DeployedJarJUnitTest {
     // class is available.
     jarBytes = this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitTestClass",
         "public class JarClassLoaderJUnitTestClass { public Integer getValue10() { return new Integer(10); } }");
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitUpdate.jar", jarBytes);
+    ClassPathLoader.getLatest().deploy("JarClassLoaderJUnitUpdate.jar", jarBytes);
 
 
     try {

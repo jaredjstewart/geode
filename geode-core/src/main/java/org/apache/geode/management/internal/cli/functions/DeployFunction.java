@@ -17,6 +17,7 @@ package org.apache.geode.management.internal.cli.functions;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.geode.internal.ClassPathLoader;
 import org.apache.logging.log4j.Logger;
 
 import org.apache.geode.SystemFailure;
@@ -62,7 +63,7 @@ public class DeployFunction implements Function, InternalEntity {
       }
 
       List<String> deployedList = new ArrayList<String>();
-      DeployedJar[] jarClassLoaders = jarDeployer.deploy(jarFilenames, jarBytes);
+      DeployedJar[] jarClassLoaders = ClassPathLoader.getLatest().deploy(jarFilenames, jarBytes);
       for (int i = 0; i < jarFilenames.length; i++) {
         deployedList.add(jarFilenames[i]);
         if (jarClassLoaders[i] != null) {

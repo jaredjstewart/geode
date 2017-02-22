@@ -62,7 +62,7 @@ public class JarDeployerIntegrationTest {
     // First deploy of the JAR file
     byte[] jarBytes = this.classBuilder.createJarFromName("ClassA");
     DeployedJar deployedJar =
-        jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
+        ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
 
     assertThat(deployedJar.getFile()).exists();
     assertThat(deployedJar.getFile().getName()).contains(".v1.");
@@ -77,7 +77,7 @@ public class JarDeployerIntegrationTest {
     // was created and the first one was deleted.
     jarBytes = this.classBuilder.createJarFromName("ClassB");
     DeployedJar newJarClassLoader =
-        jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
+        ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
     File nextDeployedJar = new File(newJarClassLoader.getFileCanonicalPath());
 
     assertThat(nextDeployedJar.exists());
@@ -101,13 +101,13 @@ public class JarDeployerIntegrationTest {
     // First deploy of the JAR file
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDNUWNC");
     DeployedJar jarClassLoader =
-        jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
+        ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
     File deployedJar = new File(jarClassLoader.getFileCanonicalPath());
 
     assertThat(deployedJar).exists();
     assertThat(deployedJar.getName()).contains(".v1.");
     DeployedJar newJarClassLoader =
-        jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
+        ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes})[0];
     assertThat(newJarClassLoader).isNull();
   }
 
@@ -124,7 +124,7 @@ public class JarDeployerIntegrationTest {
 
     // Test to verify that deployment fails if the directory doesn't exist.
     assertThatThrownBy(() -> {
-      jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
+      ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
     }).isInstanceOf(IOException.class);
 
     // Test to verify that deployment succeeds if the directory doesn't
@@ -142,7 +142,7 @@ public class JarDeployerIntegrationTest {
         }
 
         try {
-          jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
+          ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
         } catch (IOException ioex) {
           fail("IOException received unexpectedly.");
         } catch (ClassNotFoundException cnfex) {
@@ -173,7 +173,7 @@ public class JarDeployerIntegrationTest {
 
     byte[] jarBytes = this.classBuilder.createJarFromName("ClassA");
     DeployedJar jarClassLoader =
-        jarDeployer.deploy(new String[] {"myJar.jar"}, new byte[][] {jarBytes})[0];
+        ClassPathLoader.getLatest().deploy(new String[] {"myJar.jar"}, new byte[][] {jarBytes})[0];
     File deployedJar = new File(jarClassLoader.getFileCanonicalPath());
 
     assertThat(deployedJar.getName()).isEqualTo(JarDeployer.JAR_PREFIX + "myJar.v1.jar");

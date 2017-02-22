@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.apache.geode.internal.ClassPathLoader;
 import org.apache.logging.log4j.Logger;
 
 import org.apache.geode.SystemFailure;
@@ -69,7 +70,7 @@ public class UndeployFunction implements Function, InternalEntity {
         for (DeployedJar jarClassLoader : jarClassLoaders) {
           undeployedJars[index++] = jarClassLoader.getJarName();
           try {
-            undeployedJars[index++] = jarDeployer.undeploy(jarClassLoader.getJarName());
+            undeployedJars[index++] = ClassPathLoader.getLatest().undeploy(jarClassLoader.getJarName());
           } catch (IllegalArgumentException iaex) {
             // It's okay for it to have have been uneployed from this server
             undeployedJars[index++] = iaex.getMessage();
@@ -82,7 +83,7 @@ public class UndeployFunction implements Function, InternalEntity {
           String jarFilename = jarTokenizer.nextToken().trim();
           try {
             undeployedList.add(jarFilename);
-            undeployedList.add(jarDeployer.undeploy(jarFilename));
+            undeployedList.add(ClassPathLoader.getLatest().undeploy(jarFilename));
           } catch (IllegalArgumentException iaex) {
             // It's okay for it to not have been deployed to this server
             undeployedList.add(iaex.getMessage());

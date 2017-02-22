@@ -61,10 +61,9 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
 
   @Override
   public final void preTearDownCacheTestCase() throws Exception {
-    JarDeployer jarDeployer = new JarDeployer();
-    for (DeployedJar jarClassLoader : jarDeployer.findDeployedJars()) {
+    for (DeployedJar jarClassLoader : ClassPathLoader.getLatest().getJarDeployer().findDeployedJars()) {
       if (jarClassLoader.getJarName().startsWith("JarDeployerDUnit")) {
-        jarDeployer.undeploy(jarClassLoader.getJarName());
+        ClassPathLoader.getLatest().undeploy(jarClassLoader.getJarName());
       }
     }
     for (String functionName : FunctionService.getRegisteredFunctions().keySet()) {
@@ -80,14 +79,13 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
 
   @Test
   public void testDeployExclusiveLock() throws IOException, ClassNotFoundException {
-    final JarDeployer jarDeployer = new JarDeployer();
     final File currentDir = new File(".").getAbsoluteFile();
     final VM vm = Host.getHost(0).getVM(0);
 
     // Deploy the Class JAR file
-    final File jarFile1 = jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar");
+    final File jarFile1 = ClassPathLoader.getLatest().getJarDeployer().getNextVersionedJarFile("JarDeployerDUnit.jar");
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDELA");
-    jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
+    ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
     try {
       ClassPathLoader.getLatest().forName("JarDeployerDUnitDELA");
@@ -144,7 +142,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     // Deploy the JAR file
     final File jarFile1 = jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar");
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDSLA");
-    jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
+    ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
     try {
       ClassPathLoader.getLatest().forName("JarDeployerDUnitDSLA");
@@ -169,7 +167,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
 
     // Now update the JAR file and make sure the first one isn't deleted
     jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDSLB");
-    jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
+    ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
     try {
       ClassPathLoader.getLatest().forName("JarDeployerDUnitDSLB");
@@ -208,7 +206,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     // Deploy the JAR file
     final File jarFile1 = jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar");
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitUSL");
-    jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
+    ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
     try {
       ClassPathLoader.getLatest().forName("JarDeployerDUnitUSL");
@@ -232,7 +230,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     });
 
     // Now undeploy the JAR file and make sure the first one isn't deleted
-    jarDeployer.undeploy("JarDeployerDUnit.jar");
+    ClassPathLoader.getLatest().undeploy("JarDeployerDUnit.jar");
 
     if (!jarFile1.exists()) {
       fail("JAR file should not have been deleted: " + jarFile1.getName());
@@ -252,13 +250,12 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
 
   @Test
   public void testDeployUpdateByAnotherVM() throws IOException, ClassNotFoundException {
-    final JarDeployer jarDeployer = new JarDeployer();
     final File currentDir = new File(".").getAbsoluteFile();
     final VM vm = Host.getHost(0).getVM(0);
 
-    final File jarFile1 = jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar");
+    final File jarFile1 = ClassPathLoader.getLatest().getJarDeployer().getNextVersionedJarFile("JarDeployerDUnit.jar");
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDUBAVMA");
-    jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
+    ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
     try {
       ClassPathLoader.getLatest().forName("JarDeployerDUnitDUBAVMA");
@@ -266,7 +263,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
       fail("JAR file not correctly added to Classpath");
     }
 
-    final File jarFile2 = jarDeployer.getNextVersionedJarFile(jarFile1.getName());
+    final File jarFile2 = ClassPathLoader.getLatest().getJarDeployer().getNextVersionedJarFile(jarFile1.getName());
     final byte[] vmJarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDUBAVMB");
     vm.invoke(new SerializableRunnable() {
       @Override
@@ -285,7 +282,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     });
 
     // This VM is told to deploy the same JAR file.
-    jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {vmJarBytes});
+    ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {vmJarBytes});
 
     try {
       ClassPathLoader.getLatest().forName("JarDeployerDUnitDUBAVMB");
@@ -304,7 +301,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     }
 
     // Make sure the second deploy didn't create a 3rd version of the JAR file.
-    final File jarFile3 = jarDeployer.getNextVersionedJarFile(jarFile2.getName());
+    final File jarFile3 = ClassPathLoader.getLatest().getJarDeployer().getNextVersionedJarFile(jarFile2.getName());
     if (jarFile3.exists()) {
       fail("JAR file should not have been created: " + jarFile3.getName());
     }
@@ -394,7 +391,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
 
     File jarFile = jarDeployer.getNextVersionedJarFile("JarDeployerDUnit.jar");
     byte[] jarBytes = this.classBuilder.createJarFromName("JarDeployerDUnitDTAC");
-    jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
+    ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
 
     try {
       ClassPathLoader.getLatest().forName("JarDeployerDUnitDTAC");
@@ -443,7 +440,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     } catch (InterruptedException iex) {
       // It doesn't matter, just fail the test
     }
-    jarDeployer.deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
+    ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnit.jar"}, new byte[][] {jarBytes});
     if (!okayToResume.get()) {
       fail("JarDeployer did not suspend as expected");
     }
@@ -455,14 +452,14 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     final JarDeployer jarDeployer = new JarDeployer();
 
     try {
-      jarDeployer.deploy(new String[] {"JarDeployerDUnitZLF.jar"}, new byte[][] {new byte[0]});
+      ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnitZLF.jar"}, new byte[][] {new byte[0]});
       fail("Zero length files are not deployable");
     } catch (IllegalArgumentException expected) {
       // Expected
     }
 
     try {
-      jarDeployer.deploy(new String[] {"JarDeployerDUnitZLF1.jar", "JarDeployerDUnitZLF2.jar"},
+      ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnitZLF1.jar", "JarDeployerDUnitZLF2.jar"},
           new byte[][] {this.classBuilder.createJarFromName("JarDeployerDUnitZLF1"), new byte[0]});
       fail("Zero length files are not deployable");
     } catch (IllegalArgumentException expected) {
@@ -475,7 +472,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     final JarDeployer jarDeployer = new JarDeployer();
 
     try {
-      jarDeployer.deploy(new String[] {"JarDeployerDUnitIJF.jar"},
+      ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnitIJF.jar"},
           new byte[][] {"INVALID JAR CONTENT".getBytes()});
       fail("Non-JAR files are not deployable");
     } catch (IllegalArgumentException expected) {
@@ -483,7 +480,7 @@ public class JarDeployerDUnitTest extends JUnit4CacheTestCase {
     }
 
     try {
-      jarDeployer.deploy(new String[] {"JarDeployerDUnitIJF1.jar", "JarDeployerDUnitIJF2.jar"},
+      ClassPathLoader.getLatest().deploy(new String[] {"JarDeployerDUnitIJF1.jar", "JarDeployerDUnitIJF2.jar"},
           new byte[][] {this.classBuilder.createJarFromName("JarDeployerDUnitIJF1"),
               "INVALID JAR CONTENT".getBytes()});
       fail("Non-JAR files are not deployable");
