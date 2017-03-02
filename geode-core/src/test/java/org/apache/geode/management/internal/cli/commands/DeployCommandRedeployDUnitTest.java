@@ -15,18 +15,13 @@
 package org.apache.geode.management.internal.cli.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 import org.apache.geode.cache.execute.Execution;
 import org.apache.geode.cache.execute.FunctionService;
-import org.apache.geode.cache.execute.ResultCollector;
 import org.apache.geode.distributed.DistributedSystem;
 import org.apache.geode.internal.ClassBuilder;
 import org.apache.geode.internal.ClassPathLoader;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
-import org.apache.geode.management.internal.cli.result.CommandResult;
 import org.apache.geode.test.dunit.rules.GfshShellConnectionRule;
 import org.apache.geode.test.dunit.rules.Locator;
 import org.apache.geode.test.dunit.rules.LocatorServerStartupRule;
@@ -42,12 +37,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * Unit tests for the DeployCommands class
- * 
- * @since GemFire 7.0
- */
-@SuppressWarnings("serial")
 @Category(DistributedTest.class)
 public class DeployCommandRedeployDUnitTest implements Serializable {
   private final String functionName = "DeployCommandRedeployDUnitFunction";
@@ -71,8 +60,6 @@ public class DeployCommandRedeployDUnitTest implements Serializable {
 
   @Before
   public void setup() throws Exception {
-    jarVersion1 = createVersionOfJar(VERSION1);
-    jarVersion2 = createVersionOfJar(VERSION2);
 
     locator = lsRule.startLocatorVM(0);
     server1 = lsRule.startServerVM(1, locator.getPort());
@@ -82,20 +69,56 @@ public class DeployCommandRedeployDUnitTest implements Serializable {
   }
 
   @Test
-  public void redeployJarWithNewVersionOfFunction() throws Exception {
+  public void redeployJarWithNewVersionOfNonDeclarableFunction() throws Exception {
+    jarVersion1 = createJarWithFunction(VERSION1);
+    jarVersion2 = createJarWithFunction(VERSION2);
+
     gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarVersion1.getCanonicalPath());
 
-    server1.invoke(() -> assertThatCanLoad("jddunit.function." + jarName, functionName));
+    server1.invoke(() -> assertThatCanLoad(jarName, "jddunit.function." + functionName));
     server1.invoke(() -> assertThatFunctionHasVersion(functionName, VERSION1));
 
-
     gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarVersion2.getCanonicalPath());
-    server1.invoke(() -> assertThatCanLoad("jddunit.function." + jarName, functionName));
+    server1.invoke(() -> assertThatCanLoad(jarName, "jddunit.function." + functionName));
     server1.invoke(() -> assertThatFunctionHasVersion(functionName, VERSION2));
   }
 
 
-  private File createVersionOfJar(String version) throws IOException {
+  @Test
+  public void redeployJarWithNewVersionOfDeclarableFunction() throws Exception {
+    jarVersion1 = createJarWithDeclarableFunction(VERSION1);
+    jarVersion2 = createJarWithDeclarableFunction(VERSION2);
+
+    gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarVersion1.getCanonicalPath());
+
+    server1.invoke(() -> assertThatCanLoad(jarName, functionName));
+    server1.invoke(() -> assertThatFunctionHasVersion(functionName, VERSION1));
+
+    gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarVersion2.getCanonicalPath());
+    server1.invoke(() -> assertThatCanLoad(jarName, functionName));
+    server1.invoke(() -> assertThatFunctionHasVersion(functionName, VERSION2));
+  }
+
+  private File createJarWithDeclarableFunction(String version) throws Exception {
+    String classContents = "import java.util.Properties;"
+        + "import org.apache.geode.cache.Declarable;"
+        + "import org.apache.geode.cache.execute.Function;"
+        + "import org.apache.geode.cache.execute.FunctionContext;" + "public class " + functionName
+        + " implements Function, Declarable {" + "public String getId() {return \"" + functionName
+        + "\";}" + "public void init(Properties props) {}"
+        + "public void execute(FunctionContext context) {context.getResultSender().lastResult(\""
+        + version + "\");}" + "public boolean hasResult() {return true;}"
+        + "public boolean optimizeForWrite() {return false;}"
+        + "public boolean isHA() {return false;}}";
+
+    File jar = new File(lsRule.getTempFolder().newFolder(version), this.jarName);
+    ClassBuilder functionClassBuilder = new ClassBuilder();
+    functionClassBuilder.writeJarFromContent(functionName, classContents, jar);
+
+    return jar;
+  }
+
+  private File createJarWithFunction(String version) throws IOException {
     String classContents =
         "package jddunit.function;" + "import org.apache.geode.cache.execute.Function;"
             + "import org.apache.geode.cache.execute.FunctionContext;" + "public class "

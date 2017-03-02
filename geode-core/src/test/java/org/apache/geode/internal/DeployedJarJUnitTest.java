@@ -14,9 +14,6 @@
  */
 package org.apache.geode.internal;
 
-import static org.apache.geode.distributed.ConfigurationProperties.MCAST_PORT;
-import static org.apache.geode.distributed.ConfigurationProperties.NAME;
-import static org.apache.geode.internal.JarDeployer.JAR_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -24,15 +21,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.apache.geode.cache.CacheFactory;
 import org.apache.geode.cache.execute.Function;
 import org.apache.geode.cache.execute.FunctionContext;
 import org.apache.geode.cache.execute.FunctionService;
 import org.apache.geode.cache.execute.ResultSender;
-import org.apache.geode.internal.cache.GemFireCacheImpl;
-import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.cache.execute.FunctionContextImpl;
-import org.apache.geode.test.dunit.rules.ServerStarterRule;
 import org.apache.geode.test.junit.categories.IntegrationTest;
 import org.junit.After;
 import org.junit.Before;
@@ -42,20 +35,16 @@ import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -75,25 +64,17 @@ public class DeployedJarJUnitTest {
 
   private final ClassBuilder classBuilder = new ClassBuilder();
 
-  @Rule
-  public ServerStarterRule serverStarterRule = new ServerStarterRule();
-
   @Before
   public void setup() throws Exception {
-    System.setProperty("user.dir", temporaryFolder.newFolder().getAbsolutePath());
-    Properties properties = new Properties();
-    properties.setProperty(NAME, "myServer");
-    serverStarterRule.startServer(properties);
+    File workingDir = temporaryFolder.newFolder();
 
-    ClassPathLoader.setLatestToDefault();
+    ClassPathLoader.setLatestToDefault(workingDir);
   }
 
   @After
   public void tearDown() throws Exception {
     for (String functionName : FunctionService.getRegisteredFunctions().keySet()) {
-      if (functionName.startsWith("JarClassLoaderJUnit")) {
-        FunctionService.unregisterFunction(functionName);
-      }
+      FunctionService.unregisterFunction(functionName);
     }
 
     ClassPathLoader.setLatestToDefault();
@@ -284,196 +265,6 @@ public class DeployedJarJUnitTest {
     TestResultSender resultSender = new TestResultSender();
     function.execute(new FunctionContextImpl(function.getId(), null, resultSender));
     assertEquals("NOPARMSv1", (String) resultSender.getResults());
-  }
-
-  @Test
-  public void testDeclarableFunctionsWithoutParms() throws IOException, ClassNotFoundException {
-
-    // Add a Declarable Function without parameters for the class to the Classpath
-    StringBuffer stringBuffer = new StringBuffer();
-    stringBuffer.append("import java.util.Properties;");
-    stringBuffer.append("import org.apache.geode.cache.Declarable;");
-    stringBuffer.append("import org.apache.geode.cache.execute.Function;");
-    stringBuffer.append("import org.apache.geode.cache.execute.FunctionContext;");
-    stringBuffer
-        .append("public class JarClassLoaderJUnitFunction implements Function, Declarable {");
-    stringBuffer.append("public String getId() {return \"JarClassLoaderJUnitFunction\";}");
-    stringBuffer.append("public void init(Properties props) {}");
-    stringBuffer.append(
-        "public void execute(FunctionContext context) {context.getResultSender().lastResult(\"NOPARMSv1\");}");
-    stringBuffer.append("public boolean hasResult() {return true;}");
-    stringBuffer.append("public boolean optimizeForWrite() {return false;}");
-    stringBuffer.append("public boolean isHA() {return false;}}");
-    String functionString = stringBuffer.toString();
-
-    byte[] jarBytes =
-        this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitFunction.jar",
-        jarBytes);
-
-    try {
-      ClassPathLoader.getLatest().forName("JarClassLoaderJUnitFunction");
-    } catch (ClassNotFoundException cnfex) {
-      fail("JAR file not correctly added to Classpath");
-    }
-
-    // Create a cache.xml file and configure the cache with it
-    stringBuffer = new StringBuffer();
-    stringBuffer.append("<?xml version=\"1.0\"?>");
-    stringBuffer.append("<!DOCTYPE cache PUBLIC");
-    stringBuffer.append("  \"-//GemStone Systems, Inc.//GemFire Declarative Caching 7.0//EN\"");
-    stringBuffer.append("  \"http://www.gemstone.com/dtd/cache7_0.dtd\">");
-    stringBuffer.append("<cache>");
-    stringBuffer.append("  <function-service>");
-    stringBuffer.append("    <function>");
-    stringBuffer.append("      <class-name>JarClassLoaderJUnitFunction</class-name>");
-    stringBuffer.append("    </function>");
-    stringBuffer.append(" </function-service>");
-    stringBuffer.append("</cache>");
-    String cacheXmlString = stringBuffer.toString();
-    GemFireCacheImpl.getInstance()
-        .loadCacheXml(new ByteArrayInputStream(cacheXmlString.getBytes()));
-
-    // Check to see if the function without parameters executes correctly
-    Function function = FunctionService.getFunction("JarClassLoaderJUnitFunction");
-    assertNotNull(function);
-    TestResultSender resultSender = new TestResultSender();
-    function.execute(new FunctionContextImpl(function.getId(), null, resultSender));
-    assertEquals("NOPARMSv1", (String) resultSender.getResults());
-
-    // Update the second function (change the value returned from execute) by deploying a JAR file
-    functionString = functionString.replace("v1", "v2");
-    jarBytes =
-        this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitFunction.jar",
-        jarBytes);
-
-    // Check to see if the updated function without parameters executes correctly
-    function = FunctionService.getFunction("JarClassLoaderJUnitFunction");
-    assertNotNull(function);
-    function.execute(new FunctionContextImpl(function.getId(), null, resultSender));
-    assertEquals("NOPARMSv2", (String) resultSender.getResults());
-  }
-
-  @Test
-  public void testDeclarableFunctionsWithParms() throws IOException, ClassNotFoundException {
-    // Add a Declarable Function with parameters to the class to the Classpath
-    StringBuffer stringBuffer = new StringBuffer();
-    stringBuffer.append("import java.util.Properties;");
-    stringBuffer.append("import org.apache.geode.cache.Declarable;");
-    stringBuffer.append("import org.apache.geode.cache.execute.Function;");
-    stringBuffer.append("import org.apache.geode.cache.execute.FunctionContext;");
-    stringBuffer
-        .append("public class JarClassLoaderJUnitFunction implements Function, Declarable {");
-    stringBuffer.append("private Properties properties;");
-    stringBuffer.append(
-        "public String getId() {if(this.properties==null) {return \"JarClassLoaderJUnitFunction\";} else {return (String) this.properties.get(\"id\");}}");
-    stringBuffer.append("public void init(Properties props) {properties = props;}");
-    stringBuffer.append(
-        "public void execute(FunctionContext context) {context.getResultSender().lastResult(properties.get(\"returnValue\") + \"v1\");}");
-    stringBuffer.append("public boolean hasResult() {return true;}");
-    stringBuffer.append("public boolean optimizeForWrite() {return false;}");
-    stringBuffer.append("public boolean isHA() {return false;}}");
-    String functionString = stringBuffer.toString();
-
-    byte[] jarBytes =
-        this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitFunction.jar",
-        jarBytes);
-
-    try {
-      ClassPathLoader.getLatest().forName("JarClassLoaderJUnitFunction");
-    } catch (ClassNotFoundException cnfex) {
-      fail("JAR file not correctly added to Classpath");
-    }
-
-    // Create a cache.xml file and configure the cache with it
-    stringBuffer = new StringBuffer();
-    stringBuffer.append("<?xml version=\"1.0\"?>");
-    stringBuffer.append("<!DOCTYPE cache PUBLIC");
-    stringBuffer.append("  \"-//GemStone Systems, Inc.//GemFire Declarative Caching 7.0//EN\"");
-    stringBuffer.append("  \"http://www.gemstone.com/dtd/cache7_0.dtd\">");
-    stringBuffer.append("<cache>");
-    stringBuffer.append("  <function-service>");
-    stringBuffer.append("    <function>");
-    stringBuffer.append("      <class-name>JarClassLoaderJUnitFunction</class-name>");
-    stringBuffer.append(
-        "      <parameter name=\"id\"><string>JarClassLoaderJUnitFunctionA</string></parameter>");
-    stringBuffer.append("      <parameter name=\"returnValue\"><string>DOG</string></parameter>");
-    stringBuffer.append("    </function>");
-    stringBuffer.append("    <function>");
-    stringBuffer.append("      <class-name>JarClassLoaderJUnitFunction</class-name>");
-    stringBuffer.append(
-        "      <parameter name=\"id\"><string>JarClassLoaderJUnitFunctionB</string></parameter>");
-    stringBuffer.append("      <parameter name=\"returnValue\"><string>CAT</string></parameter>");
-    stringBuffer.append("    </function>");
-    stringBuffer.append(" </function-service>");
-    stringBuffer.append("</cache>");
-    String cacheXmlString = stringBuffer.toString();
-    GemFireCacheImpl.getInstance()
-        .loadCacheXml(new ByteArrayInputStream(cacheXmlString.getBytes()));
-
-    // Check to see if the functions with parameters execute correctly
-    Function function = FunctionService.getFunction("JarClassLoaderJUnitFunctionA");
-    assertNotNull(function);
-    TestResultSender resultSender = new TestResultSender();
-    function.execute(new FunctionContextImpl(function.getId(), null, resultSender));
-    assertEquals("DOGv1", (String) resultSender.getResults());
-
-    function = FunctionService.getFunction("JarClassLoaderJUnitFunctionB");
-    assertNotNull(function);
-    function.execute(new FunctionContextImpl(function.getId(), null, resultSender));
-    assertEquals("CATv1", (String) resultSender.getResults());
-
-    // Update the first function (change the value returned from execute)
-    functionString = functionString.replace("v1", "v2");
-    jarBytes =
-        this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitFunction.jar",
-        jarBytes);
-
-    // Check to see if the updated functions with parameters execute correctly
-    function = FunctionService.getFunction("JarClassLoaderJUnitFunctionA");
-    assertNotNull(function);
-    function.execute(new FunctionContextImpl(function.getId(), null, resultSender));
-    assertEquals("DOGv2", (String) resultSender.getResults());
-
-    function = FunctionService.getFunction("JarClassLoaderJUnitFunctionB");
-    assertNotNull(function);
-    function.execute(new FunctionContextImpl(function.getId(), null, resultSender));
-    assertEquals("CATv2", (String) resultSender.getResults());
-
-    // Update cache xml to add a new function and replace an existing one
-    cacheXmlString =
-        cacheXmlString.replace("JarClassLoaderJUnitFunctionA", "JarClassLoaderJUnitFunctionC")
-            .replace("CAT", "BIRD");
-    GemFireCacheImpl.getInstance()
-        .loadCacheXml(new ByteArrayInputStream(cacheXmlString.getBytes()));
-
-    // Update the first function (change the value returned from execute)
-    functionString = functionString.replace("v2", "v3");
-    jarBytes =
-        this.classBuilder.createJarFromClassContent("JarClassLoaderJUnitFunction", functionString);
-    ClassPathLoader.getLatest().getJarDeployer().deploy("JarClassLoaderJUnitFunction.jar",
-        jarBytes);
-
-    // Check to see if the updated functions with parameters execute correctly
-    function = FunctionService.getFunction("JarClassLoaderJUnitFunctionA");
-    assertNotNull(function);
-    function.execute(new FunctionContextImpl(function.getId(), null, resultSender));
-    assertEquals("DOGv3", (String) resultSender.getResults());
-
-    function = FunctionService.getFunction("JarClassLoaderJUnitFunctionC");
-    assertNotNull(function);
-    function.execute(new FunctionContextImpl(function.getId(), null, resultSender));
-    assertEquals("DOGv3", (String) resultSender.getResults());
-
-    function = FunctionService.getFunction("JarClassLoaderJUnitFunctionB");
-    assertNotNull(function);
-    function.execute(new FunctionContextImpl(function.getId(), null, resultSender));
-    assertEquals("BIRDv3", (String) resultSender.getResults());
   }
 
   @Test
