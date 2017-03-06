@@ -39,18 +39,23 @@ import java.util.List;
 
 @Category(DistributedTest.class)
 public class DeployCommandRedeployDUnitTest implements Serializable {
-  private final String functionName = "DeployCommandRedeployDUnitFunction";
-  private final String jarName = "DeployCommandRedeployDUnitTest.jar";
-
   private static final String VERSION1 = "Version1";
   private static final String VERSION2 = "Version2";
 
-  private File jarVersion1;
-  private File jarVersion2;
+  private static final String jarNameA = "DeployCommandRedeployDUnitTestA.jar";
+  private static final String functionA = "DeployCommandRedeployDUnitFunctionA";
+  private File jarAVersion1;
+  private File jarAVersion2;
+
+  private static final String jarNameB = "DeployCommandRedeployDUnitTestB.jar";
+  private static final String functionB = "DeployCommandRedeployDUnitFunctionB";
+  private static final String packageB = "jddunit.function";
+  private static final String fullyQualifiedFunctionB = packageB + "." + functionB;
+  private File jarBVersion1;
+  private File jarBVersion2;
 
   private Locator locator;
-  private Server server1;
-  private Server server2;
+  private Server server;
 
   @Rule
   public LocatorServerStartupRule lsRule = new LocatorServerStartupRule();
@@ -60,78 +65,79 @@ public class DeployCommandRedeployDUnitTest implements Serializable {
 
   @Before
   public void setup() throws Exception {
+    jarAVersion1 = createJarWithFunctionA(VERSION1);
+    jarAVersion2 = createJarWithFunctionA(VERSION2);
+
+    jarBVersion1 = createJarWithFunctionB(VERSION1);
+    jarBVersion2 = createJarWithFunctionB(VERSION2);
 
     locator = lsRule.startLocatorVM(0);
-    server1 = lsRule.startServerVM(1, locator.getPort());
-    server2 = lsRule.startServerVM(2, locator.getPort());
+    server = lsRule.startServerVM(1, locator.getPort());
 
     gfshConnector.connectAndVerify(locator);
   }
 
   @Test
-  public void redeployJarWithNewVersionOfNonDeclarableFunction() throws Exception {
-    jarVersion1 = createJarWithFunction(VERSION1);
-    jarVersion2 = createJarWithFunction(VERSION2);
+  public void redeployJarsWithNewVersionsOfFunctions() throws Exception {
+    gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarAVersion1.getCanonicalPath());
+    server.invoke(() -> assertThatCanLoad(jarNameA, functionA));
+    server.invoke(() -> assertThatFunctionHasVersion(functionA, VERSION1));
 
-    gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarVersion1.getCanonicalPath());
 
-    server1.invoke(() -> assertThatCanLoad(jarName, "jddunit.function." + functionName));
-    server1.invoke(() -> assertThatFunctionHasVersion(functionName, VERSION1));
+    gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarBVersion1.getCanonicalPath());
+    server.invoke(() -> assertThatCanLoad(jarNameA, functionA));
+    server.invoke(() -> assertThatCanLoad(jarNameB, fullyQualifiedFunctionB));
+    server.invoke(() -> assertThatFunctionHasVersion(functionA, VERSION1));
+    server.invoke(() -> assertThatFunctionHasVersion(functionB, VERSION1));
 
-    gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarVersion2.getCanonicalPath());
-    server1.invoke(() -> assertThatCanLoad(jarName, "jddunit.function." + functionName));
-    server1.invoke(() -> assertThatFunctionHasVersion(functionName, VERSION2));
+    gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarBVersion2.getCanonicalPath());
+    server.invoke(() -> assertThatCanLoad(jarNameA, functionA));
+    server.invoke(() -> assertThatCanLoad(jarNameB, fullyQualifiedFunctionB));
+    server.invoke(() -> assertThatFunctionHasVersion(functionA, VERSION1));
+    server.invoke(() -> assertThatFunctionHasVersion(functionB, VERSION2));
+
+    gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarAVersion2.getCanonicalPath());
+    server.invoke(() -> assertThatCanLoad(jarNameA, functionA));
+    server.invoke(() -> assertThatCanLoad(jarNameB, fullyQualifiedFunctionB));
+    server.invoke(() -> assertThatFunctionHasVersion(functionA, VERSION2));
+    server.invoke(() -> assertThatFunctionHasVersion(functionB, VERSION2));
   }
 
+  // Note that jar A is a Declarable Function, while jar B is only a Function.
+  // Also, the function for jar A resides in the default package, whereas jar B specifies a package.
+  // This ensures that this test has identical coverage to some tests that it replaced.
+  private File createJarWithFunctionA(String version) throws Exception {
+    String classContents =
+        "import java.util.Properties;" + "import org.apache.geode.cache.Declarable;"
+            + "import org.apache.geode.cache.execute.Function;"
+            + "import org.apache.geode.cache.execute.FunctionContext;" + "public class " + functionA
+            + " implements Function, Declarable {" + "public String getId() {return \"" + functionA
+            + "\";}" + "public void init(Properties props) {}"
+            + "public void execute(FunctionContext context) {context.getResultSender().lastResult(\""
+            + version + "\");}" + "public boolean hasResult() {return true;}"
+            + "public boolean optimizeForWrite() {return false;}"
+            + "public boolean isHA() {return false;}}";
 
-  @Test
-  public void redeployJarWithNewVersionOfDeclarableFunction() throws Exception {
-    jarVersion1 = createJarWithDeclarableFunction(VERSION1);
-    jarVersion2 = createJarWithDeclarableFunction(VERSION2);
-
-    gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarVersion1.getCanonicalPath());
-
-    server1.invoke(() -> assertThatCanLoad(jarName, functionName));
-    server1.invoke(() -> assertThatFunctionHasVersion(functionName, VERSION1));
-
-    gfshConnector.executeAndVerifyCommand("deploy --jar=" + jarVersion2.getCanonicalPath());
-    server1.invoke(() -> assertThatCanLoad(jarName, functionName));
-    server1.invoke(() -> assertThatFunctionHasVersion(functionName, VERSION2));
-  }
-
-  private File createJarWithDeclarableFunction(String version) throws Exception {
-    String classContents = "import java.util.Properties;"
-        + "import org.apache.geode.cache.Declarable;"
-        + "import org.apache.geode.cache.execute.Function;"
-        + "import org.apache.geode.cache.execute.FunctionContext;" + "public class " + functionName
-        + " implements Function, Declarable {" + "public String getId() {return \"" + functionName
-        + "\";}" + "public void init(Properties props) {}"
-        + "public void execute(FunctionContext context) {context.getResultSender().lastResult(\""
-        + version + "\");}" + "public boolean hasResult() {return true;}"
-        + "public boolean optimizeForWrite() {return false;}"
-        + "public boolean isHA() {return false;}}";
-
-    File jar = new File(lsRule.getTempFolder().newFolder(version), this.jarName);
+    File jar = new File(lsRule.getTempFolder().newFolder(jarNameA + version), this.jarNameA);
     ClassBuilder functionClassBuilder = new ClassBuilder();
-    functionClassBuilder.writeJarFromContent(functionName, classContents, jar);
+    functionClassBuilder.writeJarFromContent(functionA, classContents, jar);
 
     return jar;
   }
 
-  private File createJarWithFunction(String version) throws IOException {
+  private File createJarWithFunctionB(String version) throws IOException {
     String classContents =
-        "package jddunit.function;" + "import org.apache.geode.cache.execute.Function;"
-            + "import org.apache.geode.cache.execute.FunctionContext;" + "public class "
-            + functionName + " implements Function {" + "public boolean hasResult() {return true;}"
+        "package " + packageB + ";" + "import org.apache.geode.cache.execute.Function;"
+            + "import org.apache.geode.cache.execute.FunctionContext;" + "public class " + functionB
+            + " implements Function {" + "public boolean hasResult() {return true;}"
             + "public void execute(FunctionContext context) {context.getResultSender().lastResult(\""
-            + version + "\");}" + "public String getId() {return \"" + functionName + "\";}"
+            + version + "\");}" + "public String getId() {return \"" + functionB + "\";}"
             + "public boolean optimizeForWrite() {return false;}"
             + "public boolean isHA() {return false;}}";
 
-    File jar = new File(lsRule.getTempFolder().newFolder(version), this.jarName);
+    File jar = new File(lsRule.getTempFolder().newFolder(jarNameB + version), this.jarNameB);
     ClassBuilder functionClassBuilder = new ClassBuilder();
-    functionClassBuilder.writeJarFromContent("jddunit/function/" + functionName, classContents,
-        jar);
+    functionClassBuilder.writeJarFromContent("jddunit/function/" + functionB, classContents, jar);
 
     return jar;
   }
