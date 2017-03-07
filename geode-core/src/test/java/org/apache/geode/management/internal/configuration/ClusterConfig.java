@@ -175,7 +175,7 @@ public class ClusterConfig implements Serializable {
   }
 
   private static String getServerJarName(String jarName) {
-    return jarName.replace(".jar", "") + "v1.jar";
+    return jarName.replace(".jar", "") + ".v1.jar";
   }
 
 
