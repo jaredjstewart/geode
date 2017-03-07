@@ -139,7 +139,9 @@ public class ClusterConfig implements Serializable {
         .collect(Collectors.toSet());
     Set<String> actualJarNames = toSetIgnoringHiddenFiles(
         server.getWorkingDir().list((dir, filename) -> filename.contains(".jar")));
-    assertThat(actualJarNames).isEqualTo(expectedJarNames);
+
+    // We will end up with extra jars on disk if they are deployed and then undeployed
+    assertThat(expectedJarNames).isSubsetOf(actualJarNames);
 
     // verify config exists in memory
     server.invoke(() -> {
@@ -160,6 +162,15 @@ public class ClusterConfig implements Serializable {
         assertThat(deployedJar).isNotNull();
         assertThat(Class.forName(nameOfClassContainedInJar(jar), true,
             new URLClassLoader(new URL[] {deployedJar.getFileURL()}))).isNotNull();
+      }
+
+      // If we have extra jars on disk left over from undeploy, make sure they aren't used
+      Set<String> undeployedJarNames = new HashSet<>(actualJarNames);
+      undeployedJarNames.removeAll(expectedJarNames);
+      for (String jar : undeployedJarNames) {
+        DeployedJar undeployedJar =
+            ClassPathLoader.getLatest().getJarDeployer().findDeployedJar(jar);
+        assertThat(undeployedJar).isNull();
       }
     });
   }
