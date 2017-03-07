@@ -1094,15 +1094,16 @@ public class IncrementalBackupDUnitTest extends JUnit4CacheTestCase {
     /*
      * Deploy a "dummy" jar to the VM.
      */
-    vm0.invoke(new SerializableCallable() {
+    File deployedJarFile = (File) vm0.invoke(new SerializableCallable() {
       @Override
       public Object call() throws Exception {
-        ClassPathLoader.getLatest().getJarDeployer().deploy(new String[] {jarName},
-            new byte[][] {classBytes});
-        return null;
+        DeployedJar deployedJar =
+            ClassPathLoader.getLatest().getJarDeployer().deploy(jarName, classBytes);
+        return deployedJar.getFile();
       }
     });
 
+    assert (deployedJarFile.exists());
     /*
      * Perform backup. Make sure it is successful.
      */

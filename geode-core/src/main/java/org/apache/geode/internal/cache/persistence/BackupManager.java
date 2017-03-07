@@ -22,6 +22,7 @@ import org.apache.geode.distributed.internal.DM;
 import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.distributed.internal.MembershipListener;
 import org.apache.geode.distributed.internal.membership.InternalDistributedMember;
+import org.apache.geode.internal.ClassPathLoader;
 import org.apache.geode.internal.DeployedJar;
 import org.apache.geode.internal.JarDeployer;
 import org.apache.geode.internal.cache.DiskStoreImpl;
@@ -290,11 +291,10 @@ public class BackupManager implements MembershipListener {
     JarDeployer deployer = null;
 
     try {
-      deployer = new JarDeployer();
-
       /*
        * Suspend any user deployed jar file updates during this backup.
        */
+      deployer = ClassPathLoader.getLatest().getJarDeployer();
       deployer.suspendAll();
 
       List<DeployedJar> jarList = deployer.findDeployedJars();
