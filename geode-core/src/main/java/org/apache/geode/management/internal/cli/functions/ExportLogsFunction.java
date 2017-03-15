@@ -89,6 +89,7 @@ public class ExportLogsFunction implements Function, InternalEntity {
 
       // nothing to return back
       if (exportedZipFile == null) {
+        LOGGER.info("No exportedZipFile to return from this member");
         context.getResultSender().lastResult(null);
         return;
       }

@@ -16,6 +16,8 @@
 
 package org.apache.geode.management.internal.cli.util;
 
+import static java.nio.file.Files.list;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import org.apache.commons.io.FileUtils;
@@ -51,7 +53,6 @@ public class LogExporter {
    * @param logFilter the filter that's used to check if we need to accept the file or the logLine
    * @param baseLogFile if not null, we will export the logs in that directory
    * @param baseStatsFile if not null, we will export stats in that directory
-   * @throws ParseException
    */
   public LogExporter(LogFilter logFilter, File baseLogFile, File baseStatsFile)
       throws ParseException {
@@ -62,10 +63,8 @@ public class LogExporter {
   }
 
   /**
-   *
    * @return Path to the zip file that has all the filtered files, null if no files are selected to
    *         export.
-   * @throws IOException
    */
   public Path export() throws IOException {
     Path tempDirectory = Files.createTempDirectory("exportLogs");
@@ -87,7 +86,9 @@ public class LogExporter {
     if (tempDirectory.toFile().listFiles().length > 0) {
       zipFile = Files.createTempFile("logExport", ".zip");
       ZipUtils.zipDirectory(tempDirectory, zipFile);
-      LOGGER.info("Zipped files to: " + zipFile);
+      LOGGER.info("Zipped files to: " + zipFile.toAbsolutePath());
+    } else {
+      LOGGER.info("No files to zip for this member");
     }
 
     FileUtils.deleteDirectory(tempDirectory.toFile());
@@ -98,7 +99,7 @@ public class LogExporter {
   protected void writeFilteredLogFile(Path originalLogFile, Path filteredLogFile)
       throws IOException {
     this.logFilter.startNewFile();
-
+    LOGGER.info("Exporting " + originalLogFile.toAbsolutePath());
     try (BufferedReader reader = new BufferedReader(new FileReader(originalLogFile.toFile()))) {
       try (BufferedWriter writer = new BufferedWriter(new FileWriter(filteredLogFile.toFile()))) {
 
@@ -128,8 +129,17 @@ public class LogExporter {
   }
 
   protected List<Path> findLogFiles(Path workingDir) throws IOException {
+    LOGGER.info("Searching for log files in " + workingDir.toAbsolutePath());
     Predicate<Path> logFileSelector = (Path file) -> file.toString().toLowerCase().endsWith(".log");
-    return findFiles(workingDir, logFileSelector);
+    List<Path> logFiles = findFiles(workingDir, logFileSelector);
+    if (logFiles.isEmpty()) {
+      LOGGER.info("No log files found");
+      LOGGER.info(
+          "Working dir contained: " + list(workingDir).map(Path::toString).collect(joining(",")));
+    } else {
+      LOGGER.info("Found: [" + logFiles.stream().map(Path::toString).collect(joining(",")) + "]");
+    }
+    return logFiles;
   }
 
 
@@ -140,10 +150,21 @@ public class LogExporter {
   }
 
   private List<Path> findFiles(Path workingDir, Predicate<Path> fileSelector) throws IOException {
-    Stream<Path> selectedFiles =
-        Files.list(workingDir).filter(fileSelector).filter(this.logFilter::acceptsFile);
+    List<Path> filesInDir = Files.list(workingDir).collect(toList());
+    LOGGER.info("Files in dir: " + filesInDir.stream().map(Path::toString).collect(joining(",")));
 
-    return selectedFiles.collect(toList());
+    List<Path> selectedFiles = filesInDir.stream().filter(fileSelector).collect(toList());
+    LOGGER.info(
+        "Selected files: " + selectedFiles.stream().map(Path::toString).collect(joining(",")));
+
+
+    List<Path> filteredFiles =
+        selectedFiles.stream().filter(this.logFilter::acceptsFile).collect(toList());
+    LOGGER.info(
+        "Filtered files: " + filteredFiles.stream().map(Path::toString).collect(joining(",")));
+
+
+    return filteredFiles;
   }
 
 

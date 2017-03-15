@@ -16,6 +16,7 @@
 
 package org.apache.geode.management.internal.cli.commands;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -37,8 +38,7 @@ import org.apache.geode.test.dunit.rules.GfshShellConnectionRule;
 import org.apache.geode.test.dunit.rules.LocatorServerStartupRule;
 import org.apache.geode.test.dunit.rules.Member;
 import org.apache.geode.test.dunit.rules.MemberVM;
-import org.apache.geode.test.junit.categories.DistributedTest;
-import org.apache.geode.test.junit.categories.FlakyTest;
+import org.apache.geode.test.junit.categories.UnitTest;
 import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Rule;
@@ -61,15 +61,15 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Category(DistributedTest.class)
-public class ExportLogsDUnitTest {
+@Category(UnitTest.class)
+public class ExportLogsDUnitTest implements Serializable {
   private static final String ERROR_LOG_PREFIX = "[IGNORE]";
 
   @Rule
-  public LocatorServerStartupRule lsRule = new LocatorServerStartupRule();
+  public transient LocatorServerStartupRule lsRule = new LocatorServerStartupRule();
 
   @Rule
-  public GfshShellConnectionRule gfshConnector = new GfshShellConnectionRule();
+  public transient GfshShellConnectionRule gfshConnector = new GfshShellConnectionRule();
 
   private MemberVM locator;
   private MemberVM server1;
@@ -106,8 +106,8 @@ public class ExportLogsDUnitTest {
     gfshConnector.connectAndVerify(locator);
   }
 
-  @Test
-  public void startAndEndDateCanIncludeLogs() throws Exception {
+  // @Test
+  public void testStartAndEndDateCanIncludeLogs() throws Exception {
     ZonedDateTime now = LocalDateTime.now().atZone(ZoneId.systemDefault());
     ZonedDateTime yesterday = now.minusDays(1);
     ZonedDateTime tomorrow = now.plusDays(1);
@@ -127,9 +127,15 @@ public class ExportLogsDUnitTest {
   }
 
   @Test
-  @Category(FlakyTest.class) // time sensitive
+  // @Category(FlakyTest.class) // time sensitive
   public void testExportWithStartAndEndDateTimeFiltering() throws Exception {
+    Thread.sleep(2000);
     ZonedDateTime cutoffTime = LocalDateTime.now().atZone(ZoneId.systemDefault());
+
+    // Make sure our JVMs have time zones set up correctly
+    locator.invoke(() -> assertCurrentTimeIsAfter(cutoffTime));
+    server1.invoke(() -> assertCurrentTimeIsAfter(cutoffTime));
+    server2.invoke(() -> assertCurrentTimeIsAfter(cutoffTime));
 
     String messageAfterCutoffTime =
         "[this message should not show up since it is after cutoffTime]";
@@ -138,6 +144,10 @@ public class ExportLogsDUnitTest {
       Logger logger = LogService.getLogger();
       logLineAfterCutoffTime.writeLog(logger);
     });
+
+    assertUniqueLogExistsWithExpectedLines(locator, false);
+    assertUniqueLogExistsWithExpectedLines(server1, false);
+    assertUniqueLogExistsWithExpectedLines(server2, false);
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(FORMAT);
     String cutoffTimeString = dateTimeFormatter.format(cutoffTime);
@@ -148,14 +158,57 @@ public class ExportLogsDUnitTest {
     commandStringBuilder.addOption("log-level", "debug");
     commandStringBuilder.addOption("dir", "someDir");
 
-    gfshConnector.executeAndVerifyCommand(commandStringBuilder.toString());
+    try {
+
+      gfshConnector.executeAndVerifyCommand(commandStringBuilder.toString());
+    } catch (Throwable t) {
+      assertUniqueLogExistsWithExpectedLines(locator, true);
+      assertUniqueLogExistsWithExpectedLines(server1, true);
+      assertUniqueLogExistsWithExpectedLines(server2, true);
+      throw t;
+    }
+
+    assertUniqueLogExistsWithExpectedLines(locator, true);
+    assertUniqueLogExistsWithExpectedLines(server1, true);
+    assertUniqueLogExistsWithExpectedLines(server2, true);
 
     expectedMessages.get(server1).add(logLineAfterCutoffTime);
     Set<String> acceptedLogLevels = Stream.of("info", "error", "debug").collect(toSet());
     verifyZipFileContents(acceptedLogLevels);
   }
 
-  @Test
+  private void assertUniqueLogExistsWithExpectedLines(MemberVM member, boolean shouldPrint)
+      throws IOException {
+    Set<File> locatorLogFiles = Stream.of(member.getWorkingDir().listFiles())
+        .filter(file -> file.getName().endsWith(".log")).collect(toSet());
+    assertThat(locatorLogFiles).isNotEmpty().hasSize(1);
+
+    String logFileContents =
+        FileUtils.readFileToString(locatorLogFiles.stream().findFirst().get(), UTF_8);
+    List<String> expectedMessagesForMember = expectedMessages.get(member).stream()
+        .filter(logLine -> !logLine.shouldBeIgnoredDueToTimestamp).map(LogLine::getMessage)
+        .collect(toList());
+    for (String expectedMessage : expectedMessagesForMember) {
+      assertThat(logFileContents).contains(expectedMessage);
+    }
+
+    if (shouldPrint) {
+      String[] lines = logFileContents.split("\n");
+
+      Stream.of(lines).forEach((String line) -> {
+        System.out.println("[jaredAndPatrick] [" + member.getName() + "] " + line);
+
+      });
+    }
+
+  }
+
+  private void assertCurrentTimeIsAfter(ZonedDateTime cutoffTime) {
+    ZonedDateTime currentTimeOnLocator = LocalDateTime.now().atZone(ZoneId.systemDefault());
+    assertThat(currentTimeOnLocator).isAfter(cutoffTime);
+  }
+
+  // @Test
   public void testExportWithThresholdLogLevelFilter() throws Exception {
 
     CommandResult result = gfshConnector
@@ -166,17 +219,16 @@ public class ExportLogsDUnitTest {
 
   }
 
-  @Test
+  // @Test
   public void testExportWithExactLogLevelFilter() throws Exception {
     CommandResult result =
         gfshConnector.executeAndVerifyCommand("export logs --log-level=info --only-log-level=true");
-
 
     Set<String> acceptedLogLevels = Stream.of("info").collect(toSet());
     verifyZipFileContents(acceptedLogLevels);
   }
 
-  @Test
+  // @Test
   public void testExportWithNoFilters() throws Exception {
     gfshConnector.executeAndVerifyCommand("export logs --log-level=all");
 
@@ -189,8 +241,8 @@ public class ExportLogsDUnitTest {
     locator.invoke(ExportLogsDUnitTest::verifyExportLogsRegionWasDestroyed);
   }
 
-  @Test
-  public void exportLogsRegionIsCleanedUpProperly() throws IOException, ClassNotFoundException {
+  // @Test
+  public void testExportLogsRegionIsCleanedUpProperly() throws IOException, ClassNotFoundException {
     locator.invoke(() -> {
       GemFireCacheImpl cache = GemFireCacheImpl.getInstance();
       ExportLogsFunction.createOrGetExistingExportLogsRegion(true, cache);
@@ -219,6 +271,7 @@ public class ExportLogsDUnitTest {
 
   public void verifyZipFileContents(Set<String> acceptedLogLevels) throws IOException {
     File unzippedLogFileDir = unzipExportedLogs();
+    assertThat(unzippedLogFileDir.listFiles()).isNotEmpty();
 
     Set<File> dirsFromZipFile =
         Stream.of(unzippedLogFileDir.listFiles()).filter(File::isDirectory).collect(toSet());
@@ -273,7 +326,6 @@ public class ExportLogsDUnitTest {
     File locatorWorkingDir = locator.getWorkingDir();
     List<File> filesInDir = Stream.of(locatorWorkingDir.listFiles()).collect(toList());
     assertThat(filesInDir).isNotEmpty();
-
 
     List<File> zipFilesInDir = Stream.of(locatorWorkingDir.listFiles())
         .filter(f -> f.getName().endsWith(".zip")).collect(toList());

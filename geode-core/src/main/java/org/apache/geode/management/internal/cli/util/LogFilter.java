@@ -99,6 +99,12 @@ public class LogFilter {
   }
 
   public boolean acceptsFile(Path file) {
+    LocalDateTime start = getStartTimeOf(file);
+    LocalDateTime end = getEndTimeOf(file);
+    LOGGER
+        .info("File " + file.toAbsolutePath() + " in time window: [" + start + " .. " + end + "]");
+    LOGGER.info("Filtering on time window: [" + startDate + " .. " + endDate + "]");
+
     if (startDate == null && endDate == null) {
       return true;
     }
@@ -115,7 +121,7 @@ public class LogFilter {
 
   }
 
-  private static LocalDateTime getEndTimeOf(Path file) {
+  protected static LocalDateTime getEndTimeOf(Path file) {
     try {
       long lastModifiedMillis = file.toFile().lastModified();
       return Instant.ofEpochMilli(lastModifiedMillis).atZone(ZoneId.systemDefault())
@@ -126,7 +132,7 @@ public class LogFilter {
     }
   }
 
-  private static LocalDateTime getStartTimeOf(Path file) {
+  protected static LocalDateTime getStartTimeOf(Path file) {
     try {
       BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
       long lastModifiedMillis = attributes.creationTime().toMillis();
