@@ -175,8 +175,12 @@ public class ClusterConfigDeployJarDUnitTest extends ClusterConfigBaseTest {
     server2Config.verify(server2);
     server3Config.verify(server3);
 
+    server3.getVM().bounce();
+
     // test undeploy cluster
     gfshConnector.executeAndVerifyCommand("undeploy --jar=cluster.jar");
+    server3 = lsRule.startServerVM(3, serverProps, locator.getPort());
+
 
     cluster = cluster.removeJar("cluster.jar");
     server3Config.verify(locator);
@@ -200,5 +204,10 @@ public class ClusterConfigDeployJarDUnitTest extends ClusterConfigBaseTest {
     server1Config.verify(server1);
     server2Config.verify(server2);
     weirdServer3Config.verify(server3);
+  }
+
+  @Test
+  public void testUndeployWithBounce() {
+
   }
 }
