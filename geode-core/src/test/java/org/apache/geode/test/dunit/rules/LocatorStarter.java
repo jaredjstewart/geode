@@ -15,11 +15,18 @@
 
 package org.apache.geode.test.dunit.rules;
 
+import static org.apache.geode.distributed.ConfigurationProperties.HTTP_SERVICE_BIND_ADDRESS;
+import static org.apache.geode.distributed.ConfigurationProperties.HTTP_SERVICE_PORT;
+import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER;
+import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_PORT;
+import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_START;
 import static org.apache.geode.distributed.Locator.startLocatorAndDS;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.geode.distributed.ConfigurationProperties;
 import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.distributed.internal.InternalLocator;
+import org.apache.geode.internal.AvailablePortHelper;
 import org.awaitility.Awaitility;
 
 import java.io.IOException;
@@ -32,6 +39,14 @@ public class LocatorStarter {
 
   public LocatorStarter(Properties properties) {
     this.properties = properties;
+
+    properties.putIfAbsent(JMX_MANAGER_PORT,
+        AvailablePortHelper.getRandomAvailableTCPPort() + "");
+    properties.putIfAbsent(HTTP_SERVICE_PORT,
+        AvailablePortHelper.getRandomAvailableTCPPort() + "");
+    properties.putIfAbsent(JMX_MANAGER, "true");
+    properties.putIfAbsent(JMX_MANAGER_START, "true");
+    properties.putIfAbsent(HTTP_SERVICE_BIND_ADDRESS, "localhost");
   }
 
   public InternalLocator start() {

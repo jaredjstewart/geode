@@ -141,7 +141,7 @@ public class LocatorStarterRule extends ExternalResource {
      * This rule will automatically manage the working directory of its member with a
      * TemporaryFolder rule
      */
-    public Builder withWorkingDir() {
+    public Builder withTemporaryWorkingDir() {
       this.createWorkingDir = true;
       return this;
     }

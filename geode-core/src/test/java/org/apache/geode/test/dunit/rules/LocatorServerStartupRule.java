@@ -16,10 +16,12 @@
 
 package org.apache.geode.test.dunit.rules;
 
+import static org.apache.geode.distributed.ConfigurationProperties.DEPLOY_WORKING_DIR;
 import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_PORT;
 import static org.apache.geode.distributed.ConfigurationProperties.NAME;
 import static org.apache.geode.test.dunit.Host.getHost;
 
+import org.apache.geode.distributed.internal.InternalLocator;
 import org.apache.geode.internal.AvailablePortHelper;
 import org.apache.geode.test.dunit.Invoke;
 import org.apache.geode.test.dunit.VM;
@@ -50,7 +52,7 @@ public class LocatorServerStartupRule extends ExternalResource implements Serial
   /**
    * This is only available in each Locator/Server VM, not in the controller (test) VM.
    */
-  public static LocatorStarterRule locatorStarter;
+  public static InternalLocator internalLocator;
 
   private DistributedRestoreSystemProperties restoreSystemProperties =
       new DistributedRestoreSystemProperties();
@@ -92,11 +94,13 @@ public class LocatorServerStartupRule extends ExternalResource implements Serial
     String name = "locator-" + index;
     properties.setProperty(NAME, name);
     File workingDir = createWorkingDirForMember(name);
+    properties.setProperty(DEPLOY_WORKING_DIR, workingDir.getAbsolutePath());
     VM locatorVM = getHost(0).getVM(index);
     Locator locator = locatorVM.invoke(() -> {
-      locatorStarter = new LocatorStarterRule.Builder().withWorkingDir(workingDir).withProperties(properties).build();
-      return locatorStarter.startLocator();
+      this.internalLocator = new LocatorStarter(properties).start();
+      return new Locator(this.internalLocator);
     });
+
     members[index] = new MemberVM(locator, locatorVM);
     return members[index];
   }
@@ -167,9 +171,8 @@ public class LocatorServerStartupRule extends ExternalResource implements Serial
       serverStarter.after();
       serverStarter = null;
     }
-    if (locatorStarter != null) {
-      locatorStarter.after();
-      locatorStarter = null;
+    if (internalLocator != null) {
+      internalLocator.stop();
     }
   }
 

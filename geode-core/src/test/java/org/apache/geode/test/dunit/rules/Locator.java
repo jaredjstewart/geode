@@ -21,39 +21,42 @@ import org.apache.geode.distributed.internal.InternalLocator;
 import java.io.File;
 
 public class Locator implements Member {
-  private InternalLocator locator;
+  private File workingDir;
+  private int port;
+  private int jmxPort;
+  private int httpPort;
+  private String name;
 
-  public Locator(InternalLocator loc) {
-    this.locator = loc;
-  }
+  public Locator(InternalLocator locator)    {
+    this.workingDir = locator.getConfig().getDeployWorkingDir();
+    this.port = locator.getConfig().getTcpPort();
+    this.jmxPort = locator.getConfig().getJmxManagerPort();
+    this.httpPort = locator.getConfig().getHttpServicePort();
+    this.name = locator.getConfig().getName();
+}
 
   @Override
   public File getWorkingDir() {
-    return locator.getConfig().getDeployWorkingDir();
+    return workingDir;
   }
 
   @Override
   public int getPort() {
-    return locator.getConfig().getTcpPort();
+    return port;
   }
 
   @Override
   public int getJmxPort() {
-    return locator.getConfig().getJmxManagerPort();
+    return jmxPort;
   }
 
   @Override
   public int getHttpPort() {
-    return locator.getConfig().getHttpServicePort();
+    return httpPort;
   }
 
   @Override
   public String getName() {
-    return locator.getConfig().getName();
+    return name;
   }
-
-  public InternalLocator getInternalLocator() {
-    return this.locator;
-  }
-
 }

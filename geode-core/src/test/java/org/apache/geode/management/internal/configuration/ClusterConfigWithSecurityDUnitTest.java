@@ -74,7 +74,7 @@ public class ClusterConfigWithSecurityDUnitTest {
 
     // the second locator should inherit the first locator's security props
     locator1.invoke(() -> {
-      InternalLocator locator = LocatorServerStartupRule.locatorStarter.getLocator();
+      InternalLocator locator = InternalLocator.getLocator();
       ClusterConfigurationService sc = locator.getSharedConfiguration();
       Properties clusterConfigProps = sc.getConfiguration("cluster").getGemfireProperties();
       assertThat(clusterConfigProps.getProperty(SECURITY_MANAGER))
@@ -92,7 +92,7 @@ public class ClusterConfigWithSecurityDUnitTest {
         "import cluster-configuration --zip-file-name=" + clusterConfigZipPath);
 
     locator0.invoke(() -> {
-      InternalLocator locator = LocatorServerStartupRule.locatorStarter.getLocator();
+      InternalLocator locator = InternalLocator.getLocator();
       ClusterConfigurationService sc = locator.getSharedConfiguration();
       Properties properties = sc.getConfiguration("cluster").getGemfireProperties();
       assertThat(properties.getProperty(MCAST_PORT)).isEqualTo("0");
