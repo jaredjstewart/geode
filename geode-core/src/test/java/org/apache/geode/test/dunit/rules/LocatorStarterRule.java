@@ -53,11 +53,11 @@ import java.util.concurrent.TimeUnit;
 
 public class LocatorStarterRule extends ExternalResource {
   private Properties properties;
-  private transient InternalLocator locator;
 
   private File workingDir;
   private String oldUserDirProperty;
   protected transient TemporaryFolder temporaryFolder;
+  private InternalLocator internalLocator;
 
   private LocatorStarterRule(LocatorStarterRule.Builder builder) {
     this.properties = builder.properties;
@@ -70,7 +70,7 @@ public class LocatorStarterRule extends ExternalResource {
   }
 
   public InternalLocator getLocator() {
-    return locator;
+    return this.internalLocator;
   }
 
   @Override
@@ -85,13 +85,13 @@ public class LocatorStarterRule extends ExternalResource {
       properties.setProperty(DEPLOY_WORKING_DIR, this.workingDir.getAbsolutePath());
     }
 
-    startLocator();
+   this.internalLocator = new LocatorStarter(properties).start();
   }
 
   @Override
   public void after() {
-    if (locator != null) {
-      locator.stop();
+    if (this.internalLocator != null) {
+      this.internalLocator.stop();
     }
 
     if (oldUserDirProperty != null) {
@@ -104,45 +104,16 @@ public class LocatorStarterRule extends ExternalResource {
   }
 
   public int getHttpPort() {
-    return this.locator.getPort();
-  }
-
-  public Locator startLocator() {
-    try {
-      // this will start a jmx manager and admin rest service by default
-      locator = (InternalLocator) startLocatorAndDS(0, null, properties);
-    } catch (IOException e) {
-      throw new RuntimeException("unable to start up locator.", e);
-    }
-
-    DistributionConfig config = locator.getConfig();
-    int memberPort = locator.getConfig().getTcpPort();
-    locator.resetInternalLocatorFileNamesWithCorrectPortNumber(memberPort);
-
-    if (config.getEnableClusterConfiguration()) {
-      Awaitility.await().atMost(65, TimeUnit.SECONDS)
-          .until(() -> assertTrue(locator.isSharedConfigurationRunning()));
-    }
-    return new Locator(locator);
+    return this.internalLocator.getPort();
   }
 
   public static class Builder {
     private File workingDir = null;
     private boolean createWorkingDir = false;
-
     private Properties properties = new Properties();
 
     public Builder() {
 
-    }
-
-    public static Builder builder() {
-      return new Builder();
-    }
-
-    public Builder withProperty(String key, String value) {
-      properties.setProperty(key, value);
-      return this;
     }
 
     public Builder withSecurityManager(Class<? extends SecurityManager> securityManager) {
@@ -163,7 +134,6 @@ public class LocatorStarterRule extends ExternalResource {
 
     public LocatorStarterRule build() {
       properties.putIfAbsent(NAME, "locator");
-
       return new LocatorStarterRule(this);
     }
 
@@ -187,6 +157,5 @@ public class LocatorStarterRule extends ExternalResource {
       }
       return this;
     }
-
   }
 }

@@ -51,4 +51,9 @@ public class Locator implements Member {
   public String getName() {
     return locator.getConfig().getName();
   }
+
+  public InternalLocator getInternalLocator() {
+    return this.locator;
+  }
+
 }
