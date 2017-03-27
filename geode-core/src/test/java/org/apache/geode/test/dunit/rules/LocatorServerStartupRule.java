@@ -94,8 +94,8 @@ public class LocatorServerStartupRule extends ExternalResource implements Serial
     File workingDir = createWorkingDirForMember(name);
     VM locatorVM = getHost(0).getVM(index);
     Locator locator = locatorVM.invoke(() -> {
-      locatorStarter = new LocatorStarterRule(workingDir);
-      return locatorStarter.withProperties(properties).startLocator();
+      locatorStarter = new LocatorStarterRule.Builder().withWorkingDir(workingDir).withProperties(properties).build();
+      return locatorStarter.startLocator();
     });
     members[index] = new MemberVM(locator, locatorVM);
     return members[index];

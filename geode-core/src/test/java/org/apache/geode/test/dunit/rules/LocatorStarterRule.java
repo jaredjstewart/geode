@@ -15,13 +15,13 @@
 
 package org.apache.geode.test.dunit.rules;
 
+import static org.apache.geode.distributed.ConfigurationProperties.DEPLOY_WORKING_DIR;
 import static org.apache.geode.distributed.ConfigurationProperties.HTTP_SERVICE_BIND_ADDRESS;
 import static org.apache.geode.distributed.ConfigurationProperties.HTTP_SERVICE_PORT;
 import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER;
 import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_PORT;
 import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_START;
 import static org.apache.geode.distributed.ConfigurationProperties.NAME;
-import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_MANAGER;
 import static org.apache.geode.distributed.Locator.startLocatorAndDS;
 import static org.junit.Assert.assertTrue;
 
@@ -31,6 +31,7 @@ import org.apache.geode.distributed.internal.InternalLocator;
 import org.apache.geode.internal.AvailablePortHelper;
 import org.apache.geode.security.SecurityManager;
 import org.awaitility.Awaitility;
+import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -50,21 +51,22 @@ import java.util.concurrent.TimeUnit;
  * use {@link LocatorServerStartupRule}.
  */
 
-public class LocatorStarterRule extends MemberStarterRule<LocatorStarterRule> implements Locator {
-
+public class LocatorStarterRule extends ExternalResource {
+  private Properties properties;
   private transient InternalLocator locator;
 
-  public LocatorStarterRule() {
-  }
-
-  public LocatorStarterRule(File workingDir) {
-    super(workingDir);
-  }
+  private File workingDir;
+  private String oldUserDirProperty;
+  protected transient TemporaryFolder temporaryFolder;
 
   private LocatorStarterRule(LocatorStarterRule.Builder builder) {
-//    Properties properties = new Properties();
-//    properties.setProperty(SECURITY_MANAGER, securityManager.getName());
+    this.properties = builder.properties;
 
+    if (builder.createWorkingDir) {
+      temporaryFolder = new TemporaryFolder();
+    }
+
+    this.workingDir = builder.workingDir;
   }
 
   public InternalLocator getLocator() {
@@ -72,40 +74,62 @@ public class LocatorStarterRule extends MemberStarterRule<LocatorStarterRule> im
   }
 
   @Override
-  protected void stopMember() {
+  public void before() throws IOException {
+    if (this.temporaryFolder != null) {
+      this.temporaryFolder.create();
+      this.workingDir = temporaryFolder.getRoot();
+    }
+
+    if (this.workingDir != null) {
+      this.oldUserDirProperty = System.getProperty("user.dir");
+      properties.setProperty(DEPLOY_WORKING_DIR, this.workingDir.getAbsolutePath());
+    }
+
+    startLocator();
+  }
+
+  @Override
+  public void after() {
     if (locator != null) {
       locator.stop();
     }
-  }
 
-  public LocatorStarterRule startLocator() {
-    normalizeProperties();
-    // start locator will start a jmx manager by default, if withJmxManager is not called explicitly
-    // the tests will use random ports by default.
-    if (jmxPort < 0) {
-      withJMXManager();
+    if (oldUserDirProperty != null) {
+      System.setProperty("user.dir", oldUserDirProperty);
     }
 
+    if (temporaryFolder != null) {
+      temporaryFolder.delete();
+    }
+  }
+
+  public int getHttpPort() {
+    return this.locator.getPort();
+  }
+
+  public Locator startLocator() {
     try {
       // this will start a jmx manager and admin rest service by default
       locator = (InternalLocator) startLocatorAndDS(0, null, properties);
     } catch (IOException e) {
       throw new RuntimeException("unable to start up locator.", e);
     }
-    memberPort = locator.getPort();
+
     DistributionConfig config = locator.getConfig();
-    jmxPort = config.getJmxManagerPort();
-    httpPort = config.getHttpServicePort();
+    int memberPort = locator.getConfig().getTcpPort();
     locator.resetInternalLocatorFileNamesWithCorrectPortNumber(memberPort);
 
     if (config.getEnableClusterConfiguration()) {
       Awaitility.await().atMost(65, TimeUnit.SECONDS)
           .until(() -> assertTrue(locator.isSharedConfigurationRunning()));
     }
-    return this;
+    return new Locator(locator);
   }
 
   public static class Builder {
+    private File workingDir = null;
+    private boolean createWorkingDir = false;
+
     private Properties properties = new Properties();
 
     public Builder() {
@@ -134,23 +158,35 @@ public class LocatorStarterRule extends MemberStarterRule<LocatorStarterRule> im
       properties.putIfAbsent(JMX_MANAGER, "true");
       properties.putIfAbsent(JMX_MANAGER_START, "true");
       properties.putIfAbsent(HTTP_SERVICE_BIND_ADDRESS, "localhost");
+      return this;
     }
 
     public LocatorStarterRule build() {
-      populateDefaultsProperties();
+      properties.putIfAbsent(NAME, "locator");
 
       return new LocatorStarterRule(this);
     }
 
-//    protected transient TemporaryFolder temporaryFolder;
-//    protected String oldUserDir;
-//
-//    protected File workingDir;
-//    protected int memberPort = -1;
-//    protected int jmxPort = -1;
-//    protected int httpPort = -1;
-//
-//    protected String name;
-//    protected Properties properties = new Properties();
+    /**
+     * This rule will automatically manage the working directory of its member with a
+     * TemporaryFolder rule
+     */
+    public Builder withWorkingDir() {
+      this.createWorkingDir = true;
+      return this;
+    }
+
+    public Builder withWorkingDir(File workDir) {
+      this.workingDir = workDir;
+      return this;
+    }
+
+    public Builder withProperties(Properties props) {
+      if (props != null) {
+        this.properties.putAll(props);
+      }
+      return this;
+    }
+
   }
 }

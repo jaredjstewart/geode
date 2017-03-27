@@ -18,6 +18,37 @@ package org.apache.geode.test.dunit.rules;
 
 import org.apache.geode.distributed.internal.InternalLocator;
 
-public interface Locator extends Member {
-  InternalLocator getLocator();
+import java.io.File;
+
+public class Locator implements Member {
+  private InternalLocator locator;
+
+  public Locator(InternalLocator loc) {
+    this.locator = loc;
+  }
+
+  @Override
+  public File getWorkingDir() {
+    return locator.getConfig().getDeployWorkingDir();
+  }
+
+  @Override
+  public int getPort() {
+    return locator.getConfig().getTcpPort();
+  }
+
+  @Override
+  public int getJmxPort() {
+    return locator.getConfig().getJmxManagerPort();
+  }
+
+  @Override
+  public int getHttpPort() {
+    return locator.getConfig().getHttpServicePort();
+  }
+
+  @Override
+  public String getName() {
+    return locator.getConfig().getName();
+  }
 }

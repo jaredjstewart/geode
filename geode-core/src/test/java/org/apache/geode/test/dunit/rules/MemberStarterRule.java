@@ -116,7 +116,7 @@ public abstract class MemberStarterRule<T> extends ExternalResource implements M
   /**
    * be able to start JMX manager and admin rest on default ports
    */
-  public T  withJMXManager(boolean useDefault) {
+  public T withJMXManager(boolean useDefault) {
     // the real port numbers will be set after we started the server/locator.
     this.jmxPort = 0;
     this.httpPort = 0;
