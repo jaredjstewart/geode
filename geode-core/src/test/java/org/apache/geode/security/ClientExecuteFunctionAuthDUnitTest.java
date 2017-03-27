@@ -22,7 +22,9 @@ import org.apache.geode.cache.RegionShortcut;
 import org.apache.geode.test.dunit.Host;
 import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
-import org.apache.geode.test.dunit.rules.ServerStarterRule;
+import org.apache.geode.test.dunit.rules.LocalServerStarterRule;
+import org.apache.geode.test.dunit.rules.ServerStarterBuilder;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -43,15 +45,21 @@ public class ClientExecuteFunctionAuthDUnitTest extends JUnit4DistributedTestCas
   final Host host = Host.getHost(0);
   final VM client1 = host.getVM(1);
   final VM client2 = host.getVM(2);
+  private int serverPort;
 
   private final static Function function = new TestFunction(true, TestFunction.TEST_FUNCTION1);
 
   @Rule
-  public ServerStarterRule server =
-      new ServerStarterRule().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
+  public transient LocalServerStarterRule server =
+      new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
-          .startServer().createRegion(RegionShortcut.REPLICATE, REGION_NAME);
+          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
+
+  @Before
+  public void setup() {
+
+  }
 
   @Test
   public void testExecuteRegionFunctionWithClientRegistration() {

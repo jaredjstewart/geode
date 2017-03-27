@@ -22,6 +22,7 @@ import static org.apache.geode.security.SecurityTestUtil.createProxyRegion;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import io.codearte.catchexception.shade.mockito.cglib.core.Local;
 import org.apache.geode.cache.Region;
 import org.apache.geode.cache.RegionShortcut;
 import org.apache.geode.cache.client.ClientCache;
@@ -39,6 +40,8 @@ import org.apache.geode.pdx.SimpleClass;
 import org.apache.geode.test.dunit.Host;
 import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
+import org.apache.geode.test.dunit.rules.LocalServerStarterRule;
+import org.apache.geode.test.dunit.rules.ServerStarterBuilder;
 import org.apache.geode.test.dunit.rules.ServerStarterRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
@@ -74,13 +77,14 @@ public class CQPDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
   }
 
   @Rule
-  public ServerStarterRule server =
-      new ServerStarterRule().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
+  public LocalServerStarterRule server =
+      new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
           .withProperty(SECURITY_POST_PROCESSOR, PDXPostProcessor.class.getName())
-          .withProperty("security-pdx", pdxPersistent + "").startServer()
-          .createRegion(RegionShortcut.REPLICATE, REGION_NAME);
+          .withProperty("security-pdx", pdxPersistent + "")
+          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
+
 
   public CQPDXPostProcessorDUnitTest(boolean pdxPersistent) {
     this.pdxPersistent = pdxPersistent;

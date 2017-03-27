@@ -24,9 +24,11 @@ import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.apache.geode.test.dunit.Host;
 import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
-import org.apache.geode.test.dunit.rules.ServerStarterRule;
+import org.apache.geode.test.dunit.rules.LocalServerStarterRule;
+import org.apache.geode.test.dunit.rules.ServerStarterBuilder;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -34,6 +36,7 @@ import org.junit.experimental.categories.Category;
 @Category({DistributedTest.class, SecurityTest.class})
 public class ClientDestroyRegionAuthDUnitTest extends JUnit4DistributedTestCase {
   private static String REGION_NAME = "testRegion";
+  private int serverPort;
 
   final Host host = Host.getHost(0);
   final VM client1 = host.getVM(1);
@@ -41,11 +44,16 @@ public class ClientDestroyRegionAuthDUnitTest extends JUnit4DistributedTestCase 
   final VM client3 = host.getVM(3);
 
   @Rule
-  public ServerStarterRule server =
-      new ServerStarterRule().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
+  public LocalServerStarterRule server =
+      new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
-          .startServer().createRegion(RegionShortcut.REPLICATE, REGION_NAME);
+          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
+
+  @Before
+  public void setup() {
+    serverPort = server.getPort();
+  }
 
   @Test
   public void testDestroyRegion() throws InterruptedException {

@@ -17,6 +17,8 @@ package org.apache.geode.rest.internal.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.apache.geode.test.dunit.rules.LocalServerStarterRule;
+import org.apache.geode.test.dunit.rules.ServerStarterBuilder;
 import org.apache.geode.test.dunit.rules.ServerStarterRule;
 import org.apache.geode.test.junit.categories.IntegrationTest;
 import org.apache.geode.test.junit.categories.RestAPITest;
@@ -31,8 +33,8 @@ import org.junit.experimental.categories.Category;
 public class RestServersJUnitTest {
 
   @ClassRule
-  public static ServerStarterRule serverStarter =
-      new ServerStarterRule().withRestService(true).startServer();
+  public static LocalServerStarterRule serverStarter =
+      new ServerStarterBuilder().withRestServiceOnDefaultPort().buildInThisVM();
 
   private static GeodeRestClient restClient;
 

@@ -40,6 +40,8 @@ import org.apache.geode.test.dunit.IgnoredException;
 import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
 import org.apache.geode.test.dunit.rules.GfshShellConnectionRule;
+import org.apache.geode.test.dunit.rules.LocalServerStarterRule;
+import org.apache.geode.test.dunit.rules.ServerStarterBuilder;
 import org.apache.geode.test.dunit.rules.ServerStarterRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
@@ -80,13 +82,13 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
   }
 
   @Rule
-  public ServerStarterRule server =
-      new ServerStarterRule().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
+  public LocalServerStarterRule server =
+      new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
           .withProperty(SECURITY_POST_PROCESSOR, PDXPostProcessor.class.getName())
-          .withProperty("security-pdx", pdxPersistent + "").withJMXManager().startServer()
-          .createRegion(RegionShortcut.REPLICATE, REGION_NAME);
+          .withProperty("security-pdx", pdxPersistent + "").withJMXManager()
+          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
 
   @Test
   public void testRegionGet() {
