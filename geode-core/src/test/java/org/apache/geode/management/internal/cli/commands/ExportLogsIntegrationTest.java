@@ -30,7 +30,7 @@ public class ExportLogsIntegrationTest {
 
   @ClassRule
   public static LocatorStarterRule locator =
-      new LocatorStarterRule().withJMXManager().startLocator();
+      new LocatorStarterRule.Builder().withJMXManager().build();
 
   @Rule
   public GfshShellConnectionRule gfsh = new GfshShellConnectionRule();

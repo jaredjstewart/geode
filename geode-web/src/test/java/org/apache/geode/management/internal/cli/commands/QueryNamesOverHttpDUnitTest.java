@@ -39,7 +39,7 @@ import javax.management.QueryExp;
 @Category(IntegrationTest.class)
 public class QueryNamesOverHttpDUnitTest {
   @Rule
-  public LocatorStarterRule locatorRule = new LocatorStarterRule().withJMXManager().startLocator();
+  public LocatorStarterRule locatorRule = new LocatorStarterRule.Builder().withJMXManager().build();
 
   @Test
   public void testQueryNameOverHttp() throws Exception {

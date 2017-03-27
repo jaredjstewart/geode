@@ -33,8 +33,8 @@ import org.junit.experimental.categories.Category;
 public class PulseVerificationTest {
 
   @ClassRule
-  public static LocatorStarterRule locator = new LocatorStarterRule()
-      .withProperty(SECURITY_MANAGER, SimpleTestSecurityManager.class.getName()).startLocator();
+  public static LocatorStarterRule locator = new LocatorStarterRule.Builder()
+      .withSecurityManager(SimpleTestSecurityManager.class).build();
 
   @Rule
   public HttpClientRule client = new HttpClientRule(locator.getHttpPort());
