@@ -20,7 +20,6 @@ import static org.apache.geode.security.SecurityTestUtil.createClientCache;
 import static org.apache.geode.security.SecurityTestUtil.createProxyRegion;
 import static org.jgroups.util.Util.assertEquals;
 
-import io.codearte.catchexception.shade.mockito.cglib.core.Local;
 import org.apache.geode.cache.Region;
 import org.apache.geode.cache.RegionShortcut;
 import org.apache.geode.cache.client.ClientCache;
@@ -29,7 +28,6 @@ import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
 import org.apache.geode.test.dunit.rules.LocalServerStarterRule;
 import org.apache.geode.test.dunit.rules.ServerStarterBuilder;
-import org.apache.geode.test.dunit.rules.ServerStarterRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
 import org.junit.Rule;
@@ -53,12 +51,12 @@ public class ClientGetAllAuthDUnitTest extends JUnit4DistributedTestCase {
       new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
-          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
+          .withRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
 
   @Test
   public void testGetAll() {
     client1.invoke("logging in Stranger", () -> {
-      ClientCache cache = createClientCache("stranger", "1234567", server.getPort());
+      ClientCache cache = createClientCache("stranger", "1234567", server.getServerPort());
 
       Region region = createProxyRegion(cache, REGION_NAME);
       Map emptyMap = region.getAll(Arrays.asList("key1", "key2", "key3", "key4"));
@@ -66,7 +64,7 @@ public class ClientGetAllAuthDUnitTest extends JUnit4DistributedTestCase {
     });
 
     client2.invoke("logging in authRegionReader", () -> {
-      ClientCache cache = createClientCache("authRegionReader", "1234567", server.getPort());
+      ClientCache cache = createClientCache("authRegionReader", "1234567", server.getServerPort());
 
       Region region = createProxyRegion(cache, REGION_NAME);
       Map filledMap = region.getAll(Arrays.asList("key1", "key2", "key3", "key4"));

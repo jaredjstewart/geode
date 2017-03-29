@@ -28,7 +28,6 @@ import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
 import org.apache.geode.test.dunit.rules.LocalServerStarterRule;
 import org.apache.geode.test.dunit.rules.ServerStarterBuilder;
-import org.apache.geode.test.dunit.rules.ServerStarterRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
 import org.junit.Rule;
@@ -49,7 +48,7 @@ public class ClientRegionClearAuthDUnitTest extends JUnit4DistributedTestCase {
       new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
-          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
+          .withRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
 
   @Test
   public void testRegionClear() throws InterruptedException {
@@ -57,7 +56,7 @@ public class ClientRegionClearAuthDUnitTest extends JUnit4DistributedTestCase {
     SerializableRunnable clearUnauthorized = new SerializableRunnable() {
       @Override
       public void run() {
-        ClientCache cache = createClientCache("stranger", "1234567", server.getPort());
+        ClientCache cache = createClientCache("stranger", "1234567", server.getServerPort());
         Region region = createProxyRegion(cache, REGION_NAME);
         assertNotAuthorized(() -> region.clear(), "DATA:WRITE:AuthRegion");
       }
@@ -68,7 +67,7 @@ public class ClientRegionClearAuthDUnitTest extends JUnit4DistributedTestCase {
     SerializableRunnable clearAuthorized = new SerializableRunnable() {
       @Override
       public void run() {
-        ClientCache cache = createClientCache("authRegionUser", "1234567", server.getPort());
+        ClientCache cache = createClientCache("authRegionUser", "1234567", server.getServerPort());
         Region region = createProxyRegion(cache, REGION_NAME);
         region.clear();
       }

@@ -48,18 +48,18 @@ public class ClientDestroyRegionAuthDUnitTest extends JUnit4DistributedTestCase 
       new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
-          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
+          .withRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
 
   @Before
   public void setup() {
-    serverPort = server.getPort();
+    serverPort = server.getServerPort();
   }
 
   @Test
   public void testDestroyRegion() throws InterruptedException {
     client1.invoke(() -> {
       ClientCache cache =
-          SecurityTestUtil.createClientCache("dataWriter", "1234567", server.getPort());
+          SecurityTestUtil.createClientCache("dataWriter", "1234567", server.getServerPort());
 
       Region region =
           cache.createClientRegionFactory(ClientRegionShortcut.PROXY).create(REGION_NAME);
@@ -67,8 +67,8 @@ public class ClientDestroyRegionAuthDUnitTest extends JUnit4DistributedTestCase 
     });
 
     client2.invoke(() -> {
-      ClientCache cache =
-          SecurityTestUtil.createClientCache("authRegionManager", "1234567", server.getPort());
+      ClientCache cache = SecurityTestUtil.createClientCache("authRegionManager", "1234567",
+          server.getServerPort());
 
       Region region =
           cache.createClientRegionFactory(ClientRegionShortcut.PROXY).create(REGION_NAME);
@@ -77,7 +77,7 @@ public class ClientDestroyRegionAuthDUnitTest extends JUnit4DistributedTestCase 
 
     client3.invoke(() -> {
       ClientCache cache =
-          SecurityTestUtil.createClientCache("super-user", "1234567", server.getPort());
+          SecurityTestUtil.createClientCache("super-user", "1234567", server.getServerPort());
 
       Region region =
           cache.createClientRegionFactory(ClientRegionShortcut.PROXY).create(REGION_NAME);

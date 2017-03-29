@@ -27,7 +27,6 @@ import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
 import org.apache.geode.test.dunit.rules.LocalServerStarterRule;
 import org.apache.geode.test.dunit.rules.ServerStarterBuilder;
-import org.apache.geode.test.dunit.rules.ServerStarterRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
 import org.junit.Rule;
@@ -48,13 +47,13 @@ public class ClientUnregisterInterestAuthDUnitTest extends JUnit4DistributedTest
       new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
-          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
+          .withRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
 
   @Test
   public void testUnregisterInterest() throws Exception {
     // client2 connects to user as a user authorized to use AuthRegion region
     AsyncInvocation ai1 = client2.invokeAsync(() -> {
-      ClientCache cache = createClientCache("authRegionUser", "1234567", server.getPort());
+      ClientCache cache = createClientCache("authRegionUser", "1234567", server.getServerPort());
 
       Region region = createProxyRegion(cache, REGION_NAME);
       region.registerInterest("key3");

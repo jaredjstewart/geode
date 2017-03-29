@@ -361,7 +361,7 @@ public class HAStartupAndFailoverDUnitTest extends JUnit4DistributedTestCase {
   }
 
   // public static void processException() {
-  // assertIndexDetailsEquals(conn.getServer().getPort(), PORT1.intValue());
+  // assertIndexDetailsEquals(conn.getServer().getServerPort(), PORT1.intValue());
   // try {
   // pool.processException(new Exception("dummy"), conn);
   // //Thread.sleep(10000); // why sleep?

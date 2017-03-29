@@ -74,7 +74,7 @@ public class CQPostProcessorDunitTest extends JUnit4DistributedTestCase {
   public void testPostProcess() {
     String query = "select * from /AuthRegion";
     client1.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
 
 
@@ -108,7 +108,7 @@ public class CQPostProcessorDunitTest extends JUnit4DistributedTestCase {
     });
 
     client2.invoke(() -> {
-      ClientCache cache = createClientCache("authRegionUser", "1234567", server.getPort());
+      ClientCache cache = createClientCache("authRegionUser", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
       region.put("key6", "value6");
     });

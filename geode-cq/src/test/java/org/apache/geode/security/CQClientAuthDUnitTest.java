@@ -82,7 +82,7 @@ public class CQClientAuthDUnitTest extends JUnit4DistributedTestCase {
           UserPasswordAuthInit.class.getName() + ".create");
       ClientCacheFactory factory = new ClientCacheFactory(props);
 
-      factory.addPoolServer("localhost", server.getPort());
+      factory.addPoolServer("localhost", server.getServerPort());
       factory.setPoolThreadLocalConnections(false);
       factory.setPoolMinConnections(5);
       factory.setPoolSubscriptionEnabled(true);

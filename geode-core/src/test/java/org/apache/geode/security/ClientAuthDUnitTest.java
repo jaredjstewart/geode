@@ -41,7 +41,7 @@ public class ClientAuthDUnitTest extends JUnit4DistributedTestCase {
 
   @Before
   public void setup() {
-    serverPort = server.getPort();
+    serverPort = server.getServerPort();
   }
 
   @Rule

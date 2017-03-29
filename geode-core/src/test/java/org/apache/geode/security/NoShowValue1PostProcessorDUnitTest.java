@@ -77,7 +77,7 @@ public class NoShowValue1PostProcessorDUnitTest extends JUnit4DistributedTestCas
     keys.add("key2");
 
     client1.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
 
       // post process for get

@@ -65,7 +65,7 @@ public class ClientDestroyInvalidateAuthDUnitTest extends JUnit4DistributedTestC
     // Delete one key and invalidate another key with an authorized user.
     AsyncInvocation ai1 = client1.invokeAsync(() -> {
       ClientCache cache =
-          SecurityTestUtil.createClientCache("dataUser", "1234567", server.getPort());
+          SecurityTestUtil.createClientCache("dataUser", "1234567", server.getServerPort());
 
       Region region =
           cache.createClientRegionFactory(ClientRegionShortcut.PROXY).create(REGION_NAME);
@@ -85,7 +85,7 @@ public class ClientDestroyInvalidateAuthDUnitTest extends JUnit4DistributedTestC
     // Delete one key and invalidate another key with an unauthorized user.
     AsyncInvocation ai2 = client2.invokeAsync(() -> {
       ClientCache cache =
-          SecurityTestUtil.createClientCache("authRegionReader", "1234567", server.getPort());
+          SecurityTestUtil.createClientCache("authRegionReader", "1234567", server.getServerPort());
 
       Region region =
           cache.createClientRegionFactory(ClientRegionShortcut.PROXY).create(REGION_NAME);

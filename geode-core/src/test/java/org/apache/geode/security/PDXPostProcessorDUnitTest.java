@@ -42,7 +42,6 @@ import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
 import org.apache.geode.test.dunit.rules.GfshShellConnectionRule;
 import org.apache.geode.test.dunit.rules.LocalServerStarterRule;
 import org.apache.geode.test.dunit.rules.ServerStarterBuilder;
-import org.apache.geode.test.dunit.rules.ServerStarterRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
 import org.apache.geode.test.junit.runners.CategoryWithParameterizedRunnerFactory;
@@ -88,12 +87,12 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
               "org/apache/geode/management/internal/security/clientServer.json")
           .withProperty(SECURITY_POST_PROCESSOR, PDXPostProcessor.class.getName())
           .withProperty("security-pdx", pdxPersistent + "").withJMXManager()
-          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
+          .withRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
 
   @Test
   public void testRegionGet() {
     client2.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
       // put in a value that's a domain object
       region.put("key1", new SimpleClass(1, (byte) 1));
@@ -102,7 +101,7 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
     });
 
     client1.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
 
       // post process for get the client domain object
@@ -123,7 +122,7 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
   @Test
   public void testQuery() {
     client2.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
       // put in a value that's a domain object
       region.put("key1", new SimpleClass(1, (byte) 1));
@@ -131,7 +130,7 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
     });
 
     client1.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
 
       // post process for query
@@ -159,7 +158,7 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
   public void testRegisterInterest() {
     IgnoredException.addIgnoredException("NoAvailableServersException");
     client1.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
 
       ClientRegionFactory factory = cache.createClientRegionFactory(ClientRegionShortcut.PROXY);
       factory.addCacheListener(new CacheListenerAdapter() {
@@ -182,7 +181,7 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
     });
 
     client2.invoke(() -> {
-      ClientCache cache = createClientCache("dataUser", "1234567", server.getPort());
+      ClientCache cache = createClientCache("dataUser", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
       // put in a value that's a domain object
       region.put("key1", new SimpleClass(1, (byte) 1));
@@ -200,7 +199,7 @@ public class PDXPostProcessorDUnitTest extends JUnit4DistributedTestCase {
   public void testGfshCommand() {
     // have client2 input some domain data into the region
     client2.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
       // put in a value that's a domain object
       region.put("key1", new SimpleClass(1, (byte) 1));

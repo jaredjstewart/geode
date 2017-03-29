@@ -31,7 +31,6 @@ import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
 import org.apache.geode.test.dunit.rules.LocalServerStarterRule;
 import org.apache.geode.test.dunit.rules.ServerStarterBuilder;
-import org.apache.geode.test.dunit.rules.ServerStarterRule;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.test.junit.categories.SecurityTest;
 import org.junit.Rule;
@@ -54,7 +53,7 @@ public class ClientExecuteRegionFunctionAuthDUnitTest extends JUnit4DistributedT
       new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
-          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
+          .withRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
 
   @Test
   public void testExecuteRegionFunction() {
@@ -62,7 +61,7 @@ public class ClientExecuteRegionFunctionAuthDUnitTest extends JUnit4DistributedT
     FunctionService.registerFunction(function);
 
     client1.invoke("logging in with dataReader", () -> {
-      ClientCache cache = createClientCache("dataReader", "1234567", server.getPort());
+      ClientCache cache = createClientCache("dataReader", "1234567", server.getServerPort());
 
       Region region = createProxyRegion(cache, REGION_NAME);
       FunctionService.registerFunction(function);
@@ -72,7 +71,7 @@ public class ClientExecuteRegionFunctionAuthDUnitTest extends JUnit4DistributedT
     });
 
     client2.invoke("logging in with super-user", () -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
 
       Region region = createProxyRegion(cache, REGION_NAME);
       FunctionService.registerFunction(function);

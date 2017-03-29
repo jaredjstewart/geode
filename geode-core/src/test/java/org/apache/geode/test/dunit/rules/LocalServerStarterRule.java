@@ -24,19 +24,16 @@ import org.apache.geode.cache.server.CacheServer;
 import org.apache.geode.distributed.ConfigurationProperties;
 import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.distributed.internal.InternalDistributedSystem;
-import org.apache.geode.distributed.internal.InternalLocator;
-import org.apache.geode.internal.AvailablePortHelper;
-import org.apache.geode.internal.datasource.ConfigProperty;
-import org.awaitility.Awaitility;
+import org.apache.geode.internal.AvailablePort;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public class LocalServerStarterRule extends ExternalResource implements Serializable {
   private volatile transient Cache cache;
@@ -44,8 +41,12 @@ public class LocalServerStarterRule extends ExternalResource implements Serializ
   private final transient TemporaryFolder temporaryFolder;
 
   private final Properties properties;
-  private final int port;
   private final Map<String, RegionShortcut> regionsToCreate;
+
+  private final AvailablePort.Keeper serverPort;
+  private final AvailablePort.Keeper jmxPort;
+  private final AvailablePort.Keeper httpPort;
+  private final AvailablePort.Keeper tcpPort;
 
   LocalServerStarterRule(ServerStarterBuilder serverStarterBuilder) {
     this.properties = serverStarterBuilder.getProperties();
@@ -55,7 +56,11 @@ public class LocalServerStarterRule extends ExternalResource implements Serializ
       temporaryFolder = null;
     }
 
-    this.port = serverStarterBuilder.getPort();
+    this.serverPort = serverStarterBuilder.getServerPort();
+    this.jmxPort = serverStarterBuilder.getJmxPort();
+    this.httpPort = serverStarterBuilder.getHttpPort();
+    this.tcpPort = serverStarterBuilder.getTcpPort();
+
     this.regionsToCreate = serverStarterBuilder.getRegionsToCreate();
   }
 
@@ -67,16 +72,12 @@ public class LocalServerStarterRule extends ExternalResource implements Serializ
           temporaryFolder.getRoot().getAbsolutePath());
     }
 
+    releasePortKeepers();
     CacheFactory cf = new CacheFactory(this.properties);
-    // cf.setPdxReadSerialized(false);
-    // cf.setPdxPersistent(false);
+
     cache = cf.create();
-    DistributionConfig config =
-        ((InternalDistributedSystem) cache.getDistributedSystem()).getConfig();
     server = cache.addCacheServer();
-
-    server.setPort(this.port);
-
+    server.setPort(this.serverPort.getPort());
     server.start();
 
     for (Map.Entry<String, RegionShortcut> region : regionsToCreate.entrySet()) {
@@ -98,6 +99,13 @@ public class LocalServerStarterRule extends ExternalResource implements Serializ
     if (temporaryFolder != null) {
       temporaryFolder.delete();
     }
+
+    releasePortKeepers();
+  }
+
+  private void releasePortKeepers() {
+    Stream.of(serverPort, jmxPort, httpPort, tcpPort).filter(Objects::nonNull)
+        .forEach(AvailablePort.Keeper::release);
   }
 
   public int getHttpPort() {
@@ -108,7 +116,7 @@ public class LocalServerStarterRule extends ExternalResource implements Serializ
     }
 
     if (properties.getProperty(ConfigurationProperties.START_DEV_REST_API) != null) {
-      throw new IllegalStateException("No HTTP_SERVICE_PORT ahs been specified");
+      throw new IllegalStateException("No HTTP_SERVICE_PORT has been specified");
     } else {
       throw new IllegalStateException("Dev rest api not configured for this server");
     }
@@ -144,8 +152,8 @@ public class LocalServerStarterRule extends ExternalResource implements Serializ
     return Integer.valueOf(jmxPort);
   }
 
-  public int getPort() {
-    return this.port;
+  public int getServerPort() {
+    return this.serverPort.getPort();
   }
 
 }

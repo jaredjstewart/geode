@@ -53,7 +53,7 @@ public class ClientExecuteFunctionAuthDUnitTest extends JUnit4DistributedTestCas
       new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
-          .createRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
+          .withRegion(RegionShortcut.REPLICATE, REGION_NAME).buildInThisVM();
 
   @Before
   public void setup() {
@@ -65,7 +65,7 @@ public class ClientExecuteFunctionAuthDUnitTest extends JUnit4DistributedTestCas
 
     FunctionService.registerFunction(function);
     client1.invoke("logging in with dataReader", () -> {
-      ClientCache cache = createClientCache("dataReader", "1234567", server.getPort());
+      ClientCache cache = createClientCache("dataReader", "1234567", server.getServerPort());
 
       FunctionService.registerFunction(function);
 
@@ -74,7 +74,7 @@ public class ClientExecuteFunctionAuthDUnitTest extends JUnit4DistributedTestCas
     });
 
     client2.invoke("logging in with super-user", () -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
 
       FunctionService.registerFunction(function);
       ResultCollector rc = FunctionService.onServer(cache.getDefaultPool()).withArgs(Boolean.TRUE)
@@ -88,7 +88,7 @@ public class ClientExecuteFunctionAuthDUnitTest extends JUnit4DistributedTestCas
   public void testExecuteRegionFunctionWithOutClientRegistration() {
     FunctionService.registerFunction(function);
     client1.invoke("logging in with dataReader", () -> {
-      ClientCache cache = createClientCache("dataReader", "1234567", server.getPort());
+      ClientCache cache = createClientCache("dataReader", "1234567", server.getServerPort());
       assertNotAuthorized(() -> FunctionService.onServer(cache.getDefaultPool())
           .withArgs(Boolean.TRUE).execute(function.getId()), "DATA:WRITE");
     });

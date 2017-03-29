@@ -36,7 +36,7 @@ public class PulseDataExportTest {
 
   @Rule
   public LocalServerStarterRule server = new ServerStarterBuilder().withJMXManager()
-      .createRegion(RegionShortcut.REPLICATE, "regionA").buildInThisVM();
+      .withRegion(RegionShortcut.REPLICATE, "regionA").buildInThisVM();
 
   @Rule
   public HttpClientRule client = new HttpClientRule(server.getHttpPort());

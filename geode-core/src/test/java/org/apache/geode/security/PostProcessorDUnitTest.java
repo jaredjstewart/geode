@@ -78,7 +78,7 @@ public class PostProcessorDUnitTest extends JUnit4DistributedTestCase {
     keys.add("key2");
 
     client1.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
 
       // post process for get
@@ -96,7 +96,7 @@ public class PostProcessorDUnitTest extends JUnit4DistributedTestCase {
   @Test
   public void testPostProcessQuery() {
     client1.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
 
       // post process for query
@@ -123,7 +123,7 @@ public class PostProcessorDUnitTest extends JUnit4DistributedTestCase {
   @Test
   public void testRegisterInterestPostProcess() {
     client1.invoke(() -> {
-      ClientCache cache = createClientCache("super-user", "1234567", server.getPort());
+      ClientCache cache = createClientCache("super-user", "1234567", server.getServerPort());
 
       ClientRegionFactory factory = cache.createClientRegionFactory(ClientRegionShortcut.PROXY);
       factory.addCacheListener(new CacheListenerAdapter() {
@@ -140,7 +140,7 @@ public class PostProcessorDUnitTest extends JUnit4DistributedTestCase {
     });
 
     client2.invoke(() -> {
-      ClientCache cache = createClientCache("dataUser", "1234567", server.getPort());
+      ClientCache cache = createClientCache("dataUser", "1234567", server.getServerPort());
       Region region = createProxyRegion(cache, REGION_NAME);
       region.put("key1", "value2");
     });
