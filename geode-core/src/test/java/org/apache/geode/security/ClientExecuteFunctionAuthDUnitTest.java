@@ -45,12 +45,11 @@ public class ClientExecuteFunctionAuthDUnitTest extends JUnit4DistributedTestCas
   final Host host = Host.getHost(0);
   final VM client1 = host.getVM(1);
   final VM client2 = host.getVM(2);
-  private int serverPort;
 
   private final static Function function = new TestFunction(true, TestFunction.TEST_FUNCTION1);
 
   @Rule
-  public transient LocalServerStarterRule server =
+  public LocalServerStarterRule server =
       new ServerStarterBuilder().withProperty(SECURITY_MANAGER, TestSecurityManager.class.getName())
           .withProperty(TestSecurityManager.SECURITY_JSON,
               "org/apache/geode/management/internal/security/clientServer.json")
