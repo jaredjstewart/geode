@@ -25,6 +25,7 @@ import static org.apache.geode.distributed.ConfigurationProperties.SECURITY_MANA
 import static org.apache.geode.distributed.ConfigurationProperties.TCP_PORT;
 
 import org.apache.geode.distributed.ConfigurationProperties;
+import org.apache.geode.internal.AvailablePort;
 import org.apache.geode.internal.AvailablePortHelper;
 import org.apache.geode.security.SecurityManager;
 
@@ -32,7 +33,10 @@ import java.util.Properties;
 
 public class LocatorStarterBuilder {
   private Properties properties = new Properties();
-  private Integer locatorPort;
+  private AvailablePort.Keeper locatorPort;
+  private AvailablePort.Keeper jmxPort;
+  private AvailablePort.Keeper httpPort;
+  private AvailablePort.Keeper tcpPort;
 
   public LocatorStarterBuilder() {}
 
@@ -42,30 +46,34 @@ public class LocatorStarterBuilder {
     return this;
   }
 
-  Properties getProperties() {
-    return this.properties;
+  public LocalLocatorStarterRule buildInThisVM() {
+    setDefaultProperties();
+    throwIfPortsAreHardcoded();
+    setPortPropertiesFromKeepers();
+    return new LocalLocatorStarterRule(this);
   }
 
-  int getLocatorPort() {
-    if (locatorPort == null) {
-      throw new IllegalStateException("Locator port not set");
-    }
-    return this.locatorPort;
+  Properties getProperties() {
+    return this.properties;
   }
 
   private void setDefaultProperties() {
     properties.putIfAbsent(ConfigurationProperties.NAME, "locator");
     // properties.putIfAbsent(LOG_FILE, new File(properties.get(ConfigurationProperties.NAME) +
     // ".log").getAbsolutePath().toString());
-    int[] ports = AvailablePortHelper.getRandomAvailableTCPPorts(4);
 
     if (locatorPort == null) {
-      locatorPort = ports[0];
+      this.locatorPort = AvailablePortHelper.getRandomAvailableTCPPortKeepers(1).get(0);
     }
-
-    properties.putIfAbsent(JMX_MANAGER_PORT, ports[1] + "");
-    properties.putIfAbsent(TCP_PORT, ports[2] + "");
-    properties.putIfAbsent(HTTP_SERVICE_PORT, ports[3] + "");
+    if (jmxPort == null) {
+      this.jmxPort = AvailablePortHelper.getRandomAvailableTCPPortKeepers(1).get(0);
+    }
+    if (httpPort == null) {
+      this.httpPort = AvailablePortHelper.getRandomAvailableTCPPortKeepers(1).get(0);
+    }
+    if (locatorPort == null) {
+      this.tcpPort = AvailablePortHelper.getRandomAvailableTCPPortKeepers(1).get(0);
+    }
 
     properties.putIfAbsent(JMX_MANAGER, "true");
     properties.putIfAbsent(JMX_MANAGER_START, "true");
@@ -73,9 +81,41 @@ public class LocatorStarterBuilder {
     properties.putIfAbsent(JMX_MANAGER_HOSTNAME_FOR_CLIENTS, "localhost");
   }
 
-  public LocalLocatorStarterRule buildInThisVM() {
-    setDefaultProperties();
-    return new LocalLocatorStarterRule(this);
+  private void setPortPropertiesFromKeepers() {
+    if (jmxPort != null) {
+      properties.setProperty(JMX_MANAGER_PORT, Integer.toString(jmxPort.getPort()));
+    }
+
+    if (httpPort != null) {
+      properties.setProperty(HTTP_SERVICE_PORT, Integer.toString(httpPort.getPort()));
+    }
+
+    if (tcpPort != null) {
+      properties.setProperty(TCP_PORT, Integer.toString(tcpPort.getPort()));
+    }
   }
 
+  private void throwIfPortsAreHardcoded() {
+    if (properties.getProperty(JMX_MANAGER_PORT) != null
+        || properties.getProperty(HTTP_SERVICE_PORT) != null
+        || properties.getProperty(TCP_PORT) != null) {
+      throw new IllegalArgumentException("Ports cannot be hardcoded.");
+    }
+  }
+
+  AvailablePort.Keeper getLocatorPort() {
+    return locatorPort;
+  }
+
+  AvailablePort.Keeper getJmxPort() {
+    return jmxPort;
+  }
+
+  AvailablePort.Keeper getHttpPort() {
+    return httpPort;
+  }
+
+  AvailablePort.Keeper getTcpPort() {
+    return tcpPort;
+  }
 }

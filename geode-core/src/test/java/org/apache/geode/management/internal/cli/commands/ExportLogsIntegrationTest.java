@@ -37,7 +37,7 @@ public class ExportLogsIntegrationTest {
   public GfshShellConnectionRule gfsh = new GfshShellConnectionRule();
 
   protected void connect() throws Exception {
-    gfsh.connectAndVerify(locator.getPort(), PortType.locator);
+    gfsh.connectAndVerify(locator.getLocatorPort(), PortType.locator);
   }
 
   @Test

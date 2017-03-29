@@ -20,30 +20,39 @@ import static org.junit.Assert.assertTrue;
 import org.apache.geode.distributed.ConfigurationProperties;
 import org.apache.geode.distributed.internal.DistributionConfig;
 import org.apache.geode.distributed.internal.InternalLocator;
+import org.apache.geode.internal.AvailablePort;
 import org.apache.geode.internal.datasource.ConfigProperty;
 import org.awaitility.Awaitility;
 import org.junit.rules.ExternalResource;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public class LocalLocatorStarterRule extends ExternalResource {
   private volatile InternalLocator internalLocator;
   private final Properties properties;
-  private final int port;
+  private final AvailablePort.Keeper locatorPort;
+  private final AvailablePort.Keeper jmxPort;
+  private final AvailablePort.Keeper httpPort;
+  private final AvailablePort.Keeper tcpPort;
 
   LocalLocatorStarterRule(LocatorStarterBuilder locatorStarterBuilder) {
     this.properties = locatorStarterBuilder.getProperties();
-    this.port = locatorStarterBuilder.getLocatorPort();
+    this.locatorPort = locatorStarterBuilder.getLocatorPort();
+    this.jmxPort = locatorStarterBuilder.getJmxPort();
+    this.httpPort = locatorStarterBuilder.getHttpPort();
+    this.tcpPort = locatorStarterBuilder.getTcpPort();
   }
 
   public String getHostname() {
     return "localhost";
   }
 
-  public int getPort() {
-    return this.port;
+  public int getLocatorPort() {
+    return this.locatorPort.getPort();
   }
 
   public int getHttpPort() {
@@ -54,12 +63,18 @@ public class LocalLocatorStarterRule extends ExternalResource {
     return Integer.valueOf(httpPort);
   }
 
+  private void releasePortKeepers() {
+    Stream.of(locatorPort, jmxPort, httpPort, tcpPort).filter(Objects::nonNull)
+        .forEach(AvailablePort.Keeper::release);
+  }
 
   @Override
   protected void before() {
+    releasePortKeepers();
     try {
       // this will start a jmx manager and admin rest service by default
-      this.internalLocator = (InternalLocator) startLocatorAndDS(port, null, properties);
+      this.internalLocator =
+          (InternalLocator) startLocatorAndDS(locatorPort.getPort(), null, properties);
     } catch (IOException e) {
       throw new RuntimeException("unable to start up locator.", e);
     }
@@ -74,6 +89,8 @@ public class LocalLocatorStarterRule extends ExternalResource {
 
   @Override
   protected void after() {
+    releasePortKeepers();
+
     if (internalLocator != null) {
       internalLocator.stop();
       internalLocator = null;

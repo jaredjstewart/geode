@@ -67,7 +67,6 @@ public class ServerStarterBuilder {
 
     if (this.httpPort == null) {
       this.httpPort = AvailablePortHelper.getRandomAvailableTCPPortKeepers(1).get(0);
-
     }
 
     properties.setProperty(JMX_MANAGER, "true");
@@ -154,7 +153,6 @@ public class ServerStarterBuilder {
 
     }
   }
-
 
   AvailablePort.Keeper getServerPort() {
     return serverPort;
