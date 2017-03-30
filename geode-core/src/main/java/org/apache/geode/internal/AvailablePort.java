@@ -449,7 +449,7 @@ public class AvailablePort {
    * smaller that can cause bug 46690
    *
    */
-  public static class Keeper implements Serializable{
+  public static class Keeper implements Serializable {
     private transient final ServerSocket ss;
     private final int port;
 
