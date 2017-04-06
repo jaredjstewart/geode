@@ -18,6 +18,7 @@ package org.apache.geode.management.internal.configuration;
 import static org.apache.geode.distributed.ConfigurationProperties.GROUPS;
 import static org.apache.geode.distributed.ConfigurationProperties.LOCATORS;
 import static org.apache.geode.distributed.ConfigurationProperties.LOG_LEVEL;
+import static org.apache.geode.test.dunit.Host.getHost;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.geode.test.dunit.rules.GfshShellConnectionRule;
@@ -37,6 +38,10 @@ public class ClusterConfigDeployJarDUnitTest extends ClusterConfigBaseTest {
 
   @Before
   public void before() throws Exception {
+    getHost(0).getVM(1).bounce();
+    getHost(0).getVM(2).bounce();
+    getHost(0).getVM(3).bounce();
+
     super.before();
     clusterJar = createJarFileWithClass("Cluster", "cluster.jar", lsRule.getTempFolder().getRoot());
     group1Jar = createJarFileWithClass("Group1", "group1.jar", lsRule.getTempFolder().getRoot());
