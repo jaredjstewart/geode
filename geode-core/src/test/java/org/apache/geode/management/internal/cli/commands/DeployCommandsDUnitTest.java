@@ -15,6 +15,7 @@
 package org.apache.geode.management.internal.cli.commands;
 
 import static org.apache.geode.distributed.ConfigurationProperties.GROUPS;
+import static org.apache.geode.test.dunit.Host.getHost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertNotNull;
@@ -76,6 +77,9 @@ public class DeployCommandsDUnitTest implements Serializable {
 
   @Before
   public void setup() throws Exception {
+    getHost(0).getVM(1).bounce();
+    getHost(0).getVM(2).bounce();
+
     ClassBuilder classBuilder = new ClassBuilder();
     File jarsDir = lsRule.getTempFolder().newFolder();
     jar1 = new File(jarsDir, jarName1);

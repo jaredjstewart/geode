@@ -18,6 +18,7 @@ package org.apache.geode.management.internal.configuration;
 
 import static org.apache.geode.distributed.ConfigurationProperties.ENABLE_CLUSTER_CONFIGURATION;
 import static org.apache.geode.distributed.ConfigurationProperties.USE_CLUSTER_CONFIGURATION;
+import static org.apache.geode.test.dunit.Host.getHost;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.geode.internal.ClassBuilder;
@@ -58,6 +59,10 @@ public class ClusterConfigBaseTest {
 
   @Before
   public void before() throws Exception {
+    getHost(0).getVM(0).bounce();
+    getHost(0).getVM(1).bounce();
+    getHost(0).getVM(2).bounce();
+    getHost(0).getVM(3).bounce();
     clusterConfigZipPath = buildClusterZipFile();
     locatorProps = new Properties();
     serverProps = new Properties();

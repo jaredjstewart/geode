@@ -14,6 +14,7 @@
  */
 package org.apache.geode.management.internal.cli.commands;
 
+import static org.apache.geode.test.dunit.Host.getHost;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.geode.cache.execute.Execution;
@@ -66,6 +67,9 @@ public class DeployCommandRedeployDUnitTest implements Serializable {
 
   @Before
   public void setup() throws Exception {
+    getHost(0).getVM(0).bounce();
+    getHost(0).getVM(1).bounce();
+    getHost(0).getVM(2).bounce();
     jarAVersion1 = createJarWithFunctionA(VERSION1);
     jarAVersion2 = createJarWithFunctionA(VERSION2);
 

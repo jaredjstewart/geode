@@ -32,7 +32,7 @@ configurations {
 
 dependencies {
    // Source Dependencies
-  // External 
+  // External
   provided files("${System.getProperty('java.home')}/../lib/tools.jar")
   compile 'com.github.stephenc.findbugs:findbugs-annotations:' + project.'stephenc-findbugs.version'
   compile 'org.jgroups:jgroups:' + project.'jgroups.version'
@@ -111,7 +111,11 @@ dependencies {
   // to use a standard version. Once shiro deps are updated, remove this explicit dependency
   // in favor of a transitive dependency on beanutils.
   compile 'commons-beanutils:commons-beanutils:' + project.'commons-beanutils.version'
-  
+
+  // https://mvnrepository.com/artifact/io.github.lukehutch/fast-classpath-scanner
+  compile group: 'io.github.lukehutch', name: 'fast-classpath-scanner', version: '2.0.11'
+
+
   compile project(':geode-common')
   compile project(':geode-json')
   

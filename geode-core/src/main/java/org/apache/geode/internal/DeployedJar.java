@@ -14,6 +14,9 @@
  */
 package org.apache.geode.internal;
 
+import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
+import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -24,7 +27,9 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.security.MessageDigest;
@@ -184,37 +189,46 @@ public class DeployedJar {
 
     JarInputStream jarInputStream = null;
     try {
+      List<String> functionClasses = findFunctionsInThisJar();
+
       jarInputStream = new JarInputStream(byteArrayInputStream);
       JarEntry jarEntry = jarInputStream.getNextJarEntry();
 
       while (jarEntry != null) {
         if (jarEntry.getName().endsWith(".class")) {
-          if (isDebugEnabled) {
-            logger.debug("Attempting to load class: {}, from JAR file: {}", jarEntry.getName(),
-                this.file.getAbsolutePath());
-          }
-
           final String className = jarEntry.getName().replaceAll("/", "\\.").substring(0,
               (jarEntry.getName().length() - 6));
-          try {
-            Class<?> clazz = ClassPathLoader.getLatest().forName(className);
-            Collection<Function> registerableFunctions = getRegisterableFunctionsFromClass(clazz);
-            for (Function function : registerableFunctions) {
-              FunctionService.registerFunction(function);
-              if (isDebugEnabled) {
-                logger.debug("Registering function class: {}, from JAR file: {}", className,
-                    this.file.getAbsolutePath());
-              }
-              this.registeredFunctions.add(function);
+
+          if (functionClasses.contains(className)) {
+            if (isDebugEnabled) {
+              logger.debug("Attempting to load class: {}, from JAR file: {}", jarEntry.getName(),
+                  this.file.getAbsolutePath());
             }
-          } catch (ClassNotFoundException cnfex) {
-            logger.error("Unable to load all classes from JAR file: {}",
-                this.file.getAbsolutePath(), cnfex);
-            throw cnfex;
-          } catch (NoClassDefFoundError ncdfex) {
-            logger.error("Unable to load all classes from JAR file: {}",
-                this.file.getAbsolutePath(), ncdfex);
-            throw ncdfex;
+            try {
+              Class<?> clazz = ClassPathLoader.getLatest().forName(className);
+              Collection<Function> registerableFunctions = getRegisterableFunctionsFromClass(clazz);
+              for (Function function : registerableFunctions) {
+                FunctionService.registerFunction(function);
+                if (isDebugEnabled) {
+                  logger.debug("Registering function class: {}, from JAR file: {}", className,
+                      this.file.getAbsolutePath());
+                }
+                this.registeredFunctions.add(function);
+              }
+            } catch (ClassNotFoundException cnfex) {
+              logger.error("Unable to load all classes from JAR file: {}",
+                  this.file.getAbsolutePath(), cnfex);
+              throw cnfex;
+            } catch (NoClassDefFoundError ncdfex) {
+              logger.error("Unable to load all classes from JAR file: {}",
+                  this.file.getAbsolutePath(), ncdfex);
+              throw ncdfex;
+            }
+          } else {
+            if (isDebugEnabled) {
+              logger.debug("No functions found in class: {}, from JAR file: {}", jarEntry.getName(),
+                  this.file.getAbsolutePath());
+            }
           }
         }
         jarEntry = jarInputStream.getNextJarEntry();
@@ -325,6 +339,15 @@ public class DeployedJar {
     }
 
     return registerableFunctions;
+  }
+
+  private List<String> findFunctionsInThisJar() throws IOException {
+    URLClassLoader urlClassLoader =
+        new URLClassLoader(new URL[] {this.getFile().getCanonicalFile().toURL()});
+    FastClasspathScanner fastClasspathScanner = new FastClasspathScanner()
+        .removeTemporaryFilesAfterScan(true).overrideClassLoaders(urlClassLoader);
+    ScanResult scanResult = fastClasspathScanner.scan();
+    return scanResult.getNamesOfClassesImplementing(Function.class);
   }
 
   private Function newFunction(final Class<Function> clazz, final boolean errorOnNoSuchMethod) {
