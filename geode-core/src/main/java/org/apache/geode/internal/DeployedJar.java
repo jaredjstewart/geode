@@ -27,10 +27,8 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -42,7 +40,6 @@ import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-import org.apache.geode.cache.Cache;
 import org.apache.logging.log4j.Logger;
 
 import org.apache.geode.cache.CacheClosedException;
@@ -53,7 +50,6 @@ import org.apache.geode.cache.execute.FunctionService;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.logging.LogService;
 import org.apache.geode.pdx.internal.TypeRegistry;
-import sun.nio.ch.ChannelInputStream;
 
 /**
  * ClassLoader for a single JAR file.
@@ -108,7 +104,7 @@ public class DeployedJar {
           + ", was modified prior to obtaining a lock: " + jarName);
     }
 
-    if (!isValidJarContent(getJarContent())) {
+    if (!hasValidJarContent(getJarContent())) {
       throw new IllegalArgumentException(
           "File does not contain valid JAR content: " + versionedJarFile.getAbsolutePath());
     }
@@ -152,23 +148,10 @@ public class DeployedJar {
    * @param jarBytes Bytes of data to be validated.
    * @return True if the data has JAR content, false otherwise
    */
-  public static boolean isValidJarContent(final byte[] jarBytes) {
+  public static boolean hasValidJarContent(final byte[] jarBytes) {
     return hasValidJarContent(new ByteArrayInputStream(jarBytes));
   }
 
-  /**
-   * Peek into the JAR data and make sure that it is valid JAR content.
-   * 
-   * @param jarFile File whose contents should be validated.
-   * @return True if the data has JAR content, false otherwise
-   */
-  public static boolean hasValidJarContent(final File jarFile) {
-    try {
-      return hasValidJarContent(new FileInputStream(jarFile));
-    } catch (IOException ioex) {
-      return false;
-    }
-  }
 
   /**
    * Scan the JAR file and attempt to load all classes and register any function classes found.
@@ -215,14 +198,10 @@ public class DeployedJar {
                 }
                 this.registeredFunctions.add(function);
               }
-            } catch (ClassNotFoundException cnfex) {
+            } catch (ClassNotFoundException | NoClassDefFoundError cnfex) {
               logger.error("Unable to load all classes from JAR file: {}",
                   this.file.getAbsolutePath(), cnfex);
               throw cnfex;
-            } catch (NoClassDefFoundError ncdfex) {
-              logger.error("Unable to load all classes from JAR file: {}",
-                  this.file.getAbsolutePath(), ncdfex);
-              throw ncdfex;
             }
           } else {
             if (isDebugEnabled) {
@@ -365,20 +344,11 @@ public class DeployedJar {
               clazz.getName());
         }
       }
-    } catch (SecurityException sex) {
-      logger.error("Zero-arg constructor of function not accessible for class: {}", clazz.getName(),
-          sex);
-    } catch (IllegalAccessException iae) {
-      logger.error("Zero-arg constructor of function not accessible for class: {}", clazz.getName(),
-          iae);
-    } catch (InvocationTargetException ite) {
+    } catch (Exception ex) {
       logger.error("Error when attempting constructor for function for class: {}", clazz.getName(),
-          ite);
-    } catch (InstantiationException ie) {
-      logger.error("Unable to instantiate function for class: {}", clazz.getName(), ie);
-    } catch (ExceptionInInitializerError eiiex) {
-      logger.error("Error during function initialization for class: {}", clazz.getName(), eiiex);
+          ex);
     }
+
     return null;
   }
 

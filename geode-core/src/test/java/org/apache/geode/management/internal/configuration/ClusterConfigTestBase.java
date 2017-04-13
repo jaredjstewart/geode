@@ -23,6 +23,7 @@ import static org.apache.geode.test.dunit.Host.getHost;
 import org.apache.commons.io.FileUtils;
 import org.apache.geode.internal.ClassBuilder;
 import org.apache.geode.management.internal.configuration.utils.ZipUtils;
+import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.rules.LocatorServerStartupRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -31,7 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
-public class ClusterConfigBaseTest {
+public abstract class ClusterConfigTestBase {
   public String clusterConfigZipPath;
 
   public static final ConfigGroup CLUSTER = new ConfigGroup("cluster").regions("regionForCluster")
@@ -52,17 +53,13 @@ public class ClusterConfigBaseTest {
           .regions("regionForGroup2"));
 
   @Rule
-  public LocatorServerStartupRule lsRule = new LocatorServerStartupRule();
+  public LocatorServerStartupRule lsRule = new LocatorServerStartupRule(true);
 
   protected Properties locatorProps;
   protected Properties serverProps;
 
   @Before
-  public void before() throws Exception {
-    getHost(0).getVM(0).bounce();
-    getHost(0).getVM(1).bounce();
-    getHost(0).getVM(2).bounce();
-    getHost(0).getVM(3).bounce();
+  public void beforeClusterConfigTestBase() throws Exception {
     clusterConfigZipPath = buildClusterZipFile();
     locatorProps = new Properties();
     serverProps = new Properties();
@@ -73,7 +70,6 @@ public class ClusterConfigBaseTest {
   }
 
   private String buildClusterZipFile() throws Exception {
-    ClassBuilder classBuilder = new ClassBuilder();
     File clusterConfigDir = this.lsRule.getTempFolder().newFolder("cluster_config");
 
     File clusterDir = new File(clusterConfigDir, "cluster");
