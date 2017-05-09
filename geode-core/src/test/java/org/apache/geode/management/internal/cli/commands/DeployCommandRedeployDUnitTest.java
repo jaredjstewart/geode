@@ -195,10 +195,8 @@ public class DeployCommandRedeployDUnitTest implements Serializable {
           try {
             COUNT_OF_EXECUTIONS.incrementAndGet();
 
-            FunctionService
-                .onMember(distributedSystem, distributedSystem.getDistributedMember())
-                .execute(functionId)
-                .getResult();
+            FunctionService.onMember(distributedSystem, distributedSystem.getDistributedMember())
+                .execute(functionId).getResult();
           } catch (Exception e) {
             EXCEPTION.set(e);
           }

@@ -42,6 +42,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.jar.JarEntry;
@@ -151,13 +153,16 @@ public class DeployedJar {
 
   /**
    * Scan the JAR file and attempt to load all classes and register any function classes found.
+   *
+   * This method will process the contents of the JAR file as stored in this.jarByteContent instead
+   * of reading from the original JAR file. This is done because we can't open up the original file
+   * and then close it without releasing the shared lock that was obtained in the constructor. Once
+   * this method is finished, all classes will have been loaded and there will no longer be a need
+   * to hang on to the original contents so they will be discarded.
+   * 
+   * @return The functions that were registered.
    */
-  // This method will process the contents of the JAR file as stored in this.jarByteContent
-  // instead of reading from the original JAR file. This is done because we can't open up
-  // the original file and then close it without releasing the shared lock that was obtained
-  // in the constructor. Once this method is finished, all classes will have been loaded and
-  // there will no longer be a need to hang on to the original contents so they will be
-  // discarded.
+
   public synchronized void loadClassesAndRegisterFunctions() throws ClassNotFoundException {
     final boolean isDebugEnabled = logger.isDebugEnabled();
     if (isDebugEnabled) {
@@ -219,12 +224,26 @@ public class DeployedJar {
         }
       }
     }
+
+
   }
 
-  synchronized void cleanUp() {
-    for (Function function : this.registeredFunctions) {
-      FunctionService.unregisterFunction(function.getId());
+  /**
+   * Unregisters any functions that were removed by the new version of this jar.
+   * 
+   * @param newVersion The new version of this jar that was deployed, or null if this jar was
+   *        undeployed.
+   */
+  synchronized void cleanUp(DeployedJar newVersion) {
+    for (Function oldFunction : this.registeredFunctions) {
+      boolean functionWasRemoved =
+          (newVersion == null || !newVersion.hasFunctionWithId(oldFunction.getId()));
+
+      if (functionWasRemoved) {
+        FunctionService.unregisterFunction(oldFunction.getId());
+      }
     }
+
     this.registeredFunctions.clear();
 
     try {
@@ -391,6 +410,15 @@ public class DeployedJar {
       e.printStackTrace();
     }
     return null;
+  }
+
+  private boolean hasFunctionWithId(String id) {
+    if (this.registeredFunctions == null || this.registeredFunctions.isEmpty()) {
+      return false;
+    }
+
+    return this.registeredFunctions.stream().map(Function::getId)
+        .anyMatch(functionId -> functionId.equals(id));
   }
 
   @Override

@@ -26,7 +26,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 
-@Ignore
+// @Ignore
 @RunWith(Suite.class)
 @Suite.SuiteClasses({DeployedJarJUnitTest.class, DeployCommandsDUnitTest.class,
     JarDeployerIntegrationTest.class, ClassPathLoaderIntegrationTest.class,
