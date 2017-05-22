@@ -59,8 +59,7 @@ public abstract class AbstractCommandsSupport implements CommandMarker {
     }
   }
 
-  protected static void assertNotNull(final Object obj, final String message,
-      final Object... args) {
+  public static void assertNotNull(final Object obj, final String message, final Object... args) {
     if (obj == null) {
       throw new NullPointerException(String.format(message, args));
     }

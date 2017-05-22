@@ -39,15 +39,12 @@ import static org.apache.geode.distributed.ConfigurationProperties.REDIS_PORT;
 import static org.apache.geode.distributed.ConfigurationProperties.START_DEV_REST_API;
 import static org.apache.geode.distributed.ConfigurationProperties.STATISTIC_ARCHIVE_FILE;
 import static org.apache.geode.distributed.ConfigurationProperties.USE_CLUSTER_CONFIGURATION;
-import static org.apache.geode.internal.process.ProcessStreamReader.waitAndCaptureProcessStandardErrorStream;
 import static org.apache.geode.management.internal.cli.i18n.CliStrings.START_SERVER__PASSWORD;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.geode.GemFireException;
 import org.apache.geode.SystemFailure;
 import org.apache.geode.cache.server.CacheServer;
 import org.apache.geode.distributed.AbstractLauncher;
-import org.apache.geode.distributed.AbstractLauncher.ServiceState;
 import org.apache.geode.distributed.AbstractLauncher.Status;
 import org.apache.geode.distributed.LocatorLauncher;
 import org.apache.geode.distributed.LocatorLauncher.LocatorState;
@@ -70,7 +67,6 @@ import org.apache.geode.internal.process.ProcessStreamReader;
 import org.apache.geode.internal.process.ProcessStreamReader.InputListener;
 import org.apache.geode.internal.process.ProcessStreamReader.ReadingMode;
 import org.apache.geode.internal.process.ProcessType;
-import org.apache.geode.internal.process.ProcessUtils;
 import org.apache.geode.internal.process.signal.SignalEvent;
 import org.apache.geode.internal.process.signal.SignalListener;
 import org.apache.geode.internal.util.IOUtils;
@@ -83,20 +79,16 @@ import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.internal.ManagementConstants;
 import org.apache.geode.management.internal.cli.CliUtil;
 import org.apache.geode.management.internal.cli.LogWrapper;
-import org.apache.geode.management.internal.cli.converters.ConnectionEndpointConverter;
 import org.apache.geode.management.internal.cli.domain.ConnectToLocatorResult;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.cli.result.InfoResultData;
 import org.apache.geode.management.internal.cli.result.ResultBuilder;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.cli.shell.JmxOperationInvoker;
-import org.apache.geode.management.internal.cli.shell.OperationInvoker;
 import org.apache.geode.management.internal.cli.util.CauseFinder;
 import org.apache.geode.management.internal.cli.util.CommandStringBuilder;
 import org.apache.geode.management.internal.cli.util.ConnectionEndpoint;
-import org.apache.geode.management.internal.cli.util.JConsoleNotFoundException;
 import org.apache.geode.management.internal.cli.util.ThreePhraseGenerator;
-import org.apache.geode.management.internal.cli.util.VisualVmNotFoundException;
 import org.apache.geode.management.internal.configuration.domain.SharedConfigurationStatus;
 import org.apache.geode.management.internal.configuration.messages.SharedConfigurationStatusRequest;
 import org.apache.geode.management.internal.configuration.messages.SharedConfigurationStatusResponse;
@@ -106,32 +98,24 @@ import org.springframework.shell.core.annotation.CliAvailabilityIndicator;
 import org.springframework.shell.core.annotation.CliCommand;
 import org.springframework.shell.core.annotation.CliOption;
 
-import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Stack;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -1912,255 +1896,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
     return ResultBuilder.createInfoResult("Not-implemented");
   }
 
-  @CliCommand(value = CliStrings.START_JCONSOLE, help = CliStrings.START_JCONSOLE__HELP)
-  @CliMetaData(shellOnly = true, relatedTopic = {CliStrings.TOPIC_GEODE_MANAGER,
-      CliStrings.TOPIC_GEODE_JMX, CliStrings.TOPIC_GEODE_M_AND_M})
-  public Result startJConsole(
-      @CliOption(key = CliStrings.START_JCONSOLE__INTERVAL, unspecifiedDefaultValue = "4",
-          help = CliStrings.START_JCONSOLE__INTERVAL__HELP) final int interval,
-      @CliOption(key = CliStrings.START_JCONSOLE__NOTILE, specifiedDefaultValue = "true",
-          unspecifiedDefaultValue = "false",
-          help = CliStrings.START_JCONSOLE__NOTILE__HELP) final boolean notile,
-      @CliOption(key = CliStrings.START_JCONSOLE__PLUGINPATH,
-          help = CliStrings.START_JCONSOLE__PLUGINPATH__HELP) final String pluginpath,
-      @CliOption(key = CliStrings.START_JCONSOLE__VERSION, specifiedDefaultValue = "true",
-          unspecifiedDefaultValue = "false",
-          help = CliStrings.START_JCONSOLE__VERSION__HELP) final boolean version,
-      @CliOption(key = CliStrings.START_JCONSOLE__J,
-          help = CliStrings.START_JCONSOLE__J__HELP) final List<String> jvmArgs) {
-    try {
-      String[] jconsoleCommandLine =
-          createJConsoleCommandLine(null, interval, notile, pluginpath, version, jvmArgs);
-
-      if (isDebugging()) {
-        getGfsh().printAsInfo(
-            String.format("JConsole command-line ($1%s)", Arrays.toString(jconsoleCommandLine)));
-      }
-
-      Process jconsoleProcess = Runtime.getRuntime().exec(jconsoleCommandLine);
-
-      StringBuilder message = new StringBuilder();
-
-      if (version) {
-        jconsoleProcess.waitFor();
-
-        BufferedReader reader =
-            new BufferedReader(new InputStreamReader(jconsoleProcess.getErrorStream()));
-
-        for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-          message.append(line);
-          message.append(StringUtils.LINE_SEPARATOR);
-        }
-
-        IOUtils.close(reader);
-      } else {
-        getGfsh().printAsInfo(CliStrings.START_JCONSOLE__RUN);
-
-        String jconsoleProcessOutput = waitAndCaptureProcessStandardErrorStream(jconsoleProcess);
-
-        if (StringUtils.isNotBlank(jconsoleProcessOutput)) {
-          message.append(StringUtils.LINE_SEPARATOR);
-          message.append(jconsoleProcessOutput);
-        }
-      }
-
-      return ResultBuilder.createInfoResult(message.toString());
-    } catch (GemFireException | IllegalStateException | IllegalArgumentException e) {
-      return ResultBuilder.createShellClientErrorResult(e.getMessage());
-    } catch (IOException e) {
-      return ResultBuilder
-          .createShellClientErrorResult(CliStrings.START_JCONSOLE__IO_EXCEPTION_MESSAGE);
-    } catch (VirtualMachineError e) {
-      SystemFailure.initiateFailure(e);
-      throw e;
-    } catch (Throwable t) {
-      SystemFailure.checkFailure();
-      return ResultBuilder.createShellClientErrorResult(
-          String.format(CliStrings.START_JCONSOLE__CATCH_ALL_ERROR_MESSAGE, toString(t, false)));
-    }
-  }
-
-  protected String[] createJConsoleCommandLine(final String member, final int interval,
-      final boolean notile, final String pluginpath, final boolean version,
-      final List<String> jvmArgs) {
-    List<String> commandLine = new ArrayList<>();
-
-    commandLine.add(getJConsolePathname());
-
-    if (version) {
-      commandLine.add("-version");
-    } else {
-      commandLine.add("-interval=" + interval);
-
-      if (notile) {
-        commandLine.add("-notile");
-      }
-
-      if (StringUtils.isNotBlank(pluginpath)) {
-        commandLine.add("-pluginpath " + pluginpath);
-      }
-
-      if (jvmArgs != null) {
-        for (final String arg : jvmArgs) {
-          commandLine.add("-J" + arg);
-        }
-      }
-
-      String jmxServiceUrl = getJmxServiceUrlAsString(member);
-
-      if (StringUtils.isNotBlank(jmxServiceUrl)) {
-        commandLine.add(jmxServiceUrl);
-      }
-    }
-
-    return commandLine.toArray(new String[commandLine.size()]);
-  }
-
-  protected String getJConsolePathname() {
-    return getJdkToolPathname("jconsole" + getExecutableSuffix(),
-        new JConsoleNotFoundException(CliStrings.START_JCONSOLE__NOT_FOUND_ERROR_MESSAGE));
-  }
-
-  protected String getJdkToolPathname(final String jdkToolExecutableName,
-      final GemFireException throwable) {
-    assertNotNull(jdkToolExecutableName, "The JDK tool executable name cannot be null!");
-    assertNotNull(throwable, "The GemFireException cannot be null!");
-
-    Stack<String> pathnames = new Stack<>();
-
-    pathnames.push(jdkToolExecutableName);
-    pathnames
-        .push(IOUtils.appendToPath(System.getenv("JAVA_HOME"), "..", "bin", jdkToolExecutableName));
-    pathnames.push(IOUtils.appendToPath(System.getenv("JAVA_HOME"), "bin", jdkToolExecutableName));
-    pathnames.push(IOUtils.appendToPath(JAVA_HOME, "..", "bin", jdkToolExecutableName));
-    pathnames.push(IOUtils.appendToPath(JAVA_HOME, "bin", jdkToolExecutableName));
-
-    return getJdkToolPathname(pathnames, throwable);
-  }
-
-  protected String getJdkToolPathname(final Stack<String> pathnames,
-      final GemFireException throwable) {
-    assertNotNull(pathnames, "The JDK tool executable pathnames cannot be null!");
-    assertNotNull(throwable, "The GemFireException cannot be null!");
-
-    try {
-      // assume 'java.home' JVM System property refers to the JDK installation directory. note,
-      // however, that the
-      // 'java.home' JVM System property usually refers to the JRE used to launch this application
-      return IOUtils.verifyPathnameExists(pathnames.pop());
-    } catch (EmptyStackException ignore) {
-      throw throwable;
-    } catch (FileNotFoundException ignore) {
-      return getJdkToolPathname(pathnames, throwable);
-    }
-  }
-
-  protected static String getExecutableSuffix() {
-    return SystemUtils.isWindows() ? ".exe" : StringUtils.EMPTY;
-  }
-
-  protected String getJmxServiceUrlAsString(final String member) {
-    if (StringUtils.isNotBlank(member)) {
-      ConnectionEndpointConverter converter = new ConnectionEndpointConverter();
-
-      try {
-        ConnectionEndpoint connectionEndpoint =
-            converter.convertFromText(member, ConnectionEndpoint.class, null);
-        String hostAndPort = connectionEndpoint.getHost() + ":" + connectionEndpoint.getPort();
-        return String.format("service:jmx:rmi://%s/jndi/rmi://%s/jmxrmi", hostAndPort, hostAndPort);
-      } catch (Exception e) {
-        throw new IllegalArgumentException(
-            CliStrings.START_JCONSOLE__CONNECT_BY_MEMBER_NAME_ID_ERROR_MESSAGE);
-      }
-    } else {
-      if (isConnectedAndReady()
-          && (getGfsh().getOperationInvoker() instanceof JmxOperationInvoker)) {
-        JmxOperationInvoker jmxOperationInvoker =
-            (JmxOperationInvoker) getGfsh().getOperationInvoker();
-
-        return ObjectUtils.toString(jmxOperationInvoker.getJmxServiceUrl());
-      }
-    }
-
-    return null;
-  }
-
-  @CliCommand(value = CliStrings.START_JVISUALVM, help = CliStrings.START_JVISUALVM__HELP)
-  @CliMetaData(shellOnly = true, relatedTopic = {CliStrings.TOPIC_GEODE_MANAGER,
-      CliStrings.TOPIC_GEODE_JMX, CliStrings.TOPIC_GEODE_M_AND_M})
-  public Result startJVisualVM(@CliOption(key = CliStrings.START_JCONSOLE__J,
-      help = CliStrings.START_JCONSOLE__J__HELP) final List<String> jvmArgs) {
-    try {
-      String[] jvisualvmCommandLine = createJVisualVMCommandLine(jvmArgs);
-
-      if (isDebugging()) {
-        getGfsh().printAsInfo(
-            String.format("JVisualVM command-line (%1$s)", Arrays.toString(jvisualvmCommandLine)));
-      }
-
-      Process jvisualvmProcess = Runtime.getRuntime().exec(jvisualvmCommandLine);
-
-      getGfsh().printAsInfo(CliStrings.START_JVISUALVM__RUN);
-
-      String jvisualvmProcessOutput = waitAndCaptureProcessStandardErrorStream(jvisualvmProcess);
-
-      InfoResultData infoResultData = ResultBuilder.createInfoResultData();
-
-      if (StringUtils.isNotBlank(jvisualvmProcessOutput)) {
-        infoResultData.addLine(StringUtils.LINE_SEPARATOR);
-        infoResultData.addLine(jvisualvmProcessOutput);
-      }
-
-      return ResultBuilder.buildResult(infoResultData);
-    } catch (GemFireException | IllegalStateException | IllegalArgumentException e) {
-      return ResultBuilder.createShellClientErrorResult(e.getMessage());
-    } catch (VirtualMachineError e) {
-      SystemFailure.initiateFailure(e);
-      throw e;
-    } catch (Throwable t) {
-      SystemFailure.checkFailure();
-      return ResultBuilder.createShellClientErrorResult(
-          String.format(CliStrings.START_JVISUALVM__ERROR_MESSAGE, toString(t, false)));
-    }
-  }
-
-  protected String[] createJVisualVMCommandLine(final List<String> jvmArgs) {
-    List<String> commandLine = new ArrayList<>();
-
-    commandLine.add(getJVisualVMPathname());
-
-    if (jvmArgs != null) {
-      for (final String arg : jvmArgs) {
-        commandLine.add("-J" + arg);
-      }
-    }
-
-    return commandLine.toArray(new String[commandLine.size()]);
-  }
-
-  protected String getJVisualVMPathname() {
-    if (SystemUtils.isMacOSX()) {
-      try {
-        return IOUtils.verifyPathnameExists(
-            "/System/Library/Java/Support/VisualVM.bundle/Contents/Home/bin/jvisualvm");
-      } catch (FileNotFoundException e) {
-        throw new VisualVmNotFoundException(CliStrings.START_JVISUALVM__NOT_FOUND_ERROR_MESSAGE, e);
-      }
-    } else { // Linux, Solaris, Windows, etc...
-      try {
-        return getJdkToolPathname("jvisualvm" + getExecutableSuffix(),
-            new VisualVmNotFoundException(CliStrings.START_JVISUALVM__NOT_FOUND_ERROR_MESSAGE));
-      } catch (VisualVmNotFoundException e) {
-        if (!SystemUtils.isJavaVersionAtLeast("1.6")) {
-          throw new VisualVmNotFoundException(
-              CliStrings.START_JVISUALVM__EXPECTED_JDK_VERSION_ERROR_MESSAGE);
-        }
-
-        throw e;
-      }
-    }
-  }
-
   @Deprecated
   protected File readIntoTempFile(final String classpathResourceLocation) throws IOException {
     String resourceName = classpathResourceLocation
@@ -2191,8 +1926,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
 
     return resourceFile;
   }
-
-
 
   @CliAvailabilityIndicator({CliStrings.START_LOCATOR, CliStrings.STOP_LOCATOR,
       CliStrings.STATUS_LOCATOR, CliStrings.START_SERVER, CliStrings.STOP_SERVER,
