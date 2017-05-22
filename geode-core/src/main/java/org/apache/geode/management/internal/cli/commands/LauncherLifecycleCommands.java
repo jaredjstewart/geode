@@ -1870,32 +1870,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
     }
   }
 
-  // @CliCommand(value=CliStrings.START_MANAGER, help=CliStrings.START_MANAGER__HELP)
-  // @CliMetaData(shellOnly=true, relatedTopic = {CliStrings.TOPIC_GEODE_MANAGER,
-  // CliStrings.TOPIC_GEODE_JMX, CliStrings.TOPIC_GEODE_LIFECYCLE})
-  public Result startManager(
-      @CliOption(key = CliStrings.START_MANAGER__MEMBERNAME,
-          help = CliStrings.START_MANAGER__MEMBERNAME__HELP) String memberName,
-      @CliOption(key = CliStrings.START_MANAGER__DIR,
-          help = CliStrings.START_MANAGER__DIR__HELP) String dir,
-      @CliOption(key = CliStrings.START_MANAGER__PORT, unspecifiedDefaultValue = "1099",
-          help = CliStrings.START_MANAGER__PORT__HELP) int cacheServerPort,
-      @CliOption(key = CliStrings.START_MANAGER__BIND_ADDRESS,
-          unspecifiedDefaultValue = "localhost",
-          help = CliStrings.START_MANAGER__BIND_ADDRESS__HELP) String cacheServerHost,
-      @CliOption(key = CliStrings.START_MANAGER__CLASSPATH,
-          help = CliStrings.START_MANAGER__CLASSPATH__HELP) String classpath,
-      @CliOption(key = CliStrings.START_MANAGER__MAXHEAP,
-          help = CliStrings.START_MANAGER__MAXHEAP__HELP) String maxHeap,
-      @CliOption(key = CliStrings.START_MANAGER__INITIALHEAP,
-          help = CliStrings.START_MANAGER__INITIALHEAP__HELP) String initialHeap,
-      @CliOption(key = CliStrings.START_MANAGER__J,
-          help = CliStrings.START_MANAGER__J__HELP) Map<String, String> systepProps,
-      @CliOption(key = CliStrings.START_MANAGER__GEODEPROPS,
-          help = CliStrings.START_MANAGER__GEODEPROPS__HELP) Map<String, String> gemfireProps) {
-    return ResultBuilder.createInfoResult("Not-implemented");
-  }
-
   @Deprecated
   protected File readIntoTempFile(final String classpathResourceLocation) throws IOException {
     String resourceName = classpathResourceLocation
