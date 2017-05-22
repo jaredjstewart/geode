@@ -322,7 +322,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
                 new File(locatorLauncher.getWorkingDirectory()))),
             null);
 
-        locatorState = locatorStatus(workingDirectory, memberName);
+        locatorState = LocatorState.fromDirectory(workingDirectory, memberName);
         do {
           if (locatorProcess.isAlive()) {
             Gfsh.print(".");
@@ -331,7 +331,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
               TimeUnit.MILLISECONDS.timedWait(this, 500);
             }
 
-            locatorState = locatorStatus(workingDirectory, memberName);
+            locatorState = LocatorState.fromDirectory(workingDirectory, memberName);
 
             String currentLocatorStatusMessage = locatorState.getStatusMessage();
 
@@ -713,32 +713,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
       commandLine.add("-XX:CMSInitiatingOccupancyFraction=" + CMS_INITIAL_OCCUPANCY_FRACTION);
       // commandLine.add("-XX:MinHeapFreeRatio=" + MINIMUM_HEAP_FREE_RATIO);
     }
-  }
-
-  protected LocatorState locatorStatus(final File locatorPidFile, final int oldPid,
-      final String memberName) {
-    final int newPid = readPid(locatorPidFile);
-
-    if (newPid != INVALID_PID && newPid != oldPid) {
-      LocatorState locatorState = new LocatorLauncher.Builder().setPid(newPid).build().status();
-
-      if (ObjectUtils.equals(locatorState.getMemberName(), memberName)) {
-        return locatorState;
-      }
-    }
-
-    return new LocatorState(new LocatorLauncher.Builder().build(), Status.NOT_RESPONDING);
-  }
-
-  protected LocatorState locatorStatus(final String workingDirectory, final String memberName) {
-    LocatorState locatorState =
-        new LocatorLauncher.Builder().setWorkingDirectory(workingDirectory).build().status();
-
-    if (ObjectUtils.equals(locatorState.getMemberName(), memberName)) {
-      return locatorState;
-    }
-
-    return new LocatorState(new LocatorLauncher.Builder().build(), Status.NOT_RESPONDING);
   }
 
   protected String readErrorStream(final Process process) throws IOException {
