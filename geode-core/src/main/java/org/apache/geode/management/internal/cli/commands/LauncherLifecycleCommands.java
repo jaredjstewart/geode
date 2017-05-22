@@ -138,7 +138,6 @@ import javax.net.ssl.SSLHandshakeException;
  */
 @SuppressWarnings("unused")
 public class LauncherLifecycleCommands extends AbstractCommandsSupport {
-
   private static final String LOCATOR_TERM_NAME = "Locator";
   private static final String SERVER_TERM_NAME = "Server";
 
@@ -775,90 +774,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
           CliStrings.STATUS_LOCATOR__GENERAL_ERROR_MESSAGE, getLocatorId(locatorHost, locatorPort),
           StringUtils.defaultIfBlank(workingDirectory, SystemUtils.CURRENT_DIRECTORY),
           toString(t, getGfsh().getDebug())));
-    }
-  }
-
-  @CliCommand(value = CliStrings.STOP_LOCATOR, help = CliStrings.STOP_LOCATOR__HELP)
-  @CliMetaData(shellOnly = true,
-      relatedTopic = {CliStrings.TOPIC_GEODE_LOCATOR, CliStrings.TOPIC_GEODE_LIFECYCLE})
-  public Result stopLocator(
-      @CliOption(key = CliStrings.STOP_LOCATOR__MEMBER,
-          optionContext = ConverterHint.LOCATOR_MEMBER_IDNAME,
-          help = CliStrings.STOP_LOCATOR__MEMBER__HELP) final String member,
-      @CliOption(key = CliStrings.STOP_LOCATOR__PID,
-          help = CliStrings.STOP_LOCATOR__PID__HELP) final Integer pid,
-      @CliOption(key = CliStrings.STOP_LOCATOR__DIR,
-          help = CliStrings.STOP_LOCATOR__DIR__HELP) final String workingDirectory) {
-    LocatorState locatorState;
-
-    try {
-      if (StringUtils.isNotBlank(member)) {
-        if (isConnectedAndReady()) {
-          final MemberMXBean locatorProxy = getMemberMXBean(member);
-
-          if (locatorProxy != null) {
-            if (!locatorProxy.isLocator()) {
-              throw new IllegalStateException(
-                  CliStrings.format(CliStrings.STOP_LOCATOR__NOT_LOCATOR_ERROR_MESSAGE, member));
-            }
-
-            if (locatorProxy.isServer()) {
-              throw new IllegalStateException(CliStrings
-                  .format(CliStrings.STOP_LOCATOR__LOCATOR_IS_CACHE_SERVER_ERROR_MESSAGE, member));
-            }
-
-            locatorState = LocatorState.fromJson(locatorProxy.status());
-            locatorProxy.shutDownMember();
-          } else {
-            return ResultBuilder.createUserErrorResult(CliStrings.format(
-                CliStrings.STOP_LOCATOR__NO_LOCATOR_FOUND_FOR_MEMBER_ERROR_MESSAGE, member));
-          }
-        } else {
-          return ResultBuilder.createUserErrorResult(CliStrings.format(
-              CliStrings.STOP_SERVICE__GFSH_NOT_CONNECTED_ERROR_MESSAGE, LOCATOR_TERM_NAME));
-        }
-      } else {
-        final LocatorLauncher locatorLauncher =
-            new LocatorLauncher.Builder().setCommand(LocatorLauncher.Command.STOP)
-                .setDebug(isDebugging()).setPid(pid).setWorkingDirectory(workingDirectory).build();
-
-        locatorState = locatorLauncher.status();
-        locatorLauncher.stop();
-      }
-
-      if (Status.ONLINE.equals(locatorState.getStatus())) {
-        getGfsh().logInfo(
-            String.format(CliStrings.STOP_LOCATOR__STOPPING_LOCATOR_MESSAGE,
-                locatorState.getWorkingDirectory(), locatorState.getServiceLocation(),
-                locatorState.getMemberName(), locatorState.getPid(), locatorState.getLogFile()),
-            null);
-
-        StopWatch stopWatch = new StopWatch(true);
-        while (locatorState.isVmWithProcessIdRunning()) {
-          Gfsh.print(".");
-          if (stopWatch.elapsedTimeMillis() > WAITING_FOR_STOP_TO_MAKE_PID_GO_AWAY_TIMEOUT_MILLIS) {
-            break;
-          }
-          synchronized (this) {
-            TimeUnit.MILLISECONDS.timedWait(this, 500);
-          }
-        }
-
-        return ResultBuilder.createInfoResult(StringUtils.EMPTY);
-      } else {
-        return ResultBuilder.createUserErrorResult(locatorState.toString());
-      }
-    } catch (IllegalArgumentException | IllegalStateException e) {
-      return ResultBuilder.createUserErrorResult(e.getMessage());
-    } catch (VirtualMachineError e) {
-      SystemFailure.initiateFailure(e);
-      throw e;
-    } catch (Throwable t) {
-      SystemFailure.checkFailure();
-      return ResultBuilder.createShellClientErrorResult(String.format(
-          CliStrings.STOP_LOCATOR__GENERAL_ERROR_MESSAGE, toString(t, getGfsh().getDebug())));
-    } finally {
-      Gfsh.redirectInternalJavaLoggers();
     }
   }
 
