@@ -1017,22 +1017,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
     return INVALID_PID;
   }
 
-  protected ServerState serverStatus(final File serverPidFile, final int oldPid,
-      final String memberName) {
-    final int newPid = readPid(serverPidFile);
-
-    if (newPid != INVALID_PID && newPid != oldPid) {
-      ServerState serverState = new ServerLauncher.Builder().setPid(newPid)
-          .setDisableDefaultServer(true).build().status();
-
-      if (ObjectUtils.equals(serverState.getMemberName(), memberName)) {
-        return serverState;
-      }
-    }
-
-    return new ServerState(new ServerLauncher.Builder().build(), Status.NOT_RESPONDING);
-  }
-
   protected ServerState serverStatus(final String workingDirectory, final String memberName) {
     ServerState serverState = new ServerLauncher.Builder().setWorkingDirectory(workingDirectory)
         .setDisableDefaultServer(true).build().status();
