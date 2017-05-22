@@ -1379,59 +1379,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
     return delimitedLocators;
   }
 
-  @CliCommand(value = CliStrings.STATUS_SERVER, help = CliStrings.STATUS_SERVER__HELP)
-  @CliMetaData(shellOnly = true,
-      relatedTopic = {CliStrings.TOPIC_GEODE_SERVER, CliStrings.TOPIC_GEODE_LIFECYCLE})
-  public Result statusServer(
-      @CliOption(key = CliStrings.STATUS_SERVER__MEMBER, optionContext = ConverterHint.MEMBERIDNAME,
-          help = CliStrings.STATUS_SERVER__MEMBER__HELP) final String member,
-      @CliOption(key = CliStrings.STATUS_SERVER__PID,
-          help = CliStrings.STATUS_SERVER__PID__HELP) final Integer pid,
-      @CliOption(key = CliStrings.STATUS_SERVER__DIR,
-          help = CliStrings.STATUS_SERVER__DIR__HELP) final String workingDirectory) {
-    try {
-      if (StringUtils.isNotBlank(member)) {
-        if (isConnectedAndReady()) {
-          final MemberMXBean serverProxy = getMemberMXBean(member);
-
-          if (serverProxy != null) {
-            return ResultBuilder
-                .createInfoResult(ServerState.fromJson(serverProxy.status()).toString());
-          } else {
-            return ResultBuilder.createUserErrorResult(CliStrings.format(
-                CliStrings.STATUS_SERVER__NO_SERVER_FOUND_FOR_MEMBER_ERROR_MESSAGE, member));
-          }
-        } else {
-          return ResultBuilder.createUserErrorResult(CliStrings
-              .format(CliStrings.STATUS_SERVICE__GFSH_NOT_CONNECTED_ERROR_MESSAGE, "Cache Server"));
-        }
-      } else {
-        final ServerLauncher serverLauncher = new ServerLauncher.Builder()
-            .setCommand(ServerLauncher.Command.STATUS).setDebug(isDebugging())
-            // NOTE since we do not know whether the "CacheServer" was enabled or not on the GemFire
-            // server when it was started,
-            // set the disableDefaultServer property in the ServerLauncher.Builder to default status
-            // to the MemberMBean
-            // TODO fix this hack! (how, the 'start server' loop needs it)
-            .setDisableDefaultServer(true).setMemberName(member).setPid(pid)
-            .setWorkingDirectory(workingDirectory).build();
-
-        final ServerState status = serverLauncher.status();
-
-        return ResultBuilder.createInfoResult(status.toString());
-      }
-    } catch (IllegalArgumentException | IllegalStateException e) {
-      return ResultBuilder.createUserErrorResult(e.getMessage());
-    } catch (VirtualMachineError e) {
-      SystemFailure.initiateFailure(e);
-      throw e;
-    } catch (Throwable t) {
-      SystemFailure.checkFailure();
-      return ResultBuilder.createShellClientErrorResult(String.format(
-          CliStrings.STATUS_SERVER__GENERAL_ERROR_MESSAGE, toString(t, getGfsh().getDebug())));
-    }
-  }
-
   @Deprecated
   protected File readIntoTempFile(final String classpathResourceLocation) throws IOException {
     String resourceName = classpathResourceLocation
