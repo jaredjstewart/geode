@@ -39,6 +39,7 @@ import static org.apache.geode.distributed.ConfigurationProperties.REDIS_PORT;
 import static org.apache.geode.distributed.ConfigurationProperties.START_DEV_REST_API;
 import static org.apache.geode.distributed.ConfigurationProperties.STATISTIC_ARCHIVE_FILE;
 import static org.apache.geode.distributed.ConfigurationProperties.USE_CLUSTER_CONFIGURATION;
+import static org.apache.geode.internal.process.ProcessStreamReader.waitAndCaptureProcessStandardErrorStream;
 import static org.apache.geode.management.internal.cli.i18n.CliStrings.START_SERVER__PASSWORD;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -163,7 +164,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
   private static final long WAITING_FOR_PID_FILE_TO_CONTAIN_PID_TIMEOUT_MILLIS = 2 * 1000;
 
   protected static final int CMS_INITIAL_OCCUPANCY_FRACTION = 60;
-  protected static final int DEFAULT_PROCESS_OUTPUT_WAIT_TIME_MILLISECONDS = 5000;
   protected static final int INVALID_PID = -1;
   protected static final int MINIMUM_HEAP_FREE_RATIO = 10;
   protected static final int NUM_ATTEMPTS_FOR_SHARED_CONFIGURATION_STATUS = 3;
@@ -2191,238 +2191,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
     return resourceFile;
   }
 
-  @CliCommand(value = CliStrings.START_VSD, help = CliStrings.START_VSD__HELP)
-  @CliMetaData(shellOnly = true,
-      relatedTopic = {CliStrings.TOPIC_GEODE_M_AND_M, CliStrings.TOPIC_GEODE_STATISTICS})
-  public Result startVsd(@CliOption(key = CliStrings.START_VSD__FILE,
-      help = CliStrings.START_VSD__FILE__HELP) final String[] statisticsArchiveFilePathnames) {
-    try {
-      String geodeHome = System.getenv("GEODE_HOME");
 
-      assertState(StringUtils.isNotBlank(geodeHome), CliStrings.GEODE_HOME_NOT_FOUND_ERROR_MESSAGE);
-
-      assertState(IOUtils.isExistingPathname(getPathToVsd()),
-          String.format(CliStrings.START_VSD__NOT_FOUND_ERROR_MESSAGE, geodeHome));
-
-      String[] vsdCommandLine = createdVsdCommandLine(statisticsArchiveFilePathnames);
-
-      if (isDebugging()) {
-        getGfsh().printAsInfo(
-            String.format("GemFire VSD command-line (%1$s)", Arrays.toString(vsdCommandLine)));
-      }
-
-      Process vsdProcess = Runtime.getRuntime().exec(vsdCommandLine);
-
-      getGfsh().printAsInfo(CliStrings.START_VSD__RUN);
-
-      String vsdProcessOutput = waitAndCaptureProcessStandardErrorStream(vsdProcess);
-
-      InfoResultData infoResultData = ResultBuilder.createInfoResultData();
-
-      if (StringUtils.isNotBlank(vsdProcessOutput)) {
-        infoResultData.addLine(StringUtils.LINE_SEPARATOR);
-        infoResultData.addLine(vsdProcessOutput);
-      }
-
-      return ResultBuilder.buildResult(infoResultData);
-    } catch (GemFireException | IllegalStateException | IllegalArgumentException
-        | FileNotFoundException e) {
-      return ResultBuilder.createShellClientErrorResult(e.getMessage());
-    } catch (VirtualMachineError e) {
-      SystemFailure.initiateFailure(e);
-      throw e;
-    } catch (Throwable t) {
-      SystemFailure.checkFailure();
-      return ResultBuilder.createShellClientErrorResult(
-          String.format(CliStrings.START_VSD__ERROR_MESSAGE, toString(t, false)));
-    }
-  }
-
-  protected String[] createdVsdCommandLine(final String[] statisticsArchiveFilePathnames)
-      throws FileNotFoundException {
-    List<String> commandLine = new ArrayList<>();
-
-    commandLine.add(getPathToVsd());
-    commandLine.addAll(processStatisticsArchiveFiles(statisticsArchiveFilePathnames));
-
-    return commandLine.toArray(new String[commandLine.size()]);
-  }
-
-  protected String getPathToVsd() {
-    String vsdPathname =
-        IOUtils.appendToPath(System.getenv("GEODE_HOME"), "tools", "vsd", "bin", "vsd");
-
-    if (SystemUtils.isWindows()) {
-      vsdPathname += ".bat";
-    }
-
-    return vsdPathname;
-  }
-
-  protected Set<String> processStatisticsArchiveFiles(final String[] statisticsArchiveFilePathnames)
-      throws FileNotFoundException {
-    Set<String> statisticsArchiveFiles = new TreeSet<>();
-
-    if (statisticsArchiveFilePathnames != null) {
-      for (String pathname : statisticsArchiveFilePathnames) {
-        File path = new File(pathname);
-
-        if (path.exists()) {
-          if (path.isFile()) {
-            if (StatisticsArchiveFileFilter.INSTANCE.accept(path)) {
-              statisticsArchiveFiles.add(pathname);
-            } else {
-              throw new IllegalArgumentException(
-                  "A Statistics Archive File must end with a .gfs file extension.");
-            }
-          } else { // the File (path) is a directory
-            processStatisticsArchiveFiles(path, statisticsArchiveFiles);
-          }
-        } else {
-          throw new FileNotFoundException(String.format(
-              "The pathname (%1$s) does not exist.  Please check the path and try again.",
-              path.getAbsolutePath()));
-        }
-      }
-    }
-
-    return statisticsArchiveFiles;
-  }
-
-  @SuppressWarnings("null")
-  protected void processStatisticsArchiveFiles(final File path,
-      final Set<String> statisticsArchiveFiles) {
-    if (path != null && path.isDirectory()) {
-      for (File file : path.listFiles(StatisticsArchiveFileAndDirectoryFilter.INSTANCE)) {
-        if (file.isDirectory()) {
-          processStatisticsArchiveFiles(file, statisticsArchiveFiles);
-        } else if (StatisticsArchiveFileFilter.INSTANCE.accept(file)) {
-          statisticsArchiveFiles.add(file.getAbsolutePath());
-        }
-      }
-    }
-  }
-
-  // NOTE as of 8.0, this command is no more!
-  // @CliCommand(value=CliStrings.START_DATABROWSER, help=CliStrings.START_DATABROWSER__HELP)
-  @CliMetaData(shellOnly = true, relatedTopic = {CliStrings.TOPIC_GEODE_M_AND_M})
-  public Result startDataBrowser() {
-    try {
-      String geodeHome = System.getenv("GEODE_HOME");
-
-      assertState(StringUtils.isNotBlank(geodeHome), CliStrings.GEODE_HOME_NOT_FOUND_ERROR_MESSAGE);
-
-      if (isConnectedAndReady()
-          && (getGfsh().getOperationInvoker() instanceof JmxOperationInvoker)) {
-        String dataBrowserPath = getPathToDataBrowser();
-
-        assertState(IOUtils.isExistingPathname(dataBrowserPath),
-            String.format(CliStrings.START_DATABROWSER__NOT_FOUND_ERROR_MESSAGE, geodeHome));
-
-        JmxOperationInvoker operationInvoker =
-            (JmxOperationInvoker) getGfsh().getOperationInvoker();
-
-        String dataBrowserCommandLine = String.format("%1$s %2$s %3$d", getPathToDataBrowser(),
-            operationInvoker.getManagerHost(), operationInvoker.getManagerPort());
-
-        if (isDebugging()) {
-          getGfsh().printAsInfo(
-              String.format("GemFire DataBrowser command-line (%1$s)", dataBrowserCommandLine));
-        }
-
-        Process dataBrowserProcess = Runtime.getRuntime().exec(dataBrowserCommandLine);
-
-        getGfsh().printAsInfo(CliStrings.START_DATABROWSER__RUN);
-
-        String dataBrowserProcessOutput =
-            waitAndCaptureProcessStandardOutputStream(dataBrowserProcess);
-
-        InfoResultData infoResultData = ResultBuilder.createInfoResultData();
-
-        if (StringUtils.isNotBlank(dataBrowserProcessOutput)) {
-          infoResultData.addLine(StringUtils.LINE_SEPARATOR);
-          infoResultData.addLine(dataBrowserProcessOutput);
-        }
-
-        return ResultBuilder.buildResult(infoResultData);
-      } else {
-        return ResultBuilder.createUserErrorResult(CliStrings.format(
-            CliStrings.GFSH_MUST_BE_CONNECTED_VIA_JMX_FOR_LAUNCHING_0, "GemFire DataBrowser"));
-      }
-    } catch (IllegalArgumentException | IllegalStateException e) {
-      return ResultBuilder.createUserErrorResult(e.getMessage());
-    } catch (VirtualMachineError e) {
-      SystemFailure.initiateFailure(e);
-      throw e;
-    } catch (Throwable t) {
-      SystemFailure.checkFailure();
-      return ResultBuilder.createShellClientErrorResult(t.getMessage());
-    }
-  }
-
-  protected String getPathToDataBrowser() {
-    String dataBrowserPathName =
-        IOUtils.appendToPath(GEODE_HOME, "tools", "DataBrowser", "bin", "databrowser");
-
-    if (SystemUtils.isWindows()) {
-      dataBrowserPathName += ".bat";
-    }
-
-    return dataBrowserPathName;
-  }
-
-  protected String waitAndCaptureProcessStandardOutputStream(final Process process) {
-    return waitAndCaptureProcessStandardOutputStream(process,
-        DEFAULT_PROCESS_OUTPUT_WAIT_TIME_MILLISECONDS);
-  }
-
-  protected String waitAndCaptureProcessStandardOutputStream(final Process process,
-      final long waitTimeMilliseconds) {
-    return waitAndCaptureProcessStream(process, process.getInputStream(), waitTimeMilliseconds);
-  }
-
-  protected String waitAndCaptureProcessStandardErrorStream(final Process process) {
-    return waitAndCaptureProcessStandardErrorStream(process,
-        DEFAULT_PROCESS_OUTPUT_WAIT_TIME_MILLISECONDS);
-  }
-
-  protected String waitAndCaptureProcessStandardErrorStream(final Process process,
-      final long waitTimeMilliseconds) {
-    return waitAndCaptureProcessStream(process, process.getErrorStream(), waitTimeMilliseconds);
-  }
-
-  private String waitAndCaptureProcessStream(final Process process,
-      final InputStream processInputStream, long waitTimeMilliseconds) {
-    final StringBuffer buffer = new StringBuffer();
-
-    InputListener inputListener = new InputListener() {
-      @Override
-      public void notifyInputLine(final String line) {
-        buffer.append(line);
-        buffer.append(StringUtils.LINE_SEPARATOR);
-      }
-    };
-
-    ProcessStreamReader reader = new ProcessStreamReader.Builder(process)
-        .inputStream(processInputStream).inputListener(inputListener).build();
-
-    try {
-      reader.start();
-
-      final long endTime = (System.currentTimeMillis() + waitTimeMilliseconds);
-
-      while (System.currentTimeMillis() < endTime) {
-        try {
-          reader.join(waitTimeMilliseconds);
-        } catch (InterruptedException ignore) {
-        }
-      }
-    } finally {
-      reader.stop();
-    }
-
-    return buffer.toString();
-  }
 
   @CliAvailabilityIndicator({CliStrings.START_LOCATOR, CliStrings.STOP_LOCATOR,
       CliStrings.STATUS_LOCATOR, CliStrings.START_SERVER, CliStrings.STOP_SERVER,
@@ -2444,27 +2213,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
       // System.err.printf("Gfsh LauncherSignalListener Received Signal '%1$s' (%2$d)...%n",
       // event.getSignal().getName(), event.getSignal().getNumber());
       this.signaled = true;
-    }
-  }
-
-  protected static class StatisticsArchiveFileFilter implements FileFilter {
-
-    protected static final StatisticsArchiveFileFilter INSTANCE = new StatisticsArchiveFileFilter();
-
-    public boolean accept(final File pathname) {
-      return (pathname.isFile() && pathname.getAbsolutePath().endsWith(".gfs"));
-    }
-  }
-
-  protected static class StatisticsArchiveFileAndDirectoryFilter
-      extends StatisticsArchiveFileFilter {
-
-    protected static final StatisticsArchiveFileAndDirectoryFilter INSTANCE =
-        new StatisticsArchiveFileAndDirectoryFilter();
-
-    @Override
-    public boolean accept(final File pathname) {
-      return (pathname.isDirectory() || super.accept(pathname));
     }
   }
 

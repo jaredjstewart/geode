@@ -117,7 +117,7 @@ public abstract class AbstractCommandsSupport implements CommandMarker {
     }
   }
 
-  protected boolean isDebugging() {
+  public static boolean isDebugging() {
     return (getGfsh() != null && getGfsh().getDebug());
   }
 
