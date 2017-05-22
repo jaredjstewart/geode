@@ -1017,17 +1017,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
     return INVALID_PID;
   }
 
-  protected ServerState serverStatus(final String workingDirectory, final String memberName) {
-    ServerState serverState = new ServerLauncher.Builder().setWorkingDirectory(workingDirectory)
-        .setDisableDefaultServer(true).build().status();
-
-    if (ObjectUtils.equals(serverState.getMemberName(), memberName)) {
-      return serverState;
-    }
-
-    return new ServerState(new ServerLauncher.Builder().build(), Status.NOT_RESPONDING);
-  }
-
   @Deprecated
   protected String getClasspath(final String userClasspath) {
     String classpath = getSystemClasspath();
@@ -1495,7 +1484,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
                 new File(serverLauncher.getWorkingDirectory()))),
             null);
 
-        serverState = serverStatus(workingDirectory, memberName);
+        serverState = ServerState.fromDirectory(workingDirectory, memberName);
         do {
           if (serverProcess.isAlive()) {
             Gfsh.print(".");
@@ -1504,7 +1493,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
               TimeUnit.MILLISECONDS.timedWait(this, 500);
             }
 
-            serverState = serverStatus(workingDirectory, memberName);
+            serverState = ServerState.fromDirectory(workingDirectory, memberName);
 
             String currentServerStatusMessage = serverState.getStatusMessage();
 
