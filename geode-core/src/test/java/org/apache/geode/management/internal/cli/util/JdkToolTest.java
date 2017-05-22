@@ -19,10 +19,13 @@ import static org.junit.Assert.assertEquals;
 
 import org.apache.geode.GemFireException;
 import org.apache.geode.internal.util.IOUtils;
+import org.apache.geode.test.junit.categories.UnitTest;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.Stack;
 
+@Category(UnitTest.class)
 public class JdkToolTest {
 
   @Test
