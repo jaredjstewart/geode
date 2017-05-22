@@ -24,17 +24,25 @@ import org.apache.geode.distributed.internal.ClusterConfigurationService;
 import org.apache.geode.distributed.internal.InternalLocator;
 import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.security.SecurityService;
+import org.apache.geode.management.DistributedSystemMXBean;
+import org.apache.geode.management.MemberMXBean;
 import org.apache.geode.management.cli.CliMetaData;
 import org.apache.geode.management.cli.Result;
+import org.apache.geode.management.internal.ManagementConstants;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.cli.util.MemberNotFoundException;
 import org.springframework.shell.core.CommandMarker;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Set;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.Query;
+import javax.management.QueryExp;
 
 /**
  * The AbstractCommandsSupport class is an abstract base class encapsulating common functionality
@@ -113,6 +121,73 @@ public abstract class AbstractCommandsSupport implements CommandMarker {
       runnable.run();
       result.setCommandPersisted(true);
     }
+  }
+
+  /**
+   * Gets a proxy to the DistributedSystemMXBean from the GemFire Manager's MBeanServer, or null if
+   * unable to find the DistributedSystemMXBean.
+   * </p>
+   *
+   * @return a proxy to the DistributedSystemMXBean from the GemFire Manager's MBeanServer, or null
+   *         if unable to find the DistributedSystemMXBean.
+   */
+  public static DistributedSystemMXBean getDistributedSystemMXBean()
+      throws IOException, MalformedObjectNameException {
+    assertState(isConnectedAndReady(),
+        "Gfsh must be connected in order to get proxy to a GemFire DistributedSystemMXBean.");
+    return getGfsh().getOperationInvoker().getDistributedSystemMXBean();
+  }
+
+  /**
+   * Gets a proxy to the MemberMXBean for the GemFire member specified by member name or ID from the
+   * GemFire Manager's MBeanServer.
+   * </p>
+   *
+   * @param member a String indicating the GemFire member's name or ID.
+   * @return a proxy to the MemberMXBean having the specified GemFire member's name or ID from the
+   *         GemFire Manager's MBeanServer, or null if no GemFire member could be found with the
+   *         specified member name or ID.
+   * @see #getMemberMXBean(String, String)
+   */
+  public static MemberMXBean getMemberMXBean(final String member) throws IOException {
+    return getMemberMXBean(null, member);
+  }
+
+  public static MemberMXBean getMemberMXBean(final String serviceName, final String member)
+      throws IOException {
+    assertState(isConnectedAndReady(),
+        "Gfsh must be connected in order to get proxy to a GemFire Member MBean.");
+
+    MemberMXBean memberBean = null;
+
+    try {
+      String objectNamePattern = ManagementConstants.OBJECTNAME__PREFIX;
+
+      objectNamePattern += (org.apache.geode.internal.lang.StringUtils.isBlank(serviceName)
+          ? org.apache.geode.internal.lang.StringUtils.EMPTY
+          : "service=" + serviceName + org.apache.geode.internal.lang.StringUtils.COMMA_DELIMITER);
+      objectNamePattern += "type=Member,*";
+
+      // NOTE throws a MalformedObjectNameException, however, this should not happen since the
+      // ObjectName is constructed
+      // here in a conforming pattern
+      final ObjectName objectName = ObjectName.getInstance(objectNamePattern);
+
+      final QueryExp query = Query.or(Query.eq(Query.attr("Name"), Query.value(member)),
+          Query.eq(Query.attr("Id"), Query.value(member)));
+
+      final Set<ObjectName> memberObjectNames =
+          getGfsh().getOperationInvoker().queryNames(objectName, query);
+
+      if (!memberObjectNames.isEmpty()) {
+        memberBean = getGfsh().getOperationInvoker()
+            .getMBeanProxy(memberObjectNames.iterator().next(), MemberMXBean.class);
+      }
+    } catch (MalformedObjectNameException e) {
+      getGfsh().logSevere(e.getMessage(), e);
+    }
+
+    return memberBean;
   }
 
   public static boolean isDebugging() {
