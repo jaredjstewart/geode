@@ -2160,60 +2160,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
     }
   }
 
-  @CliCommand(value = CliStrings.START_PULSE, help = CliStrings.START_PULSE__HELP)
-  @CliMetaData(shellOnly = true, relatedTopic = {CliStrings.TOPIC_GEODE_MANAGER,
-      CliStrings.TOPIC_GEODE_JMX, CliStrings.TOPIC_GEODE_M_AND_M})
-  public Result startPulse(@CliOption(key = CliStrings.START_PULSE__URL,
-      unspecifiedDefaultValue = "http://localhost:7070/pulse",
-      help = CliStrings.START_PULSE__URL__HELP) final String url) {
-    try {
-      if (StringUtils.isNotBlank(url)) {
-        browse(URI.create(url));
-        return ResultBuilder.createInfoResult(CliStrings.START_PULSE__RUN);
-      } else {
-        if (isConnectedAndReady()) {
-          OperationInvoker operationInvoker = getGfsh().getOperationInvoker();
-
-          ObjectName managerObjectName = (ObjectName) operationInvoker.getAttribute(
-              ManagementConstants.OBJECTNAME__DISTRIBUTEDSYSTEM_MXBEAN, "ManagerObjectName");
-
-          String pulseURL =
-              (String) operationInvoker.getAttribute(managerObjectName.toString(), "PulseURL");
-
-          if (StringUtils.isNotBlank(pulseURL)) {
-            browse(URI.create(pulseURL));
-            return ResultBuilder
-                .createInfoResult(CliStrings.START_PULSE__RUN + " with URL: " + pulseURL);
-          } else {
-            String pulseMessage = (String) operationInvoker
-                .getAttribute(managerObjectName.toString(), "StatusMessage");
-            return (StringUtils.isNotBlank(pulseMessage)
-                ? ResultBuilder.createGemFireErrorResult(pulseMessage)
-                : ResultBuilder.createGemFireErrorResult(CliStrings.START_PULSE__URL__NOTFOUND));
-          }
-        } else {
-          return ResultBuilder.createUserErrorResult(CliStrings
-              .format(CliStrings.GFSH_MUST_BE_CONNECTED_FOR_LAUNCHING_0, "GemFire Pulse"));
-        }
-      }
-    } catch (Exception e) {
-      return ResultBuilder.createShellClientErrorResult(e.getMessage());
-    } catch (VirtualMachineError e) {
-      SystemFailure.initiateFailure(e);
-      throw e;
-    } catch (Throwable t) {
-      SystemFailure.checkFailure();
-      return ResultBuilder.createShellClientErrorResult(
-          String.format(CliStrings.START_PULSE__ERROR, toString(t, false)));
-    }
-  }
-
-  private void browse(URI uri) throws IOException {
-    assertState(Desktop.isDesktopSupported(),
-        String.format(CliStrings.DESKSTOP_APP_RUN_ERROR_MESSAGE, System.getProperty("os.name")));
-    Desktop.getDesktop().browse(uri);
-  }
-
   @Deprecated
   protected File readIntoTempFile(final String classpathResourceLocation) throws IOException {
     String resourceName = classpathResourceLocation

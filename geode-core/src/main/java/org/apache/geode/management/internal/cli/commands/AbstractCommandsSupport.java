@@ -66,7 +66,7 @@ public abstract class AbstractCommandsSupport implements CommandMarker {
     }
   }
 
-  protected static void assertState(final boolean valid, final String message,
+  public static void assertState(final boolean valid, final String message,
       final Object... args) {
     if (!valid) {
       throw new IllegalStateException(String.format(message, args));
@@ -83,7 +83,7 @@ public abstract class AbstractCommandsSupport implements CommandMarker {
         : StringUtils.defaultIfBlank(falseValue, "false"));
   }
 
-  protected static String toString(final Throwable t, final boolean printStackTrace) {
+  public static String toString(final Throwable t, final boolean printStackTrace) {
     String message = t.getMessage();
 
     if (printStackTrace) {
@@ -95,7 +95,7 @@ public abstract class AbstractCommandsSupport implements CommandMarker {
     return message;
   }
 
-  protected boolean isConnectedAndReady() {
+  public static boolean isConnectedAndReady() {
     return (getGfsh() != null && getGfsh().isConnectedAndReady());
   }
 
@@ -129,7 +129,7 @@ public abstract class AbstractCommandsSupport implements CommandMarker {
     return (InternalCache) CacheFactory.getAnyInstance();
   }
 
-  protected static Gfsh getGfsh() {
+  public static Gfsh getGfsh() {
     return Gfsh.getCurrentInstance();
   }
 
