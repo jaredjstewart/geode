@@ -18,6 +18,7 @@ import static org.apache.geode.management.internal.cli.commands.AbstractCommands
 import static org.apache.geode.management.internal.cli.commands.AbstractCommandsSupport.getMemberMXBean;
 import static org.apache.geode.management.internal.cli.commands.AbstractCommandsSupport.isConnectedAndReady;
 import static org.apache.geode.management.internal.cli.commands.AbstractCommandsSupport.isDebugging;
+import static org.apache.geode.management.internal.cli.i18n.CliStrings.LOCATOR_TERM_NAME;
 
 import org.apache.geode.SystemFailure;
 import org.apache.geode.distributed.AbstractLauncher;
@@ -39,7 +40,6 @@ import org.springframework.shell.core.annotation.CliOption;
 import java.util.concurrent.TimeUnit;
 
 public class StopLocatorCommand implements CommandMarker {
-  private static final String LOCATOR_TERM_NAME = "Locator";
   private static final long WAITING_FOR_STOP_TO_MAKE_PID_GO_AWAY_TIMEOUT_MILLIS = 30 * 1000;
 
   @CliCommand(value = CliStrings.STOP_LOCATOR, help = CliStrings.STOP_LOCATOR__HELP)

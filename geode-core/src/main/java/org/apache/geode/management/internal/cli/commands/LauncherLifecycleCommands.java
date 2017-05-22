@@ -39,7 +39,9 @@ import static org.apache.geode.distributed.ConfigurationProperties.REDIS_PORT;
 import static org.apache.geode.distributed.ConfigurationProperties.START_DEV_REST_API;
 import static org.apache.geode.distributed.ConfigurationProperties.STATISTIC_ARCHIVE_FILE;
 import static org.apache.geode.distributed.ConfigurationProperties.USE_CLUSTER_CONFIGURATION;
+import static org.apache.geode.management.internal.cli.i18n.CliStrings.LOCATOR_TERM_NAME;
 import static org.apache.geode.management.internal.cli.i18n.CliStrings.START_SERVER__PASSWORD;
+import static org.apache.geode.management.internal.cli.util.HostUtils.getLocatorId;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.geode.SystemFailure;
@@ -51,16 +53,12 @@ import org.apache.geode.distributed.LocatorLauncher.LocatorState;
 import org.apache.geode.distributed.ServerLauncher;
 import org.apache.geode.distributed.ServerLauncher.ServerState;
 import org.apache.geode.distributed.internal.DistributionConfig;
-import org.apache.geode.distributed.internal.tcpserver.TcpClient;
-import org.apache.geode.internal.DistributionLocator;
 import org.apache.geode.internal.GemFireVersion;
 import org.apache.geode.internal.OSProcess;
-import org.apache.geode.internal.cache.persistence.PersistentMemberPattern;
 import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.lang.ObjectUtils;
 import org.apache.geode.internal.lang.StringUtils;
 import org.apache.geode.internal.lang.SystemUtils;
-import org.apache.geode.internal.net.SocketCreator;
 import org.apache.geode.internal.process.ClusterConfigurationNotAvailableException;
 import org.apache.geode.internal.process.ProcessLauncherContext;
 import org.apache.geode.internal.process.ProcessStreamReader;
@@ -70,13 +68,11 @@ import org.apache.geode.internal.process.ProcessType;
 import org.apache.geode.internal.process.signal.SignalEvent;
 import org.apache.geode.internal.process.signal.SignalListener;
 import org.apache.geode.internal.util.IOUtils;
-import org.apache.geode.internal.util.StopWatch;
 import org.apache.geode.management.DistributedSystemMXBean;
 import org.apache.geode.management.MemberMXBean;
 import org.apache.geode.management.cli.CliMetaData;
 import org.apache.geode.management.cli.ConverterHint;
 import org.apache.geode.management.cli.Result;
-import org.apache.geode.management.internal.ManagementConstants;
 import org.apache.geode.management.internal.cli.CliUtil;
 import org.apache.geode.management.internal.cli.LogWrapper;
 import org.apache.geode.management.internal.cli.domain.ConnectToLocatorResult;
@@ -88,10 +84,9 @@ import org.apache.geode.management.internal.cli.shell.JmxOperationInvoker;
 import org.apache.geode.management.internal.cli.util.CauseFinder;
 import org.apache.geode.management.internal.cli.util.CommandStringBuilder;
 import org.apache.geode.management.internal.cli.util.ConnectionEndpoint;
+import org.apache.geode.management.internal.cli.util.HostUtils;
 import org.apache.geode.management.internal.cli.util.ThreePhraseGenerator;
-import org.apache.geode.management.internal.configuration.domain.SharedConfigurationStatus;
-import org.apache.geode.management.internal.configuration.messages.SharedConfigurationStatusRequest;
-import org.apache.geode.management.internal.configuration.messages.SharedConfigurationStatusResponse;
+import org.apache.geode.management.internal.configuration.utils.SharedConfiguration;
 import org.apache.geode.management.internal.security.ResourceConstants;
 import org.apache.geode.security.AuthenticationFailedException;
 import org.springframework.shell.core.annotation.CliAvailabilityIndicator;
@@ -106,21 +101,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import javax.management.Query;
-import javax.management.QueryExp;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
@@ -138,7 +127,6 @@ import javax.net.ssl.SSLHandshakeException;
  */
 @SuppressWarnings("unused")
 public class LauncherLifecycleCommands extends AbstractCommandsSupport {
-  private static final String LOCATOR_TERM_NAME = "Locator";
   private static final String SERVER_TERM_NAME = "Server";
 
   private static final long PROCESS_STREAM_READER_JOIN_TIMEOUT_MILLIS = 30 * 1000;
@@ -149,11 +137,9 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
   protected static final int CMS_INITIAL_OCCUPANCY_FRACTION = 60;
   protected static final int INVALID_PID = -1;
   protected static final int MINIMUM_HEAP_FREE_RATIO = 10;
-  protected static final int NUM_ATTEMPTS_FOR_SHARED_CONFIGURATION_STATUS = 3;
 
   protected static final String GEODE_HOME = System.getenv("GEODE_HOME");
   protected static final String JAVA_HOME = System.getProperty("java.home");
-  protected static final String LOCALHOST = "localhost";
 
   // MUST CHANGE THIS TO REGEX SINCE VERSION CHANGES IN JAR NAME
   protected static final String GEODE_JAR_PATHNAME =
@@ -391,8 +377,8 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
         if (bindAddr != null) {
           locatorHostName = bindAddr.getCanonicalHostName();
         } else {
-          locatorHostName =
-              StringUtils.defaultIfBlank(locatorLauncher.getHostnameForClients(), getLocalHost());
+          locatorHostName = StringUtils.defaultIfBlank(locatorLauncher.getHostnameForClients(),
+              HostUtils.getLocalHost());
         }
 
         int locatorPort = Integer.parseInt(locatorState.getPort());
@@ -407,8 +393,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
 
         // Report on the state of the Shared Configuration service if enabled...
         if (enableSharedConfiguration) {
-          infoResultData
-              .addLine(getSharedConfigurationStatusFromLocator(locatorHostName, locatorPort));
+          infoResultData.addLine(SharedConfiguration.getFromLocator(locatorHostName, locatorPort));
         }
       }
 
@@ -640,143 +625,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
     return configurationProperties;
   }
 
-  private String getSharedConfigurationStatusFromLocatorState(LocatorState locatorState)
-      throws ClassNotFoundException, IOException {
-    return getSharedConfigurationStatusFromLocator(locatorState.getHost(),
-        Integer.parseInt(locatorState.getPort()));
-  }
-
-  private String getSharedConfigurationStatusFromLocator(String locatorHostName, int locatorPort)
-      throws ClassNotFoundException, IOException {
-    final StringBuilder buffer = new StringBuilder();
-
-    try {
-      final InetAddress networkAddress = InetAddress.getByName(locatorHostName);
-      InetSocketAddress inetSockAddr = new InetSocketAddress(networkAddress, locatorPort);
-
-      TcpClient client = new TcpClient();
-      SharedConfigurationStatusResponse statusResponse = (SharedConfigurationStatusResponse) client
-          .requestToServer(inetSockAddr, new SharedConfigurationStatusRequest(), 10000, true);
-
-      for (int i = 0; i < NUM_ATTEMPTS_FOR_SHARED_CONFIGURATION_STATUS; i++) {
-        if (statusResponse.getStatus().equals(SharedConfigurationStatus.STARTED)
-            || statusResponse.getStatus().equals(SharedConfigurationStatus.NOT_STARTED)) {
-          statusResponse = (SharedConfigurationStatusResponse) client.requestToServer(inetSockAddr,
-              new SharedConfigurationStatusRequest(), 10000, true);
-          try {
-            Thread.sleep(5000);
-          } catch (InterruptedException e) {
-            // Swallow the exception
-          }
-        } else {
-          break;
-        }
-      }
-
-      switch (statusResponse.getStatus()) {
-        case RUNNING:
-          buffer.append("\nCluster configuration service is up and running.");
-          break;
-        case STOPPED:
-          buffer.append(
-              "\nCluster configuration service failed to start , please check the log file for errors.");
-          break;
-        case WAITING:
-          buffer.append(
-              "\nCluster configuration service is waiting for other locators with newer shared configuration data.");
-          Set<PersistentMemberPattern> pmpSet = statusResponse.getOtherLocatorInformation();
-          if (!pmpSet.isEmpty()) {
-            buffer.append("\nThis locator might have stale cluster configuration data.");
-            buffer.append(
-                "\nFollowing locators contain potentially newer cluster configuration data");
-
-            for (PersistentMemberPattern pmp : pmpSet) {
-              buffer.append("\nHost : ").append(pmp.getHost());
-              buffer.append("\nDirectory : ").append(pmp.getDirectory());
-            }
-          } else {
-            buffer.append("\nPlease check the log file for errors");
-          }
-          break;
-        case UNDETERMINED:
-          buffer.append(
-              "\nUnable to determine the status of shared configuration service, please check the log file");
-          break;
-        case NOT_STARTED:
-          buffer.append("\nCluster configuration service has not been started yet");
-          break;
-        case STARTED:
-          buffer
-              .append("\nCluster configuration service has been started, but its not running yet");
-          break;
-      }
-    } catch (Exception e) {
-      // TODO fix this once Trac Bug #50513 gets fixed
-      // NOTE this ClassCastException occurs if the a plain text TCP/IP connection is used to
-      // connect to a Locator
-      // configured with SSL.
-      getGfsh().logToFile(String.format(
-          "Failed to get the status of the Shared Configuration Service running on Locator (%1$s[%2$d])!",
-          locatorHostName, locatorPort), e);
-    }
-
-    return buffer.toString();
-  }
-
-  @CliCommand(value = CliStrings.STATUS_LOCATOR, help = CliStrings.STATUS_LOCATOR__HELP)
-  @CliMetaData(shellOnly = true,
-      relatedTopic = {CliStrings.TOPIC_GEODE_LOCATOR, CliStrings.TOPIC_GEODE_LIFECYCLE})
-  public Result statusLocator(
-      @CliOption(key = CliStrings.STATUS_LOCATOR__MEMBER,
-          optionContext = ConverterHint.LOCATOR_MEMBER_IDNAME,
-          help = CliStrings.STATUS_LOCATOR__MEMBER__HELP) final String member,
-      @CliOption(key = CliStrings.STATUS_LOCATOR__HOST,
-          help = CliStrings.STATUS_LOCATOR__HOST__HELP) final String locatorHost,
-      @CliOption(key = CliStrings.STATUS_LOCATOR__PORT,
-          help = CliStrings.STATUS_LOCATOR__PORT__HELP) final Integer locatorPort,
-      @CliOption(key = CliStrings.STATUS_LOCATOR__PID,
-          help = CliStrings.STATUS_LOCATOR__PID__HELP) final Integer pid,
-      @CliOption(key = CliStrings.STATUS_LOCATOR__DIR,
-          help = CliStrings.STATUS_LOCATOR__DIR__HELP) final String workingDirectory) {
-    try {
-      if (StringUtils.isNotBlank(member)) {
-        if (isConnectedAndReady()) {
-          final MemberMXBean locatorProxy = getMemberMXBean(member);
-
-          if (locatorProxy != null) {
-            LocatorState state = LocatorState.fromJson(locatorProxy.status());
-            return createStatusLocatorResult(state);
-          } else {
-            return ResultBuilder.createUserErrorResult(CliStrings.format(
-                CliStrings.STATUS_LOCATOR__NO_LOCATOR_FOUND_FOR_MEMBER_ERROR_MESSAGE, member));
-          }
-        } else {
-          return ResultBuilder.createUserErrorResult(CliStrings.format(
-              CliStrings.STATUS_SERVICE__GFSH_NOT_CONNECTED_ERROR_MESSAGE, LOCATOR_TERM_NAME));
-        }
-      } else {
-        final LocatorLauncher locatorLauncher =
-            new LocatorLauncher.Builder().setCommand(LocatorLauncher.Command.STATUS)
-                .setBindAddress(locatorHost).setDebug(isDebugging()).setPid(pid)
-                .setPort(locatorPort).setWorkingDirectory(workingDirectory).build();
-
-        final LocatorState state = locatorLauncher.status();
-        return createStatusLocatorResult(state);
-      }
-    } catch (IllegalArgumentException | IllegalStateException e) {
-      return ResultBuilder.createUserErrorResult(e.getMessage());
-    } catch (VirtualMachineError e) {
-      SystemFailure.initiateFailure(e);
-      throw e;
-    } catch (Throwable t) {
-      SystemFailure.checkFailure();
-      return ResultBuilder.createShellClientErrorResult(String.format(
-          CliStrings.STATUS_LOCATOR__GENERAL_ERROR_MESSAGE, getLocatorId(locatorHost, locatorPort),
-          StringUtils.defaultIfBlank(workingDirectory, SystemUtils.CURRENT_DIRECTORY),
-          toString(t, getGfsh().getDebug())));
-    }
-  }
-
   // TODO re-evaluate whether a MalformedObjectNameException should be thrown here; just because we
   // were not able to find
   // the "current" Locators in order to conveniently add the new member to the GemFire cluster does
@@ -792,14 +640,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
             .concat(LOCATORS).concat("=").concat(currentLocators));
       }
     }
-  }
-
-  protected Result createStatusLocatorResult(final LocatorState state)
-      throws NumberFormatException, IOException, ClassNotFoundException {
-    InfoResultData infoResultData = ResultBuilder.createInfoResultData();
-    infoResultData.addLine(state.toString());
-    infoResultData.addLine(getSharedConfigurationStatusFromLocatorState(state));
-    return ResultBuilder.buildResult(infoResultData);
   }
 
   protected void addGemFirePropertyFile(final List<String> commandLine,
@@ -1022,28 +862,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
 
   protected String getJavaPath() {
     return new File(new File(JAVA_HOME, "bin"), "java").getPath();
-  }
-
-  // TODO refactor the following method into a common base class or utility class
-  protected String getLocalHost() {
-    try {
-      return SocketCreator.getLocalHost().getCanonicalHostName();
-    } catch (UnknownHostException ignore) {
-      return LOCALHOST;
-    }
-  }
-
-  protected String getLocatorId(final String host, final Integer port) {
-    final String locatorHost = (host != null ? host : getLocalHost());
-    final String locatorPort =
-        StringUtils.defaultString(port, String.valueOf(DistributionLocator.DEFAULT_LOCATOR_PORT));
-    return locatorHost.concat("[").concat(locatorPort).concat("]");
-  }
-
-  protected String getServerId(final String host, final Integer port) {
-    String serverHost = (host != null ? host : getLocalHost());
-    String serverPort = StringUtils.defaultString(port, String.valueOf(CacheServer.DEFAULT_PORT));
-    return serverHost.concat("[").concat(serverPort).concat("]");
   }
 
   @CliCommand(value = CliStrings.START_SERVER, help = CliStrings.START_SERVER__HELP)

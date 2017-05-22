@@ -402,24 +402,6 @@ public class LauncherLifecycleCommandsTest {
   }
 
   @Test
-  public void testGetLocatorId() {
-    assertEquals("machine[11235]", getLauncherLifecycleCommands().getLocatorId("machine", 11235));
-    assertEquals("machine.domain.org[11235]",
-        getLauncherLifecycleCommands().getLocatorId("machine.domain.org", 11235));
-    assertEquals("machine[" + DistributionLocator.DEFAULT_LOCATOR_PORT + "]",
-        getLauncherLifecycleCommands().getLocatorId("machine", null));
-  }
-
-  @Test
-  public void testGetServerId() {
-    assertEquals("machine[12480]", getLauncherLifecycleCommands().getServerId("machine", 12480));
-    assertEquals("machine.domain.org[12480]",
-        getLauncherLifecycleCommands().getServerId("machine.domain.org", 12480));
-    assertEquals("machine[" + CacheServer.DEFAULT_PORT + "]",
-        getLauncherLifecycleCommands().getServerId("machine", null));
-  }
-
-  @Test
   public void testCreateServerCommandLine() throws Exception {
     ServerLauncher serverLauncher = new ServerLauncher.Builder()
         .setCommand(ServerLauncher.Command.START).setDisableDefaultServer(true)
