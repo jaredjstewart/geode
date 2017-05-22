@@ -366,7 +366,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
 
             String currentLocatorStatusMessage = locatorState.getStatusMessage();
 
-            if (isStartingOrNotResponding(locatorState.getStatus())
+            if (locatorState.isStartingOrNotResponding()
                 && !(StringUtils.isBlank(currentLocatorStatusMessage)
                     || currentLocatorStatusMessage.equalsIgnoreCase(previousLocatorStatusMessage)
                     || currentLocatorStatusMessage.trim().toLowerCase().equals("null"))) {
@@ -382,7 +382,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
                     exitValue, locatorLauncher.getWorkingDirectory(), message.toString()));
           }
         } while (!(registeredLocatorSignalListener && locatorSignalListener.isSignaled())
-            && isStartingOrNotResponding(locatorState.getStatus()));
+            && locatorState.isStartingOrNotResponding());
       } finally {
         stderrReader.stopAsync(PROCESS_STREAM_READER_ASYNC_STOP_TIMEOUT_MILLIS); // stop will close
                                                                                  // ErrorStream
@@ -392,7 +392,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
       Gfsh.println();
 
       final boolean asyncStart = (registeredLocatorSignalListener
-          && locatorSignalListener.isSignaled() && isStartingNotRespondingOrNull(locatorState));
+          && locatorSignalListener.isSignaled() && ServerState.isStartingNotRespondingOrNull(locatorState));
 
       InfoResultData infoResultData = ResultBuilder.createInfoResultData();
 
@@ -1239,14 +1239,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
     return serverHost.concat("[").concat(serverPort).concat("]");
   }
 
-  protected boolean isStartingNotRespondingOrNull(final ServiceState serviceState) {
-    return (serviceState == null || isStartingOrNotResponding(serviceState.getStatus()));
-  }
-
-  protected boolean isStartingOrNotResponding(final Status processStatus) {
-    return (Status.NOT_RESPONDING.equals(processStatus) || Status.STARTING.equals(processStatus));
-  }
-
   protected boolean isVmWithProcessIdRunning(final Integer pid) {
     // note: this will use JNA if available or return false
     return ProcessUtils.isProcessAlive(pid);
@@ -1552,7 +1544,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
 
             String currentServerStatusMessage = serverState.getStatusMessage();
 
-            if (isStartingOrNotResponding(serverState.getStatus())
+            if (serverState.isStartingOrNotResponding()
                 && !(StringUtils.isBlank(currentServerStatusMessage)
                     || currentServerStatusMessage.equalsIgnoreCase(previousServerStatusMessage)
                     || currentServerStatusMessage.trim().toLowerCase().equals("null"))) {
@@ -1569,7 +1561,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
 
           }
         } while (!(registeredServerSignalListener && serverSignalListener.isSignaled())
-            && isStartingOrNotResponding(serverState.getStatus()));
+            && serverState.isStartingOrNotResponding());
       } finally {
         stderrReader.stopAsync(PROCESS_STREAM_READER_ASYNC_STOP_TIMEOUT_MILLIS); // stop will close
                                                                                  // ErrorStream
@@ -1578,7 +1570,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
 
       Gfsh.println();
 
-      final boolean asyncStart = isStartingNotRespondingOrNull(serverState);
+      final boolean asyncStart = ServerState.isStartingNotRespondingOrNull(serverState);
 
       if (asyncStart) { // async start
         Gfsh.print(String.format(CliStrings.ASYNC_PROCESS_LAUNCH_MESSAGE, SERVER_TERM_NAME));
