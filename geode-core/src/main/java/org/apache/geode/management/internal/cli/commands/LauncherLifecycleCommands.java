@@ -849,7 +849,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
             null);
 
         StopWatch stopWatch = new StopWatch(true);
-        while (isVmWithProcessIdRunning(locatorState.getPid())) {
+        while (locatorState.isVmWithProcessIdRunning()) {
           Gfsh.print(".");
           if (stopWatch.elapsedTimeMillis() > WAITING_FOR_STOP_TO_MAKE_PID_GO_AWAY_TIMEOUT_MILLIS) {
             break;
@@ -1237,11 +1237,6 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
     String serverHost = (host != null ? host : getLocalHost());
     String serverPort = StringUtils.defaultString(port, String.valueOf(CacheServer.DEFAULT_PORT));
     return serverHost.concat("[").concat(serverPort).concat("]");
-  }
-
-  protected boolean isVmWithProcessIdRunning(final Integer pid) {
-    // note: this will use JNA if available or return false
-    return ProcessUtils.isProcessAlive(pid);
   }
 
   @CliCommand(value = CliStrings.START_SERVER, help = CliStrings.START_SERVER__HELP)
@@ -1862,7 +1857,7 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
             null);
 
         StopWatch stopWatch = new StopWatch(true);
-        while (isVmWithProcessIdRunning(serverState.getPid())) {
+        while (serverState.isVmWithProcessIdRunning()) {
           Gfsh.print(".");
           if (stopWatch.elapsedTimeMillis() > WAITING_FOR_STOP_TO_MAKE_PID_GO_AWAY_TIMEOUT_MILLIS) {
             break;
