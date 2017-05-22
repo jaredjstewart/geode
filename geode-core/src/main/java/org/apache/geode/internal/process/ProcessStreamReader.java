@@ -213,7 +213,7 @@ public abstract class ProcessStreamReader implements Runnable {
   }
 
   public static String waitAndCaptureProcessStandardOutputStream(final Process process,
-                                                             final long waitTimeMilliseconds) {
+      final long waitTimeMilliseconds) {
     return waitAndCaptureProcessStream(process, process.getInputStream(), waitTimeMilliseconds);
   }
 
@@ -223,12 +223,12 @@ public abstract class ProcessStreamReader implements Runnable {
   }
 
   public static String waitAndCaptureProcessStandardErrorStream(final Process process,
-                                                            final long waitTimeMilliseconds) {
+      final long waitTimeMilliseconds) {
     return waitAndCaptureProcessStream(process, process.getErrorStream(), waitTimeMilliseconds);
   }
 
   private static String waitAndCaptureProcessStream(final Process process,
-                                             final InputStream processInputStream, long waitTimeMilliseconds) {
+      final InputStream processInputStream, long waitTimeMilliseconds) {
     final StringBuffer buffer = new StringBuffer();
 
     InputListener inputListener = line -> {
@@ -256,6 +256,7 @@ public abstract class ProcessStreamReader implements Runnable {
 
     return buffer.toString();
   }
+
   /**
    * Builds a ProcessStreamReader.
    * 

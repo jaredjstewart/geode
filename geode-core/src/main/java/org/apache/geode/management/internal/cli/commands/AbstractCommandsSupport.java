@@ -66,8 +66,7 @@ public abstract class AbstractCommandsSupport implements CommandMarker {
     }
   }
 
-  public static void assertState(final boolean valid, final String message,
-      final Object... args) {
+  public static void assertState(final boolean valid, final String message, final Object... args) {
     if (!valid) {
       throw new IllegalStateException(String.format(message, args));
     }

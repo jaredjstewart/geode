@@ -591,12 +591,13 @@ public abstract class AbstractLauncher<T extends Comparable<T>> implements Runna
       return new GfJsonObject(map).toString();
     }
 
-    public static  boolean isStartingNotRespondingOrNull(final ServiceState serviceState) {
+    public static boolean isStartingNotRespondingOrNull(final ServiceState serviceState) {
       return (serviceState == null || serviceState.isStartingOrNotResponding());
     }
 
     public boolean isStartingOrNotResponding() {
-      return (Status.NOT_RESPONDING.equals(this.getStatus()) || Status.STARTING.equals(this.getStatus()));
+      return (Status.NOT_RESPONDING.equals(this.getStatus())
+          || Status.STARTING.equals(this.getStatus()));
     }
 
     public boolean isVmWithProcessIdRunning() {

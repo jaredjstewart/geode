@@ -391,8 +391,9 @@ public class LauncherLifecycleCommands extends AbstractCommandsSupport {
 
       Gfsh.println();
 
-      final boolean asyncStart = (registeredLocatorSignalListener
-          && locatorSignalListener.isSignaled() && ServerState.isStartingNotRespondingOrNull(locatorState));
+      final boolean asyncStart =
+          (registeredLocatorSignalListener && locatorSignalListener.isSignaled()
+              && ServerState.isStartingNotRespondingOrNull(locatorState));
 
       InfoResultData infoResultData = ResultBuilder.createInfoResultData();
 

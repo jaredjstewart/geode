@@ -86,8 +86,8 @@ public class StartVsdCommand implements CommandMarker {
       throw e;
     } catch (Throwable t) {
       SystemFailure.checkFailure();
-      return ResultBuilder.createShellClientErrorResult(
-          String.format(CliStrings.START_VSD__ERROR_MESSAGE, AbstractCommandsSupport.toString(t, false)));
+      return ResultBuilder.createShellClientErrorResult(String
+          .format(CliStrings.START_VSD__ERROR_MESSAGE, AbstractCommandsSupport.toString(t, false)));
     }
   }
 
@@ -144,7 +144,7 @@ public class StartVsdCommand implements CommandMarker {
 
   @SuppressWarnings("null")
   protected void processStatisticsArchiveFiles(final File path,
-                                               final Set<String> statisticsArchiveFiles) {
+      final Set<String> statisticsArchiveFiles) {
     if (path != null && path.isDirectory()) {
       for (File file : path.listFiles(StatisticsArchiveFileAndDirectoryFilter.INSTANCE)) {
         if (file.isDirectory()) {
