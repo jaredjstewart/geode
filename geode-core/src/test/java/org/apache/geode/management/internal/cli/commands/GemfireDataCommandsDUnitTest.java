@@ -985,126 +985,126 @@ public class GemfireDataCommandsDUnitTest extends CliCommandTestBase {
     vm2.invoke(checkPutKeys);
   }
 
-  @Test
-  @Category(FlakyTest.class) // GEODE-1249
-  public void testSimplePutIfAbsentCommand() {
-    final String keyPrefix = "testKey";
-    final String valuePrefix = "testValue";
-
-    setupForGetPutRemoveLocateEntry("testSimplePutIfAbsent");
-
-    final VM vm1 = Host.getHost(0).getVM(1);
-    final VM vm2 = Host.getHost(0).getVM(2);
-
-    // Seed the region with some keys
-    SerializableRunnable putKeys = new SerializableRunnable() {
-      @Override
-      public void run() {
-        Cache cache = getCache();
-        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-        assertNotNull(region);
-        region.clear();
-        for (int i = 0; i < COUNT; i++) {
-          String key = keyPrefix + i;
-          String value = valuePrefix + i;
-          region.put(key, value);
-        }
-        assertEquals(COUNT, region.size());
-      }
-    };
-    vm1.invoke(putKeys);
-
-    // Now try to replace all existing keys with new values to test --skip-if-exists. Values should
-    // not be replaced if the key is present.
-    for (int i = 0; i < COUNT; i++) {
-      String command = "put";
-      String key = keyPrefix + i;
-      String value = valuePrefix + i + i;
-      command = command + " " + "--key=" + key + " --value=" + value + " --region="
-          + DATA_REGION_NAME_PATH + " --skip-if-exists=true";
-      CommandResult cmdResult = executeCommand(command);
-      printCommandOutput(cmdResult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-      validateResult(cmdResult, true);
-    }
-
-    // Verify that none of the values were replaced
-    SerializableRunnable checkPutIfAbsentKeys = new SerializableRunnable() {
-      @Override
-      public void run() {
-        Cache cache = getCache();
-        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-        assertNotNull(region);
-        for (int i = 0; i < COUNT; i++) {
-          String key = keyPrefix + i;
-          String expected = valuePrefix + i;
-          String actual = (String) region.get(key);
-          assertEquals("--skip-if-exists=true failed to preserve value", expected, actual);
-        }
-      }
-    };
-
-    vm1.invoke(checkPutIfAbsentKeys);
-    vm2.invoke(checkPutIfAbsentKeys);
-  }
-
-  @Category(FlakyTest.class) // GEODE-1496 (http)
-  @Test
-  public void testSimpleRemoveCommand() {
-    final String keyPrefix = "testKey";
-    final String valuePrefix = "testValue";
-
-    setupForGetPutRemoveLocateEntry("testSimpleRemove");
-
-    final VM vm1 = Host.getHost(0).getVM(1);
-    final VM vm2 = Host.getHost(0).getVM(2);
-
-
-    SerializableRunnable putKeys = new SerializableRunnable() {
-      @Override
-      public void run() {
-        Cache cache = getCache();
-        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-        assertNotNull(region);
-        region.clear();
-        for (int i = 0; i < COUNT; i++) {
-          String key = keyPrefix + i;
-          String value = valuePrefix + i;
-          region.put(key, value);
-        }
-        assertEquals(COUNT, region.size());
-      }
-    };
-    vm1.invoke(putKeys);
-
-    for (int i = 0; i < COUNT; i++) {
-      String command = "remove";
-      String key = keyPrefix + i;
-      String value = valuePrefix + i;
-      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
-      CommandResult cmdResult = executeCommand(command);
-      printCommandOutput(cmdResult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-      validateResult(cmdResult, true);
-    }
-
-    SerializableRunnable checkRemoveKeys = new SerializableRunnable() {
-      @Override
-      public void run() {
-        Cache cache = getCache();
-        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-        assertNotNull(region);
-        for (int i = 0; i < COUNT; i++) {
-          String key = keyPrefix + i;
-          assertEquals(false, region.containsKey(key));
-        }
-        assertEquals(0, region.size());
-      }
-    };
-
-    vm1.invoke(checkRemoveKeys);
-    vm2.invoke(checkRemoveKeys);
-  }
+//  @Test
+//  @Category(FlakyTest.class) // GEODE-1249
+//  public void testSimplePutIfAbsentCommand() {
+//    final String keyPrefix = "testKey";
+//    final String valuePrefix = "testValue";
+//
+//    setupForGetPutRemoveLocateEntry("testSimplePutIfAbsent");
+//
+//    final VM vm1 = Host.getHost(0).getVM(1);
+//    final VM vm2 = Host.getHost(0).getVM(2);
+//
+//    // Seed the region with some keys
+//    SerializableRunnable putKeys = new SerializableRunnable() {
+//      @Override
+//      public void run() {
+//        Cache cache = getCache();
+//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+//        assertNotNull(region);
+//        region.clear();
+//        for (int i = 0; i < COUNT; i++) {
+//          String key = keyPrefix + i;
+//          String value = valuePrefix + i;
+//          region.put(key, value);
+//        }
+//        assertEquals(COUNT, region.size());
+//      }
+//    };
+//    vm1.invoke(putKeys);
+//
+//    // Now try to replace all existing keys with new values to test --skip-if-exists. Values should
+//    // not be replaced if the key is present.
+//    for (int i = 0; i < COUNT; i++) {
+//      String command = "put";
+//      String key = keyPrefix + i;
+//      String value = valuePrefix + i + i;
+//      command = command + " " + "--key=" + key + " --value=" + value + " --region="
+//          + DATA_REGION_NAME_PATH + " --skip-if-exists=true";
+//      CommandResult cmdResult = executeCommand(command);
+//      printCommandOutput(cmdResult);
+//      assertEquals(Result.Status.OK, cmdResult.getStatus());
+//      validateResult(cmdResult, true);
+//    }
+//
+//    // Verify that none of the values were replaced
+//    SerializableRunnable checkPutIfAbsentKeys = new SerializableRunnable() {
+//      @Override
+//      public void run() {
+//        Cache cache = getCache();
+//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+//        assertNotNull(region);
+//        for (int i = 0; i < COUNT; i++) {
+//          String key = keyPrefix + i;
+//          String expected = valuePrefix + i;
+//          String actual = (String) region.get(key);
+//          assertEquals("--skip-if-exists=true failed to preserve value", expected, actual);
+//        }
+//      }
+//    };
+//
+//    vm1.invoke(checkPutIfAbsentKeys);
+//    vm2.invoke(checkPutIfAbsentKeys);
+//  }
+//
+//  @Category(FlakyTest.class) // GEODE-1496 (http)
+//  @Test
+//  public void testSimpleRemoveCommand() {
+//    final String keyPrefix = "testKey";
+//    final String valuePrefix = "testValue";
+//
+//    setupForGetPutRemoveLocateEntry("testSimpleRemove");
+//
+//    final VM vm1 = Host.getHost(0).getVM(1);
+//    final VM vm2 = Host.getHost(0).getVM(2);
+//
+//
+//    SerializableRunnable putKeys = new SerializableRunnable() {
+//      @Override
+//      public void run() {
+//        Cache cache = getCache();
+//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+//        assertNotNull(region);
+//        region.clear();
+//        for (int i = 0; i < COUNT; i++) {
+//          String key = keyPrefix + i;
+//          String value = valuePrefix + i;
+//          region.put(key, value);
+//        }
+//        assertEquals(COUNT, region.size());
+//      }
+//    };
+//    vm1.invoke(putKeys);
+//
+//    for (int i = 0; i < COUNT; i++) {
+//      String command = "remove";
+//      String key = keyPrefix + i;
+//      String value = valuePrefix + i;
+//      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
+//      CommandResult cmdResult = executeCommand(command);
+//      printCommandOutput(cmdResult);
+//      assertEquals(Result.Status.OK, cmdResult.getStatus());
+//      validateResult(cmdResult, true);
+//    }
+//
+//    SerializableRunnable checkRemoveKeys = new SerializableRunnable() {
+//      @Override
+//      public void run() {
+//        Cache cache = getCache();
+//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+//        assertNotNull(region);
+//        for (int i = 0; i < COUNT; i++) {
+//          String key = keyPrefix + i;
+//          assertEquals(false, region.containsKey(key));
+//        }
+//        assertEquals(0, region.size());
+//      }
+//    };
+//
+//    vm1.invoke(checkRemoveKeys);
+//    vm2.invoke(checkRemoveKeys);
+//  }
 
 //  @Test
 //  public void testSimpleGetLocateEntryCommand() {
