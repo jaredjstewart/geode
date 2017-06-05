@@ -1106,220 +1106,220 @@ public class GemfireDataCommandsDUnitTest extends CliCommandTestBase {
     vm2.invoke(checkRemoveKeys);
   }
 
-  @Test
-  public void testSimpleGetLocateEntryCommand() {
-    final String keyPrefix = "testKey";
-    final String valuePrefix = "testValue";
-
-    setupForGetPutRemoveLocateEntry("testSimpleGetLocateEntry");
-
-    final VM vm1 = Host.getHost(0).getVM(1);
-    final VM vm2 = Host.getHost(0).getVM(2);
-
-    SerializableRunnable putKeys = new SerializableRunnable() {
-      @Override
-      public void run() {
-        Cache cache = getCache();
-        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-        assertNotNull(region);
-        region.clear();
-        for (int i = 0; i < COUNT; i++) {
-          String key = keyPrefix + i;
-          String value = valuePrefix + i;
-          region.put(key, value);
-        }
-      }
-    };
-
-    vm1.invoke(putKeys);
-    for (int i = 0; i < COUNT; i++) {
-      String command = "get";
-      String key = keyPrefix + i;
-      String value = valuePrefix + i;
-      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
-      CommandResult cmdResult = executeCommand(command);
-      printCommandOutput(cmdResult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-      validateResult(cmdResult, true);
-
-      command = "locate entry";
-      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
-      cmdResult = executeCommand(command);
-      printCommandOutput(cmdResult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-      validateResult(cmdResult, true);
-
-    }
-
-  }
-
-  @Test
-  public void testRecursiveLocateEntryCommand() {
-    final String keyPrefix = "testKey";
-    final String valuePrefix = "testValue";
-
-    setupForGetPutRemoveLocateEntry("testRecursiveLocateEntry");
-
-    final VM vm1 = Host.getHost(0).getVM(1);
-    final VM vm2 = Host.getHost(0).getVM(2);
-
-    SerializableRunnable putKeys = new SerializableRunnable() {
-      @Override
-      public void run() {
-        Cache cache = getCache();
-        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-        Region region2 = cache.getRegion(DATA_REGION_NAME_CHILD_1_PATH);
-        Region region3 = cache.getRegion(DATA_REGION_NAME_CHILD_1_2_PATH);
-        assertNotNull(region);
-        region.clear();
-        for (int i = 0; i < COUNT; i++) {
-          String key = keyPrefix + i;
-          String value = valuePrefix + i;
-          region.put(key, value);
-          region2.put(key, value);
-          region3.put(key, value);
-        }
-      }
-    };
-
-    vm1.invoke(putKeys);
-    for (int i = 0; i < COUNT; i++) {
-      String key = keyPrefix + i;
-      String command = "locate entry";
-      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH
-          + " --recursive=true";
-      CommandResult cmdResult = executeCommand(command);
-      printCommandOutput(cmdResult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-      validateResult(cmdResult, true);
-      validateLocationsResult(cmdResult, 6); // 3 Regions X 2 members = 6
-    }
-  }
-
-  @Test
-  public void testGetLocateEntryFromRegionOnDifferentVM() {
-    final String keyPrefix = "testKey";
-    final String valuePrefix = "testValue";
-
-    setupForGetPutRemoveLocateEntry("testGetLocateEntryFromRegionOnDifferentVM");
-
-    final VM vm1 = Host.getHost(0).getVM(1);
-    final VM vm2 = Host.getHost(0).getVM(2);
-
-    SerializableRunnable putKeys1 = new SerializableRunnable() {
-      @Override
-      public void run() {
-        Cache cache = getCache();
-        Region region = cache.getRegion(DATA_REGION_NAME_VM1_PATH);
-        Region parRegion = cache.getRegion(DATA_PAR_REGION_NAME_VM1_PATH);
-        assertNotNull(region);
-        region.clear();
-        for (int i = 0; i < COUNT; i++) {
-          if (i % 2 == 0) {
-            String key = keyPrefix + i;
-            String value = valuePrefix + i;
-            region.put(key, value);
-            parRegion.put(key, value);
-          }
-        }
-      }
-    };
-
-    SerializableRunnable putKeys2 = new SerializableRunnable() {
-      @Override
-      public void run() {
-        Cache cache = getCache();
-        Region region = cache.getRegion(DATA_REGION_NAME_VM2_PATH);
-        Region parRegion = cache.getRegion(DATA_PAR_REGION_NAME_VM2_PATH);
-        assertNotNull(region);
-        region.clear();
-        for (int i = 0; i < COUNT; i++) {
-          if (i % 2 != 0) {
-            String key = keyPrefix + i;
-            String value = valuePrefix + i;
-            region.put(key, value);
-            parRegion.put(key, value);
-          }
-        }
-      }
-    };
-
-    vm1.invoke(putKeys1);
-    vm2.invoke(putKeys2);
-    for (int i = 0; i < COUNT; i++) {
-      String command = "get";
-      String key = keyPrefix + i;
-      String value = valuePrefix + i;
-      if (i % 2 == 0)
-        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM1_PATH;
-      else if (i % 2 == 1)
-        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM2_PATH;
-      CommandResult cmdResult = executeCommand(command);
-      printCommandOutput(cmdResult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-      validateResult(cmdResult, true);
-
-      command = "locate entry";
-      if (i % 2 == 0)
-        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM1_PATH;
-      else if (i % 2 == 1)
-        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM2_PATH;
-      cmdResult = executeCommand(command);
-      printCommandOutput(cmdResult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-      validateResult(cmdResult, true);
-
-
-      command = "locate entry";
-      if (i % 2 == 0)
-        command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_VM1_PATH;
-      else if (i % 2 == 1)
-        command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_VM2_PATH;
-      cmdResult = executeCommand(command);
-      printCommandOutput(cmdResult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-      validateResult(cmdResult, true);
-      validateLocationsResult(cmdResult, 1); // 1 Regions X (2-1) 2 Copies but redundancy not
-                                             // satisfied = 1
-    }
-  }
-
-  @Category(FlakyTest.class) // GEODE-1822
-  @Test
-  public void testGetLocateEntryLocationsForPR() {
-    final String keyPrefix = "testKey";
-    final String valuePrefix = "testValue";
-
-    setupForGetPutRemoveLocateEntry("testGetLocateEntryLocationsForPR");
-    final VM vm1 = Host.getHost(0).getVM(1);
-
-    SerializableRunnable putKeys1 = new SerializableRunnable() {
-      @Override
-      public void run() {
-        Cache cache = getCache();
-        Region region = cache.getRegion(DATA_PAR_REGION_NAME_PATH);
-        assertNotNull(region);
-        for (int i = 0; i < COUNT; i++) {
-          String key = keyPrefix + i;
-          String value = valuePrefix + i;
-          region.put(key, value);
-        }
-      }
-    };
-
-    vm1.invoke(putKeys1);
-
-    for (int i = 0; i < COUNT; i++) {
-      String key = keyPrefix + i;
-      String command = "locate entry";
-      command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_PATH;
-      CommandResult cmdResult = executeCommand(command);
-      printCommandOutput(cmdResult);
-      assertEquals(Result.Status.OK, cmdResult.getStatus());
-      validateResult(cmdResult, true);
-      validateLocationsResult(cmdResult, 2); // 2 Members
-    }
-  }
+//  @Test
+//  public void testSimpleGetLocateEntryCommand() {
+//    final String keyPrefix = "testKey";
+//    final String valuePrefix = "testValue";
+//
+//    setupForGetPutRemoveLocateEntry("testSimpleGetLocateEntry");
+//
+//    final VM vm1 = Host.getHost(0).getVM(1);
+//    final VM vm2 = Host.getHost(0).getVM(2);
+//
+//    SerializableRunnable putKeys = new SerializableRunnable() {
+//      @Override
+//      public void run() {
+//        Cache cache = getCache();
+//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+//        assertNotNull(region);
+//        region.clear();
+//        for (int i = 0; i < COUNT; i++) {
+//          String key = keyPrefix + i;
+//          String value = valuePrefix + i;
+//          region.put(key, value);
+//        }
+//      }
+//    };
+//
+//    vm1.invoke(putKeys);
+//    for (int i = 0; i < COUNT; i++) {
+//      String command = "get";
+//      String key = keyPrefix + i;
+//      String value = valuePrefix + i;
+//      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
+//      CommandResult cmdResult = executeCommand(command);
+//      printCommandOutput(cmdResult);
+//      assertEquals(Result.Status.OK, cmdResult.getStatus());
+//      validateResult(cmdResult, true);
+//
+//      command = "locate entry";
+//      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
+//      cmdResult = executeCommand(command);
+//      printCommandOutput(cmdResult);
+//      assertEquals(Result.Status.OK, cmdResult.getStatus());
+//      validateResult(cmdResult, true);
+//
+//    }
+//
+//  }
+//
+//  @Test
+//  public void testRecursiveLocateEntryCommand() {
+//    final String keyPrefix = "testKey";
+//    final String valuePrefix = "testValue";
+//
+//    setupForGetPutRemoveLocateEntry("testRecursiveLocateEntry");
+//
+//    final VM vm1 = Host.getHost(0).getVM(1);
+//    final VM vm2 = Host.getHost(0).getVM(2);
+//
+//    SerializableRunnable putKeys = new SerializableRunnable() {
+//      @Override
+//      public void run() {
+//        Cache cache = getCache();
+//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+//        Region region2 = cache.getRegion(DATA_REGION_NAME_CHILD_1_PATH);
+//        Region region3 = cache.getRegion(DATA_REGION_NAME_CHILD_1_2_PATH);
+//        assertNotNull(region);
+//        region.clear();
+//        for (int i = 0; i < COUNT; i++) {
+//          String key = keyPrefix + i;
+//          String value = valuePrefix + i;
+//          region.put(key, value);
+//          region2.put(key, value);
+//          region3.put(key, value);
+//        }
+//      }
+//    };
+//
+//    vm1.invoke(putKeys);
+//    for (int i = 0; i < COUNT; i++) {
+//      String key = keyPrefix + i;
+//      String command = "locate entry";
+//      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH
+//          + " --recursive=true";
+//      CommandResult cmdResult = executeCommand(command);
+//      printCommandOutput(cmdResult);
+//      assertEquals(Result.Status.OK, cmdResult.getStatus());
+//      validateResult(cmdResult, true);
+//      validateLocationsResult(cmdResult, 6); // 3 Regions X 2 members = 6
+//    }
+//  }
+//
+//  @Test
+//  public void testGetLocateEntryFromRegionOnDifferentVM() {
+//    final String keyPrefix = "testKey";
+//    final String valuePrefix = "testValue";
+//
+//    setupForGetPutRemoveLocateEntry("testGetLocateEntryFromRegionOnDifferentVM");
+//
+//    final VM vm1 = Host.getHost(0).getVM(1);
+//    final VM vm2 = Host.getHost(0).getVM(2);
+//
+//    SerializableRunnable putKeys1 = new SerializableRunnable() {
+//      @Override
+//      public void run() {
+//        Cache cache = getCache();
+//        Region region = cache.getRegion(DATA_REGION_NAME_VM1_PATH);
+//        Region parRegion = cache.getRegion(DATA_PAR_REGION_NAME_VM1_PATH);
+//        assertNotNull(region);
+//        region.clear();
+//        for (int i = 0; i < COUNT; i++) {
+//          if (i % 2 == 0) {
+//            String key = keyPrefix + i;
+//            String value = valuePrefix + i;
+//            region.put(key, value);
+//            parRegion.put(key, value);
+//          }
+//        }
+//      }
+//    };
+//
+//    SerializableRunnable putKeys2 = new SerializableRunnable() {
+//      @Override
+//      public void run() {
+//        Cache cache = getCache();
+//        Region region = cache.getRegion(DATA_REGION_NAME_VM2_PATH);
+//        Region parRegion = cache.getRegion(DATA_PAR_REGION_NAME_VM2_PATH);
+//        assertNotNull(region);
+//        region.clear();
+//        for (int i = 0; i < COUNT; i++) {
+//          if (i % 2 != 0) {
+//            String key = keyPrefix + i;
+//            String value = valuePrefix + i;
+//            region.put(key, value);
+//            parRegion.put(key, value);
+//          }
+//        }
+//      }
+//    };
+//
+//    vm1.invoke(putKeys1);
+//    vm2.invoke(putKeys2);
+//    for (int i = 0; i < COUNT; i++) {
+//      String command = "get";
+//      String key = keyPrefix + i;
+//      String value = valuePrefix + i;
+//      if (i % 2 == 0)
+//        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM1_PATH;
+//      else if (i % 2 == 1)
+//        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM2_PATH;
+//      CommandResult cmdResult = executeCommand(command);
+//      printCommandOutput(cmdResult);
+//      assertEquals(Result.Status.OK, cmdResult.getStatus());
+//      validateResult(cmdResult, true);
+//
+//      command = "locate entry";
+//      if (i % 2 == 0)
+//        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM1_PATH;
+//      else if (i % 2 == 1)
+//        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM2_PATH;
+//      cmdResult = executeCommand(command);
+//      printCommandOutput(cmdResult);
+//      assertEquals(Result.Status.OK, cmdResult.getStatus());
+//      validateResult(cmdResult, true);
+//
+//
+//      command = "locate entry";
+//      if (i % 2 == 0)
+//        command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_VM1_PATH;
+//      else if (i % 2 == 1)
+//        command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_VM2_PATH;
+//      cmdResult = executeCommand(command);
+//      printCommandOutput(cmdResult);
+//      assertEquals(Result.Status.OK, cmdResult.getStatus());
+//      validateResult(cmdResult, true);
+//      validateLocationsResult(cmdResult, 1); // 1 Regions X (2-1) 2 Copies but redundancy not
+//                                             // satisfied = 1
+//    }
+//  }
+//
+//  @Category(FlakyTest.class) // GEODE-1822
+//  @Test
+//  public void testGetLocateEntryLocationsForPR() {
+//    final String keyPrefix = "testKey";
+//    final String valuePrefix = "testValue";
+//
+//    setupForGetPutRemoveLocateEntry("testGetLocateEntryLocationsForPR");
+//    final VM vm1 = Host.getHost(0).getVM(1);
+//
+//    SerializableRunnable putKeys1 = new SerializableRunnable() {
+//      @Override
+//      public void run() {
+//        Cache cache = getCache();
+//        Region region = cache.getRegion(DATA_PAR_REGION_NAME_PATH);
+//        assertNotNull(region);
+//        for (int i = 0; i < COUNT; i++) {
+//          String key = keyPrefix + i;
+//          String value = valuePrefix + i;
+//          region.put(key, value);
+//        }
+//      }
+//    };
+//
+//    vm1.invoke(putKeys1);
+//
+//    for (int i = 0; i < COUNT; i++) {
+//      String key = keyPrefix + i;
+//      String command = "locate entry";
+//      command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_PATH;
+//      CommandResult cmdResult = executeCommand(command);
+//      printCommandOutput(cmdResult);
+//      assertEquals(Result.Status.OK, cmdResult.getStatus());
+//      validateResult(cmdResult, true);
+//      validateLocationsResult(cmdResult, 2); // 2 Members
+//    }
+//  }
 //
 //  @Test
 //  public void testPutFromRegionOnDifferentVM() {
