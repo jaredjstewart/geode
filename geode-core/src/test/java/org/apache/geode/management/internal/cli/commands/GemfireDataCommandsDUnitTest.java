@@ -825,31 +825,31 @@ public class GemfireDataCommandsDUnitTest extends CliCommandTestBase {
 //    doTestSelectBeansWithNestedFieldAsResult();
 //  }
 
-  @Test
-  public void testPrimitivesWithDataCommands() {
-    setupForGetPutRemoveLocateEntry("testPrimitives");
-    Byte byteKey = Byte.parseByte("41");
-    Byte byteValue = Byte.parseByte("31");
-    Short shortKey = Short.parseShort("123");
-    Short shortValue = Short.parseShort("121");
-    Integer integerKey = Integer.parseInt("123456");
-    Integer integerValue = Integer.parseInt("12345678");
-    Float floatKey = Float.valueOf("12432.2325");
-    Float flaotValue = Float.valueOf("111111.1111");
-    Double doubleKey = Double.valueOf("12432.235425");
-    Double doubleValue = Double.valueOf("111111.111111");
-
-    getLogWriter().info("Testing Byte Wrappers");
-    testGetPutLocateEntryFromShellAndGemfire(byteKey, byteValue, Byte.class, true, true);
-    getLogWriter().info("Testing Short Wrappers");
-    testGetPutLocateEntryFromShellAndGemfire(shortKey, shortValue, Short.class, true, true);
-    getLogWriter().info("Testing Integer Wrappers");
-    testGetPutLocateEntryFromShellAndGemfire(integerKey, integerValue, Integer.class, true, true);
-    getLogWriter().info("Testing Float Wrappers");
-    testGetPutLocateEntryFromShellAndGemfire(floatKey, flaotValue, Float.class, true, true);
-    getLogWriter().info("Testing Double Wrappers");
-    testGetPutLocateEntryFromShellAndGemfire(doubleKey, doubleValue, Double.class, true, true);
-  }
+//  @Test
+//  public void testPrimitivesWithDataCommands() {
+//    setupForGetPutRemoveLocateEntry("testPrimitives");
+//    Byte byteKey = Byte.parseByte("41");
+//    Byte byteValue = Byte.parseByte("31");
+//    Short shortKey = Short.parseShort("123");
+//    Short shortValue = Short.parseShort("121");
+//    Integer integerKey = Integer.parseInt("123456");
+//    Integer integerValue = Integer.parseInt("12345678");
+//    Float floatKey = Float.valueOf("12432.2325");
+//    Float flaotValue = Float.valueOf("111111.1111");
+//    Double doubleKey = Double.valueOf("12432.235425");
+//    Double doubleValue = Double.valueOf("111111.111111");
+//
+//    getLogWriter().info("Testing Byte Wrappers");
+//    testGetPutLocateEntryFromShellAndGemfire(byteKey, byteValue, Byte.class, true, true);
+//    getLogWriter().info("Testing Short Wrappers");
+//    testGetPutLocateEntryFromShellAndGemfire(shortKey, shortValue, Short.class, true, true);
+//    getLogWriter().info("Testing Integer Wrappers");
+//    testGetPutLocateEntryFromShellAndGemfire(integerKey, integerValue, Integer.class, true, true);
+//    getLogWriter().info("Testing Float Wrappers");
+//    testGetPutLocateEntryFromShellAndGemfire(floatKey, flaotValue, Float.class, true, true);
+//    getLogWriter().info("Testing Double Wrappers");
+//    testGetPutLocateEntryFromShellAndGemfire(doubleKey, doubleValue, Double.class, true, true);
+//  }
 
 
   /**
