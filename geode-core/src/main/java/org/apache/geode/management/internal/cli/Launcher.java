@@ -16,6 +16,7 @@ package org.apache.geode.management.internal.cli;
 
 import org.apache.geode.internal.GemFireVersion;
 import org.apache.geode.internal.PureJavaMode;
+import org.apache.geode.management.internal.cli.commands.LauncherLifecycleCommands;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.cli.shell.GfshConfig;
@@ -99,7 +100,7 @@ public class Launcher {
     this.allowedCommandLineCommands.add(CliStrings.START_PULSE);
     this.allowedCommandLineCommands.add(CliStrings.START_JCONSOLE);
     this.allowedCommandLineCommands.add(CliStrings.START_JVISUALVM);
-    this.allowedCommandLineCommands.add(CliStrings.START_LOCATOR);
+    this.allowedCommandLineCommands.add(LauncherLifecycleCommands.StartLocator.START_LOCATOR);
     this.allowedCommandLineCommands.add(CliStrings.START_MANAGER);
     this.allowedCommandLineCommands.add(CliStrings.START_SERVER);
     this.allowedCommandLineCommands.add(CliStrings.START_VSD);

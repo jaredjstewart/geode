@@ -67,4 +67,23 @@ public class LauncherLifecycleCommandsTest {
     assertThat(gemfireProperties).containsKey(JMX_MANAGER_HOSTNAME_FOR_CLIENTS);
     assertThat(gemfireProperties.get(JMX_MANAGER_HOSTNAME_FOR_CLIENTS)).isEqualTo(fakeHostname);
   }
+
+  @Test
+  public void startServerRespectsJmxManagerHostnameForClients() throws Exception {
+    String fakeHostname = "someFakeHostname";
+    String startServerCommand = new CommandStringBuilder("start server")
+        .addOption(JMX_MANAGER_HOSTNAME_FOR_CLIENTS, fakeHostname).getCommandString();
+
+    LauncherLifecycleCommands spy = commandRule.spyCommand(startServerCommand);
+    doReturn(mock(Gfsh.class)).when(spy).getGfsh();
+    commandRule.executeLastCommandWithInstance(spy);
+
+    ArgumentCaptor<Properties> gemfirePropertiesCaptor = ArgumentCaptor.forClass(Properties.class);
+    verify(spy).createStartLocatorCommandLine(any(), any(), any(),
+        gemfirePropertiesCaptor.capture(), any(), any(), any(), any(), any());
+
+    Properties gemfireProperties = gemfirePropertiesCaptor.getValue();
+    assertThat(gemfireProperties).containsKey(JMX_MANAGER_HOSTNAME_FOR_CLIENTS);
+    assertThat(gemfireProperties.get(JMX_MANAGER_HOSTNAME_FOR_CLIENTS)).isEqualTo(fakeHostname);
+  }
 }
