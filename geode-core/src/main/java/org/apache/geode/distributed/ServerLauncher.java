@@ -55,6 +55,8 @@ import org.apache.geode.internal.process.StartupStatusListener;
 import org.apache.geode.internal.process.UnableToControlProcessException;
 import org.apache.geode.internal.util.IOUtils;
 import org.apache.geode.lang.AttachAPINotFoundException;
+import org.apache.geode.management.internal.cli.commands.LauncherLifecycleCommands;
+import org.apache.geode.management.internal.cli.commands.LauncherLifecycleCommands.StartServer;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.cli.json.GfJsonArray;
 import org.apache.geode.management.internal.cli.json.GfJsonException;
@@ -1515,24 +1517,25 @@ public class ServerLauncher extends AbstractLauncher<String> {
       parser.accepts("server-port").withRequiredArg().ofType(Integer.class);
       parser.accepts("spring-xml-location").withRequiredArg().ofType(String.class);
       parser.accepts("version");
-      parser.accepts(CliStrings.START_SERVER__CRITICAL__HEAP__PERCENTAGE).withRequiredArg()
+      parser.accepts(StartServer.START_SERVER__CRITICAL__HEAP__PERCENTAGE).withRequiredArg()
           .ofType(Float.class);
-      parser.accepts(CliStrings.START_SERVER__EVICTION__HEAP__PERCENTAGE).withRequiredArg()
+      parser.accepts(StartServer.START_SERVER__EVICTION__HEAP__PERCENTAGE).withRequiredArg()
           .ofType(Float.class);
-      parser.accepts(CliStrings.START_SERVER__CRITICAL_OFF_HEAP_PERCENTAGE).withRequiredArg()
+      parser.accepts(StartServer.START_SERVER__CRITICAL_OFF_HEAP_PERCENTAGE).withRequiredArg()
           .ofType(Float.class);
-      parser.accepts(CliStrings.START_SERVER__EVICTION_OFF_HEAP_PERCENTAGE).withRequiredArg()
+      parser.accepts(StartServer.START_SERVER__EVICTION_OFF_HEAP_PERCENTAGE).withRequiredArg()
           .ofType(Float.class);
-      parser.accepts(CliStrings.START_SERVER__MAX__CONNECTIONS).withRequiredArg()
+      parser.accepts(StartServer.START_SERVER__MAX__CONNECTIONS).withRequiredArg()
           .ofType(Integer.class);
-      parser.accepts(CliStrings.START_SERVER__MAX__MESSAGE__COUNT).withRequiredArg()
+      parser.accepts(StartServer.START_SERVER__MAX__MESSAGE__COUNT).withRequiredArg()
           .ofType(Integer.class);
-      parser.accepts(CliStrings.START_SERVER__MAX__THREADS).withRequiredArg().ofType(Integer.class);
-      parser.accepts(CliStrings.START_SERVER__MESSAGE__TIME__TO__LIVE).withRequiredArg()
+      parser.accepts(StartServer.START_SERVER__MAX__THREADS).withRequiredArg()
           .ofType(Integer.class);
-      parser.accepts(CliStrings.START_SERVER__SOCKET__BUFFER__SIZE).withRequiredArg()
+      parser.accepts(StartServer.START_SERVER__MESSAGE__TIME__TO__LIVE).withRequiredArg()
           .ofType(Integer.class);
-      parser.accepts(CliStrings.START_SERVER__HOSTNAME__FOR__CLIENTS).withRequiredArg()
+      parser.accepts(StartServer.START_SERVER__SOCKET__BUFFER__SIZE).withRequiredArg()
+          .ofType(Integer.class);
+      parser.accepts(StartServer.START_SERVER__HOSTNAME__FOR__CLIENTS).withRequiredArg()
           .ofType(String.class);
 
       return parser;
@@ -1561,49 +1564,49 @@ public class ServerLauncher extends AbstractLauncher<String> {
         setRebalance(options.has("rebalance"));
         setRedirectOutput(options.has("redirect-output"));
 
-        if (options.hasArgument(CliStrings.START_SERVER__CRITICAL__HEAP__PERCENTAGE)) {
+        if (options.hasArgument(StartServer.START_SERVER__CRITICAL__HEAP__PERCENTAGE)) {
           setCriticalHeapPercentage(Float.parseFloat(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__CRITICAL__HEAP__PERCENTAGE))));
+              .toString(options.valueOf(StartServer.START_SERVER__CRITICAL__HEAP__PERCENTAGE))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__EVICTION__HEAP__PERCENTAGE)) {
+        if (options.hasArgument(StartServer.START_SERVER__EVICTION__HEAP__PERCENTAGE)) {
           setEvictionHeapPercentage(Float.parseFloat(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__EVICTION__HEAP__PERCENTAGE))));
+              .toString(options.valueOf(StartServer.START_SERVER__EVICTION__HEAP__PERCENTAGE))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__CRITICAL_OFF_HEAP_PERCENTAGE)) {
+        if (options.hasArgument(StartServer.START_SERVER__CRITICAL_OFF_HEAP_PERCENTAGE)) {
           setCriticalOffHeapPercentage(Float.parseFloat(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__CRITICAL_OFF_HEAP_PERCENTAGE))));
+              .toString(options.valueOf(StartServer.START_SERVER__CRITICAL_OFF_HEAP_PERCENTAGE))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__EVICTION_OFF_HEAP_PERCENTAGE)) {
+        if (options.hasArgument(StartServer.START_SERVER__EVICTION_OFF_HEAP_PERCENTAGE)) {
           setEvictionOffHeapPercentage(Float.parseFloat(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__EVICTION_OFF_HEAP_PERCENTAGE))));
+              .toString(options.valueOf(StartServer.START_SERVER__EVICTION_OFF_HEAP_PERCENTAGE))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__MAX__CONNECTIONS)) {
+        if (options.hasArgument(StartServer.START_SERVER__MAX__CONNECTIONS)) {
           setMaxConnections(Integer.parseInt(
-              ObjectUtils.toString(options.valueOf(CliStrings.START_SERVER__MAX__CONNECTIONS))));
+              ObjectUtils.toString(options.valueOf(StartServer.START_SERVER__MAX__CONNECTIONS))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__MAX__MESSAGE__COUNT)) {
-          setMaxConnections(Integer.parseInt(
-              ObjectUtils.toString(options.valueOf(CliStrings.START_SERVER__MAX__MESSAGE__COUNT))));
-        }
-
-        if (options.hasArgument(CliStrings.START_SERVER__MESSAGE__TIME__TO__LIVE)) {
+        if (options.hasArgument(StartServer.START_SERVER__MAX__MESSAGE__COUNT)) {
           setMaxConnections(Integer.parseInt(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__MESSAGE__TIME__TO__LIVE))));
+              .toString(options.valueOf(StartServer.START_SERVER__MAX__MESSAGE__COUNT))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__SOCKET__BUFFER__SIZE)) {
+        if (options.hasArgument(StartServer.START_SERVER__MESSAGE__TIME__TO__LIVE)) {
           setMaxConnections(Integer.parseInt(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__SOCKET__BUFFER__SIZE))));
+              .toString(options.valueOf(StartServer.START_SERVER__MESSAGE__TIME__TO__LIVE))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__MAX__THREADS)) {
+        if (options.hasArgument(StartServer.START_SERVER__SOCKET__BUFFER__SIZE)) {
+          setMaxConnections(Integer.parseInt(ObjectUtils
+              .toString(options.valueOf(StartServer.START_SERVER__SOCKET__BUFFER__SIZE))));
+        }
+
+        if (options.hasArgument(StartServer.START_SERVER__MAX__THREADS)) {
           setMaxThreads(Integer.parseInt(
-              ObjectUtils.toString(options.valueOf(CliStrings.START_SERVER__MAX__THREADS))));
+              ObjectUtils.toString(options.valueOf(StartServer.START_SERVER__MAX__THREADS))));
         }
 
         if (!isHelping()) {
@@ -1634,44 +1637,44 @@ public class ServerLauncher extends AbstractLauncher<String> {
 
         // TODO why are these option not inside the 'if (!isHelping())' conditional block!?
 
-        if (options.hasArgument(CliStrings.START_SERVER__CRITICAL__HEAP__PERCENTAGE)) {
+        if (options.hasArgument(StartServer.START_SERVER__CRITICAL__HEAP__PERCENTAGE)) {
           setCriticalHeapPercentage(Float.parseFloat(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__CRITICAL__HEAP__PERCENTAGE))));
+              .toString(options.valueOf(StartServer.START_SERVER__CRITICAL__HEAP__PERCENTAGE))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__EVICTION__HEAP__PERCENTAGE)) {
+        if (options.hasArgument(StartServer.START_SERVER__EVICTION__HEAP__PERCENTAGE)) {
           setEvictionHeapPercentage(Float.parseFloat(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__EVICTION__HEAP__PERCENTAGE))));
+              .toString(options.valueOf(StartServer.START_SERVER__EVICTION__HEAP__PERCENTAGE))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__MAX__CONNECTIONS)) {
+        if (options.hasArgument(StartServer.START_SERVER__MAX__CONNECTIONS)) {
           setMaxConnections(Integer.parseInt(
-              ObjectUtils.toString(options.valueOf(CliStrings.START_SERVER__MAX__CONNECTIONS))));
+              ObjectUtils.toString(options.valueOf(StartServer.START_SERVER__MAX__CONNECTIONS))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__MAX__MESSAGE__COUNT)) {
-          setMaxMessageCount(Integer.parseInt(
-              ObjectUtils.toString(options.valueOf(CliStrings.START_SERVER__MAX__MESSAGE__COUNT))));
+        if (options.hasArgument(StartServer.START_SERVER__MAX__MESSAGE__COUNT)) {
+          setMaxMessageCount(Integer.parseInt(ObjectUtils
+              .toString(options.valueOf(StartServer.START_SERVER__MAX__MESSAGE__COUNT))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__MAX__THREADS)) {
+        if (options.hasArgument(StartServer.START_SERVER__MAX__THREADS)) {
           setMaxThreads(Integer.parseInt(
-              ObjectUtils.toString(options.valueOf(CliStrings.START_SERVER__MAX__THREADS))));
+              ObjectUtils.toString(options.valueOf(StartServer.START_SERVER__MAX__THREADS))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__MESSAGE__TIME__TO__LIVE)) {
+        if (options.hasArgument(StartServer.START_SERVER__MESSAGE__TIME__TO__LIVE)) {
           setMessageTimeToLive(Integer.parseInt(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__MESSAGE__TIME__TO__LIVE))));
+              .toString(options.valueOf(StartServer.START_SERVER__MESSAGE__TIME__TO__LIVE))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__SOCKET__BUFFER__SIZE)) {
+        if (options.hasArgument(StartServer.START_SERVER__SOCKET__BUFFER__SIZE)) {
           setSocketBufferSize(Integer.parseInt(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__SOCKET__BUFFER__SIZE))));
+              .toString(options.valueOf(StartServer.START_SERVER__SOCKET__BUFFER__SIZE))));
         }
 
-        if (options.hasArgument(CliStrings.START_SERVER__HOSTNAME__FOR__CLIENTS)) {
+        if (options.hasArgument(StartServer.START_SERVER__HOSTNAME__FOR__CLIENTS)) {
           setHostNameForClients(ObjectUtils
-              .toString(options.valueOf(CliStrings.START_SERVER__HOSTNAME__FOR__CLIENTS)));
+              .toString(options.valueOf(StartServer.START_SERVER__HOSTNAME__FOR__CLIENTS)));
         }
 
       } catch (OptionException e) {

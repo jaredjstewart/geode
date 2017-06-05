@@ -877,6 +877,8 @@ public class LauncherLifecycleCommands implements GfshCommand {
           help = StartServer.START_SERVER__GROUP__HELP) final String group,
       @CliOption(key = StartServer.START_SERVER__HOSTNAME__FOR__CLIENTS,
           help = StartServer.START_SERVER__HOSTNAME__FOR__CLIENTS__HELP) final String hostNameForClients,
+      @CliOption(key = ConfigurationProperties.JMX_MANAGER_HOSTNAME_FOR_CLIENTS,
+          help = StartServer.START_SERVER__JMX_MANAGER_HOSTNAME_FOR_CLIENTS__HELP) final String jmxManagerHostnameForClients,
       @CliOption(key = StartServer.START_SERVER__INCLUDE_SYSTEM_CLASSPATH,
           specifiedDefaultValue = "true", unspecifiedDefaultValue = "false",
           help = StartServer.START_SERVER__INCLUDE_SYSTEM_CLASSPATH__HELP) final Boolean includeSystemClasspath,
@@ -1016,6 +1018,8 @@ public class LauncherLifecycleCommands implements GfshCommand {
       gemfireProperties.setProperty(ENABLE_TIME_STATISTICS,
           StringUtils.defaultString(enableTimeStatistics));
       gemfireProperties.setProperty(GROUPS, StringUtils.defaultString(group));
+      gemfireProperties.setProperty(JMX_MANAGER_HOSTNAME_FOR_CLIENTS,
+          StringUtils.defaultString(jmxManagerHostnameForClients));
       gemfireProperties.setProperty(LOCATORS, StringUtils.defaultString(locators));
       gemfireProperties.setProperty(LOCATOR_WAIT_TIME, StringUtils.defaultString(locatorWaitTime));
       gemfireProperties.setProperty(LOG_LEVEL, StringUtils.defaultString(logLevel));
@@ -1563,6 +1567,8 @@ public class LauncherLifecycleCommands implements GfshCommand {
     public static final String START_SERVER__J = "J";
     public static final String START_SERVER__J__HELP =
         "Argument passed to the JVM on which the server will run. For example, --J=-Dfoo.bar=true will set the system property \"foo.bar\" to \"true\".";
+    public static final String START_SERVER__JMX_MANAGER_HOSTNAME_FOR_CLIENTS__HELP =
+        "Hostname given to clients that ask the server for the location of a JMX Manager";
     public static final String START_SERVER__LOCATORS = LOCATORS;
     public static final String START_SERVER__LOCATORS__HELP =
         "Sets the list of Locators used by the Cache Server to join the appropriate Geode cluster.";

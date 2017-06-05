@@ -79,10 +79,12 @@ public class LauncherLifecycleCommandsTest {
     commandRule.executeLastCommandWithInstance(spy);
 
     ArgumentCaptor<Properties> gemfirePropertiesCaptor = ArgumentCaptor.forClass(Properties.class);
-    verify(spy).createStartLocatorCommandLine(any(), any(), any(),
-        gemfirePropertiesCaptor.capture(), any(), any(), any(), any(), any());
+    verify(spy).createStartServerCommandLine(any(), any(), any(), gemfirePropertiesCaptor.capture(),
+        any(), any(), any(), any(), any(), any());
 
     Properties gemfireProperties = gemfirePropertiesCaptor.getValue();
+
+    System.out.println(gemfireProperties);
     assertThat(gemfireProperties).containsKey(JMX_MANAGER_HOSTNAME_FOR_CLIENTS);
     assertThat(gemfireProperties.get(JMX_MANAGER_HOSTNAME_FOR_CLIENTS)).isEqualTo(fakeHostname);
   }
