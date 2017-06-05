@@ -47,6 +47,8 @@ import org.apache.geode.internal.process.ProcessType;
 import org.apache.geode.internal.process.ProcessUtils;
 import org.apache.geode.internal.util.IOUtils;
 import org.apache.geode.management.cli.Result;
+import org.apache.geode.management.internal.cli.commands.LauncherLifecycleCommands.StartLocator;
+import org.apache.geode.management.internal.cli.commands.LauncherLifecycleCommands.StartServer;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.cli.result.CommandResult;
 import org.apache.geode.management.internal.cli.util.CommandStringBuilder;
@@ -315,16 +317,16 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
 
     assertTrue(pidFile.isFile());
 
-    CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_LOCATOR);
+    CommandStringBuilder command = new CommandStringBuilder(StartLocator.START_LOCATOR);
 
-    command.addOption(CliStrings.START_LOCATOR__MEMBER_NAME, pathname);
-    command.addOption(CliStrings.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
-    command.addOption(CliStrings.START_LOCATOR__PORT, String.valueOf(locatorPort));
-    command.addOption(CliStrings.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
+    command.addOption(StartLocator.START_LOCATOR__MEMBER_NAME, pathname);
+    command.addOption(StartLocator.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
+    command.addOption(StartLocator.START_LOCATOR__PORT, String.valueOf(locatorPort));
+    command.addOption(StartLocator.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
         Boolean.FALSE.toString());
-    command.addOption(CliStrings.START_LOCATOR__J,
+    command.addOption(StartLocator.START_LOCATOR__J,
         "-D" + DistributionConfig.GEMFIRE_PREFIX + "http-service-port=0");
-    command.addOption(CliStrings.START_LOCATOR__J, "-D" + DistributionConfig.GEMFIRE_PREFIX
+    command.addOption(StartLocator.START_LOCATOR__J, "-D" + DistributionConfig.GEMFIRE_PREFIX
         + "jmx-manager-port=" + AvailablePortHelper.getRandomAvailableTCPPort());
 
     CommandResult result = executeCommand(command.toString());
@@ -366,21 +368,21 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
   public void test001StartLocatorFailsFastOnMissingGemFirePropertiesFile() throws IOException {
     String gemfirePropertiesPathname = "/path/to/missing/gemfire.properties";
 
-    CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_LOCATOR);
+    CommandStringBuilder command = new CommandStringBuilder(StartLocator.START_LOCATOR);
     String pathName = getClass().getSimpleName().concat("_").concat(getTestMethodName());
     final File workingDirectory = temporaryFolder.newFolder(pathName);
 
-    command.addOption(CliStrings.START_LOCATOR__MEMBER_NAME, pathName);
-    command.addOption(CliStrings.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
-    command.addOption(CliStrings.START_LOCATOR__PORT, "0");
-    command.addOption(CliStrings.START_LOCATOR__PROPERTIES, gemfirePropertiesPathname);
-    command.addOption(CliStrings.START_LOCATOR__J,
+    command.addOption(StartLocator.START_LOCATOR__MEMBER_NAME, pathName);
+    command.addOption(StartLocator.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
+    command.addOption(StartLocator.START_LOCATOR__PORT, "0");
+    command.addOption(StartLocator.START_LOCATOR__PROPERTIES, gemfirePropertiesPathname);
+    command.addOption(StartLocator.START_LOCATOR__J,
         "-D" + DistributionConfig.GEMFIRE_PREFIX + "http-service-port=0");
-    command.addOption(CliStrings.START_LOCATOR__J,
+    command.addOption(StartLocator.START_LOCATOR__J,
         "-D" + DistributionConfig.GEMFIRE_PREFIX + "jmx-manager=false");
-    command.addOption(CliStrings.START_LOCATOR__J,
+    command.addOption(StartLocator.START_LOCATOR__J,
         "-D" + DistributionConfig.GEMFIRE_PREFIX + "jmx-manager-port=0");
-    command.addOption(CliStrings.START_LOCATOR__J,
+    command.addOption(StartLocator.START_LOCATOR__J,
         "-D" + DistributionConfig.GEMFIRE_PREFIX + "jmx-manager-start=false");
 
     CommandResult result = executeCommand(command.toString());
@@ -417,11 +419,11 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
 
     try {
       // verify the start locator output does not contain string "gemfire"
-      CommandStringBuilder locCommand = new CommandStringBuilder(CliStrings.START_LOCATOR);
-      locCommand.addOption(CliStrings.START_LOCATOR__MEMBER_NAME, pathnameLoc);
-      locCommand.addOption(CliStrings.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
-      locCommand.addOption(CliStrings.START_LOCATOR__DIR, workingDirectoryLoc.getCanonicalPath());
-      locCommand.addOption(CliStrings.START_LOCATOR__PORT, String.valueOf(locatorPort));
+      CommandStringBuilder locCommand = new CommandStringBuilder(StartLocator.START_LOCATOR);
+      locCommand.addOption(StartLocator.START_LOCATOR__MEMBER_NAME, pathnameLoc);
+      locCommand.addOption(StartLocator.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
+      locCommand.addOption(StartLocator.START_LOCATOR__DIR, workingDirectoryLoc.getCanonicalPath());
+      locCommand.addOption(StartLocator.START_LOCATOR__PORT, String.valueOf(locatorPort));
 
       CommandResult locResult = executeCommand(locCommand.toString());
       assertNotNull(locResult);
@@ -431,9 +433,9 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
       assertTrue("Locator output was: " + locatorOutput, !locatorOutput.contains("Gemfire"));
 
       // verify the start server output does not contain string "gemfire"
-      CommandStringBuilder serCommand = new CommandStringBuilder(CliStrings.START_SERVER);
-      serCommand.addOption(CliStrings.START_SERVER__NAME, pathnameSer);
-      serCommand.addOption(CliStrings.START_SERVER__DIR, workingDirectorySer.getCanonicalPath());
+      CommandStringBuilder serCommand = new CommandStringBuilder(StartServer.START_SERVER);
+      serCommand.addOption(StartServer.START_SERVER__NAME, pathnameSer);
+      serCommand.addOption(StartServer.START_SERVER__DIR, workingDirectorySer.getCanonicalPath());
 
       CommandResult serResult = executeCommand(serCommand.toString());
       assertNotNull(serResult);
@@ -454,20 +456,20 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
     String pathName = getClass().getSimpleName().concat("_").concat(getTestMethodName());
     final File workingDirectory = temporaryFolder.newFolder(pathName);
 
-    CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_LOCATOR);
+    CommandStringBuilder command = new CommandStringBuilder(StartLocator.START_LOCATOR);
 
-    command.addOption(CliStrings.START_LOCATOR__MEMBER_NAME, pathName);
-    command.addOption(CliStrings.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
-    command.addOption(CliStrings.START_LOCATOR__PORT, "0");
-    command.addOption(CliStrings.START_LOCATOR__SECURITY_PROPERTIES,
+    command.addOption(StartLocator.START_LOCATOR__MEMBER_NAME, pathName);
+    command.addOption(StartLocator.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
+    command.addOption(StartLocator.START_LOCATOR__PORT, "0");
+    command.addOption(StartLocator.START_LOCATOR__SECURITY_PROPERTIES,
         gemfireSecurityPropertiesPathname);
-    command.addOption(CliStrings.START_LOCATOR__J,
+    command.addOption(StartLocator.START_LOCATOR__J,
         "-D" + DistributionConfig.GEMFIRE_PREFIX + "http-service-port=0");
-    command.addOption(CliStrings.START_LOCATOR__J,
+    command.addOption(StartLocator.START_LOCATOR__J,
         "-D" + DistributionConfig.GEMFIRE_PREFIX + "jmx-manager=false");
-    command.addOption(CliStrings.START_LOCATOR__J,
+    command.addOption(StartLocator.START_LOCATOR__J,
         "-D" + DistributionConfig.GEMFIRE_PREFIX + "jmx-manager-port=0");
-    command.addOption(CliStrings.START_LOCATOR__J,
+    command.addOption(StartLocator.START_LOCATOR__J,
         "-D" + DistributionConfig.GEMFIRE_PREFIX + "jmx-manager-start=false");
 
     CommandResult result = executeCommand(command.toString());
@@ -487,13 +489,13 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
   public void test003StartServerFailsFastOnMissingCacheXmlFile() throws IOException {
     String cacheXmlPathname = "/path/to/missing/cache.xml";
 
-    CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_SERVER);
+    CommandStringBuilder command = new CommandStringBuilder(StartServer.START_SERVER);
     String pathName = getClass().getSimpleName().concat("_").concat(getTestMethodName());
     final File workingDirectory = temporaryFolder.newFolder(pathName);
 
-    command.addOption(CliStrings.START_SERVER__NAME, pathName);
-    command.addOption(CliStrings.START_SERVER__DIR, workingDirectory.getCanonicalPath());
-    command.addOption(CliStrings.START_SERVER__CACHE_XML_FILE, cacheXmlPathname);
+    command.addOption(StartServer.START_SERVER__NAME, pathName);
+    command.addOption(StartServer.START_SERVER__DIR, workingDirectory.getCanonicalPath());
+    command.addOption(StartServer.START_SERVER__CACHE_XML_FILE, cacheXmlPathname);
 
     CommandResult result = executeCommand(command.toString());
 
@@ -510,14 +512,14 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
   public void test004StartServerFailsFastOnMissingGemFirePropertiesFile() throws IOException {
     String gemfirePropertiesFile = "/path/to/missing/gemfire.properties";
 
-    CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_SERVER);
+    CommandStringBuilder command = new CommandStringBuilder(StartServer.START_SERVER);
 
     String pathName = getClass().getSimpleName().concat("_").concat(getTestMethodName());
     final File workingDirectory = temporaryFolder.newFolder(pathName);
 
-    command.addOption(CliStrings.START_SERVER__NAME, pathName);
-    command.addOption(CliStrings.START_SERVER__DIR, workingDirectory.getCanonicalPath());
-    command.addOption(CliStrings.START_SERVER__PROPERTIES, gemfirePropertiesFile);
+    command.addOption(StartServer.START_SERVER__NAME, pathName);
+    command.addOption(StartServer.START_SERVER__DIR, workingDirectory.getCanonicalPath());
+    command.addOption(StartServer.START_SERVER__PROPERTIES, gemfirePropertiesFile);
 
     CommandResult result = executeCommand(command.toString());
 
@@ -535,14 +537,14 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
   @Test
   public void testStartServerFailsFastOnMissingPassword() throws IOException {
 
-    CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_SERVER);
+    CommandStringBuilder command = new CommandStringBuilder(StartServer.START_SERVER);
 
     String pathName = getClass().getSimpleName().concat("_").concat(getTestMethodName());
     final File workingDirectory = temporaryFolder.newFolder(pathName);
 
-    command.addOption(CliStrings.START_SERVER__NAME, pathName);
-    command.addOption(CliStrings.START_SERVER__DIR, workingDirectory.getCanonicalPath());
-    command.addOption(CliStrings.START_SERVER__USERNAME, "test");
+    command.addOption(StartServer.START_SERVER__NAME, pathName);
+    command.addOption(StartServer.START_SERVER__DIR, workingDirectory.getCanonicalPath());
+    command.addOption(StartServer.START_SERVER__USERNAME, "test");
 
     CommandResult result = executeCommand(command.toString());
 
@@ -559,14 +561,14 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
       throws IOException {
     String gemfireSecuritiesPropertiesFile = "/path/to/missing/gemfire-securities.properties";
 
-    CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_SERVER);
+    CommandStringBuilder command = new CommandStringBuilder(StartServer.START_SERVER);
 
     String pathName = getClass().getSimpleName().concat("_").concat(getTestMethodName());
     final File workingDirectory = temporaryFolder.newFolder(pathName);
 
-    command.addOption(CliStrings.START_SERVER__NAME, pathName);
-    command.addOption(CliStrings.START_SERVER__DIR, workingDirectory.getCanonicalPath());
-    command.addOption(CliStrings.START_SERVER__SECURITY_PROPERTIES,
+    command.addOption(StartServer.START_SERVER__NAME, pathName);
+    command.addOption(StartServer.START_SERVER__DIR, workingDirectory.getCanonicalPath());
+    command.addOption(StartServer.START_SERVER__SECURITY_PROPERTIES,
         gemfireSecuritiesPropertiesFile);
 
     CommandResult result = executeCommand(command.toString());
@@ -592,17 +594,17 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
     assertTrue(workingDirectory.isDirectory() || workingDirectory.mkdir());
 
     try {
-      CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_LOCATOR);
+      CommandStringBuilder command = new CommandStringBuilder(StartLocator.START_LOCATOR);
 
-      command.addOption(CliStrings.START_LOCATOR__MEMBER_NAME, pathname);
-      command.addOption(CliStrings.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
-      command.addOption(CliStrings.START_LOCATOR__DIR, pathname);
-      command.addOption(CliStrings.START_LOCATOR__PORT, String.valueOf(locatorPort));
-      command.addOption(CliStrings.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
+      command.addOption(StartLocator.START_LOCATOR__MEMBER_NAME, pathname);
+      command.addOption(StartLocator.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
+      command.addOption(StartLocator.START_LOCATOR__DIR, pathname);
+      command.addOption(StartLocator.START_LOCATOR__PORT, String.valueOf(locatorPort));
+      command.addOption(StartLocator.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
           Boolean.FALSE.toString());
-      command.addOption(CliStrings.START_LOCATOR__J,
+      command.addOption(StartLocator.START_LOCATOR__J,
           "-D" + DistributionConfig.GEMFIRE_PREFIX + "http-service-port=0");
-      command.addOption(CliStrings.START_LOCATOR__J, "-D" + DistributionConfig.GEMFIRE_PREFIX
+      command.addOption(StartLocator.START_LOCATOR__J, "-D" + DistributionConfig.GEMFIRE_PREFIX
           + "jmx-manager-port=" + AvailablePortHelper.getRandomAvailableTCPPort());
 
       CommandResult result = executeCommand(command.toString());
@@ -645,18 +647,18 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
     assertTrue(workingDirectory.isDirectory() || workingDirectory.mkdir());
 
     try {
-      CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_LOCATOR);
+      CommandStringBuilder command = new CommandStringBuilder(StartLocator.START_LOCATOR);
 
-      command.addOption(CliStrings.START_LOCATOR__MEMBER_NAME, pathname);
-      command.addOption(CliStrings.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
-      command.addOption(CliStrings.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
-      command.addOption(CliStrings.START_LOCATOR__PORT, String.valueOf(locatorPort));
-      command.addOption(CliStrings.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
+      command.addOption(StartLocator.START_LOCATOR__MEMBER_NAME, pathname);
+      command.addOption(StartLocator.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
+      command.addOption(StartLocator.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
+      command.addOption(StartLocator.START_LOCATOR__PORT, String.valueOf(locatorPort));
+      command.addOption(StartLocator.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
           Boolean.FALSE.toString());
-      command.addOption(CliStrings.START_LOCATOR__FORCE, Boolean.TRUE.toString());
-      command.addOption(CliStrings.START_LOCATOR__J,
+      command.addOption(StartLocator.START_LOCATOR__FORCE, Boolean.TRUE.toString());
+      command.addOption(StartLocator.START_LOCATOR__J,
           "-D" + DistributionConfig.GEMFIRE_PREFIX + "http-service-port=0");
-      command.addOption(CliStrings.START_LOCATOR__J,
+      command.addOption(StartLocator.START_LOCATOR__J,
           "-D" + DistributionConfig.GEMFIRE_PREFIX + "jmx-manager-port=" + jmxManagerPort);
 
       CommandResult result = executeCommand(command.toString());
@@ -717,18 +719,18 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
     assertTrue(workingDirectory.isDirectory() || workingDirectory.mkdir());
 
     try {
-      CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_LOCATOR);
+      CommandStringBuilder command = new CommandStringBuilder(StartLocator.START_LOCATOR);
 
-      command.addOption(CliStrings.START_LOCATOR__MEMBER_NAME, pathname);
-      command.addOption(CliStrings.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
-      command.addOption(CliStrings.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
-      command.addOption(CliStrings.START_LOCATOR__PORT, String.valueOf(locatorPort));
-      command.addOption(CliStrings.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
+      command.addOption(StartLocator.START_LOCATOR__MEMBER_NAME, pathname);
+      command.addOption(StartLocator.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
+      command.addOption(StartLocator.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
+      command.addOption(StartLocator.START_LOCATOR__PORT, String.valueOf(locatorPort));
+      command.addOption(StartLocator.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
           Boolean.FALSE.toString());
-      command.addOption(CliStrings.START_LOCATOR__FORCE, Boolean.TRUE.toString());
-      command.addOption(CliStrings.START_LOCATOR__J,
+      command.addOption(StartLocator.START_LOCATOR__FORCE, Boolean.TRUE.toString());
+      command.addOption(StartLocator.START_LOCATOR__J,
           "-D" + DistributionConfig.GEMFIRE_PREFIX + "http-service-port=0");
-      command.addOption(CliStrings.START_LOCATOR__J,
+      command.addOption(StartLocator.START_LOCATOR__J,
           "-D" + DistributionConfig.GEMFIRE_PREFIX + "jmx-manager-port=" + jmxManagerPort);
 
       CommandResult result = executeCommand(command.toString());
@@ -791,18 +793,18 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
     try {
       assertTrue(workingDirectory.isDirectory() || workingDirectory.mkdir());
 
-      CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_LOCATOR);
+      CommandStringBuilder command = new CommandStringBuilder(StartLocator.START_LOCATOR);
 
-      command.addOption(CliStrings.START_LOCATOR__MEMBER_NAME, pathname);
-      command.addOption(CliStrings.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
-      command.addOption(CliStrings.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
-      command.addOption(CliStrings.START_LOCATOR__PORT, String.valueOf(locatorPort));
-      command.addOption(CliStrings.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
+      command.addOption(StartLocator.START_LOCATOR__MEMBER_NAME, pathname);
+      command.addOption(StartLocator.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
+      command.addOption(StartLocator.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
+      command.addOption(StartLocator.START_LOCATOR__PORT, String.valueOf(locatorPort));
+      command.addOption(StartLocator.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
           Boolean.FALSE.toString());
-      command.addOption(CliStrings.START_LOCATOR__FORCE, Boolean.TRUE.toString());
-      command.addOption(CliStrings.START_LOCATOR__J,
+      command.addOption(StartLocator.START_LOCATOR__FORCE, Boolean.TRUE.toString());
+      command.addOption(StartLocator.START_LOCATOR__J,
           "-D" + DistributionConfig.GEMFIRE_PREFIX + "http-service-port=0");
-      command.addOption(CliStrings.START_LOCATOR__J,
+      command.addOption(StartLocator.START_LOCATOR__J,
           "-D" + DistributionConfig.GEMFIRE_PREFIX + "jmx-manager-port=" + jmxManagerPort);
 
       CommandResult result = executeCommand(command.toString());
@@ -892,18 +894,18 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
     try {
       assertTrue(workingDirectory.isDirectory() || workingDirectory.mkdir());
 
-      CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_LOCATOR);
+      CommandStringBuilder command = new CommandStringBuilder(StartLocator.START_LOCATOR);
 
-      command.addOption(CliStrings.START_LOCATOR__MEMBER_NAME, pathname);
-      command.addOption(CliStrings.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
-      command.addOption(CliStrings.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
-      command.addOption(CliStrings.START_LOCATOR__PORT, String.valueOf(locatorPort));
-      command.addOption(CliStrings.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
+      command.addOption(StartLocator.START_LOCATOR__MEMBER_NAME, pathname);
+      command.addOption(StartLocator.START_LOCATOR__CONNECT, Boolean.FALSE.toString());
+      command.addOption(StartLocator.START_LOCATOR__DIR, workingDirectory.getCanonicalPath());
+      command.addOption(StartLocator.START_LOCATOR__PORT, String.valueOf(locatorPort));
+      command.addOption(StartLocator.START_LOCATOR__ENABLE__SHARED__CONFIGURATION,
           Boolean.FALSE.toString());
-      command.addOption(CliStrings.START_LOCATOR__FORCE, Boolean.TRUE.toString());
-      command.addOption(CliStrings.START_LOCATOR__J,
+      command.addOption(StartLocator.START_LOCATOR__FORCE, Boolean.TRUE.toString());
+      command.addOption(StartLocator.START_LOCATOR__J,
           "-D" + DistributionConfig.GEMFIRE_PREFIX + "http-service-port=0");
-      command.addOption(CliStrings.START_LOCATOR__J,
+      command.addOption(StartLocator.START_LOCATOR__J,
           "-D" + DistributionConfig.GEMFIRE_PREFIX + "jmx-manager-port=" + jmxManagerPort);
 
       CommandResult result = executeCommand(command.toString());
@@ -976,19 +978,20 @@ public class LauncherLifecycleCommandsDUnitTest extends CliCommandTestBase {
 
     assertTrue(workingDirectory.isDirectory() || workingDirectory.mkdir());
 
-    CommandStringBuilder command = new CommandStringBuilder(CliStrings.START_SERVER);
+    CommandStringBuilder command = new CommandStringBuilder(StartServer.START_SERVER);
 
-    command.addOption(CliStrings.START_SERVER__NAME,
+    command.addOption(StartServer.START_SERVER__NAME,
         pathname + TIMESTAMP.format(Calendar.getInstance().getTime()));
-    command.addOption(CliStrings.START_SERVER__SERVER_PORT, String.valueOf(serverPort));
-    command.addOption(CliStrings.START_SERVER__USE_CLUSTER_CONFIGURATION, Boolean.FALSE.toString());
-    command.addOption(CliStrings.START_SERVER__MAXHEAP, "10M");
-    command.addOption(CliStrings.START_SERVER__LOG_LEVEL, "config");
-    command.addOption(CliStrings.START_SERVER__DIR, workingDirectory.getCanonicalPath());
-    command.addOption(CliStrings.START_SERVER__CACHE_XML_FILE,
+    command.addOption(StartServer.START_SERVER__SERVER_PORT, String.valueOf(serverPort));
+    command.addOption(StartServer.START_SERVER__USE_CLUSTER_CONFIGURATION,
+        Boolean.FALSE.toString());
+    command.addOption(StartServer.START_SERVER__MAXHEAP, "10M");
+    command.addOption(StartServer.START_SERVER__LOG_LEVEL, "config");
+    command.addOption(StartServer.START_SERVER__DIR, workingDirectory.getCanonicalPath());
+    command.addOption(StartServer.START_SERVER__CACHE_XML_FILE,
         IOUtils.tryGetCanonicalPathElseGetAbsolutePath(writeAndGetCacheXmlFile(workingDirectory)));
-    command.addOption(CliStrings.START_SERVER__INCLUDE_SYSTEM_CLASSPATH);
-    command.addOption(CliStrings.START_SERVER__J, "-D" + DistributionConfig.GEMFIRE_PREFIX + ""
+    command.addOption(StartServer.START_SERVER__INCLUDE_SYSTEM_CLASSPATH);
+    command.addOption(StartServer.START_SERVER__J, "-D" + DistributionConfig.GEMFIRE_PREFIX + ""
         + START_LOCATOR + "=localhost[" + locatorPort + "]");
 
 

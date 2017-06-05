@@ -25,12 +25,15 @@ import static org.mockito.Mockito.verify;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.cli.util.CommandStringBuilder;
 import org.apache.geode.test.dunit.rules.GfshParserRule;
+import org.apache.geode.test.junit.categories.UnitTest;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentCaptor;
 
 import java.util.Properties;
 
+@Category(UnitTest.class)
 public class LauncherLifecycleCommandsTest {
   @ClassRule
   public static GfshParserRule commandRule = new GfshParserRule();

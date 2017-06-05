@@ -51,6 +51,8 @@ import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.management.cli.Result.Status;
 import org.apache.geode.management.internal.cli.HeadlessGfsh;
 import org.apache.geode.management.internal.cli.commands.CliCommandTestBase;
+import org.apache.geode.management.internal.cli.commands.LauncherLifecycleCommands;
+import org.apache.geode.management.internal.cli.commands.LauncherLifecycleCommands.StartServer;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.cli.result.CommandResult;
 import org.apache.geode.management.internal.cli.util.CommandStringBuilder;
@@ -148,10 +150,10 @@ public class ClusterConfigurationServiceEndToEndDUnitTest extends CliCommandTest
       int port = serverPorts[i];
       String serverName = serverNamePrefix + Integer.toString(i + startNum) + "-" + port;
 
-      CommandStringBuilder csb = new CommandStringBuilder(CliStrings.START_SERVER);
-      csb.addOption(CliStrings.START_SERVER__NAME, serverName);
-      csb.addOption(CliStrings.START_SERVER__LOCATORS, locatorString);
-      csb.addOption(CliStrings.START_SERVER__SERVER_PORT, Integer.toString(port));
+      CommandStringBuilder csb = new CommandStringBuilder(StartServer.START_SERVER);
+      csb.addOption(StartServer.START_SERVER__NAME, serverName);
+      csb.addOption(StartServer.START_SERVER__LOCATORS, locatorString);
+      csb.addOption(StartServer.START_SERVER__SERVER_PORT, Integer.toString(port));
 
       CommandResult cmdResult = executeCommand(gfsh, csb.getCommandString());
 
