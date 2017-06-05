@@ -2366,6 +2366,9 @@ public class CliStrings {
   public static final String START_LOCATOR__GROUP = "group";
   public static final String START_LOCATOR__GROUP__HELP = "Group(s) the Locator will be a part of.";
   public static final String START_LOCATOR__HOSTNAME_FOR_CLIENTS = "hostname-for-clients";
+
+  public static final String START_LOCATOR__JMX_MANAGER_HOSTNAME_FOR_CLIENTS__HELP =
+      "Hostname given to clients that ask the locator for the location of a JMX Manager";
   public static final String START_LOCATOR__HOSTNAME_FOR_CLIENTS__HELP =
       "Hostname or IP address that will be sent to clients so they can connect to this Locator. The default is the bind-address of the Locator.";
   public static final String START_LOCATOR__INCLUDE_SYSTEM_CLASSPATH = "include-system-classpath";

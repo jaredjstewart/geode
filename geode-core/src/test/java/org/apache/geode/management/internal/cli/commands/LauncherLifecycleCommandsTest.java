@@ -15,19 +15,19 @@
 
 package org.apache.geode.management.internal.cli.commands;
 
+import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_HOSTNAME_FOR_CLIENTS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-import org.apache.geode.management.internal.cli.GfshParseResult;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
+import org.apache.geode.management.internal.cli.util.CommandStringBuilder;
 import org.apache.geode.test.dunit.rules.GfshParserRule;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.util.ReflectionUtils;
 
 import java.util.Properties;
 
@@ -47,5 +47,24 @@ public class LauncherLifecycleCommandsTest {
 
     Properties properties = propsCaptor.getValue();
     System.out.println();
+  }
+
+  @Test
+  public void startLocatorRespectsJmxManagerHostnameForClients() throws Exception {
+    String fakeHostname = "someFakeHostname";
+    String startLocatorCommand = new CommandStringBuilder("start locator")
+        .addOption(JMX_MANAGER_HOSTNAME_FOR_CLIENTS, fakeHostname).getCommandString();
+
+    LauncherLifecycleCommands spy = commandRule.spyCommand(startLocatorCommand);
+    doReturn(mock(Gfsh.class)).when(spy).getGfsh();
+    commandRule.executeLastCommandWithInstance(spy);
+
+    ArgumentCaptor<Properties> gemfirePropertiesCaptor = ArgumentCaptor.forClass(Properties.class);
+    verify(spy).createStartLocatorCommandLine(any(), any(), any(),
+        gemfirePropertiesCaptor.capture(), any(), any(), any(), any(), any());
+
+    Properties gemfireProperties = gemfirePropertiesCaptor.getValue();
+    assertThat(gemfireProperties).containsKey(JMX_MANAGER_HOSTNAME_FOR_CLIENTS);
+    assertThat(gemfireProperties.get(JMX_MANAGER_HOSTNAME_FOR_CLIENTS)).isEqualTo(fakeHostname);
   }
 }

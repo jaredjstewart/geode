@@ -22,6 +22,7 @@ import static org.apache.geode.distributed.ConfigurationProperties.ENABLE_TIME_S
 import static org.apache.geode.distributed.ConfigurationProperties.GROUPS;
 import static org.apache.geode.distributed.ConfigurationProperties.HTTP_SERVICE_BIND_ADDRESS;
 import static org.apache.geode.distributed.ConfigurationProperties.HTTP_SERVICE_PORT;
+import static org.apache.geode.distributed.ConfigurationProperties.JMX_MANAGER_HOSTNAME_FOR_CLIENTS;
 import static org.apache.geode.distributed.ConfigurationProperties.LOAD_CLUSTER_CONFIGURATION_FROM_DIR;
 import static org.apache.geode.distributed.ConfigurationProperties.LOCATORS;
 import static org.apache.geode.distributed.ConfigurationProperties.LOCATOR_WAIT_TIME;
@@ -48,6 +49,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.geode.SystemFailure;
 import org.apache.geode.cache.server.CacheServer;
 import org.apache.geode.distributed.AbstractLauncher;
+import org.apache.geode.distributed.ConfigurationProperties;
 import org.apache.geode.distributed.LocatorLauncher;
 import org.apache.geode.distributed.LocatorLauncher.LocatorState;
 import org.apache.geode.distributed.ServerLauncher;
@@ -170,6 +172,8 @@ public class LauncherLifecycleCommands implements GfshCommand {
           help = CliStrings.START_LOCATOR__GROUP__HELP) final String group,
       @CliOption(key = CliStrings.START_LOCATOR__HOSTNAME_FOR_CLIENTS,
           help = CliStrings.START_LOCATOR__HOSTNAME_FOR_CLIENTS__HELP) final String hostnameForClients,
+      @CliOption(key = ConfigurationProperties.JMX_MANAGER_HOSTNAME_FOR_CLIENTS,
+          help = CliStrings.START_LOCATOR__JMX_MANAGER_HOSTNAME_FOR_CLIENTS__HELP) final String jmxManagerHostnameForClients,
       @CliOption(key = CliStrings.START_LOCATOR__INCLUDE_SYSTEM_CLASSPATH,
           specifiedDefaultValue = "true", unspecifiedDefaultValue = "false",
           help = CliStrings.START_LOCATOR__INCLUDE_SYSTEM_CLASSPATH__HELP) final Boolean includeSystemClasspath,
@@ -260,6 +264,7 @@ public class LauncherLifecycleCommands implements GfshCommand {
       gemfireProperties.setProperty(HTTP_SERVICE_PORT, StringUtils.defaultString(httpServicePort));
       gemfireProperties.setProperty(HTTP_SERVICE_BIND_ADDRESS,
           StringUtils.defaultString(httpServiceBindAddress));
+      gemfireProperties.setProperty(JMX_MANAGER_HOSTNAME_FOR_CLIENTS, jmxManagerHostnameForClients);
 
 
       // read the OSProcess enable redirect system property here -- TODO: replace with new GFSH
