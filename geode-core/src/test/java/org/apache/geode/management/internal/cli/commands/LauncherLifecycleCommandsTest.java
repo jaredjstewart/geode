@@ -32,6 +32,7 @@ import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentCaptor;
 
 import java.util.Properties;
+import java.util.stream.Stream;
 
 @Category(UnitTest.class)
 public class LauncherLifecycleCommandsTest {
@@ -90,5 +91,28 @@ public class LauncherLifecycleCommandsTest {
     System.out.println(gemfireProperties);
     assertThat(gemfireProperties).containsKey(JMX_MANAGER_HOSTNAME_FOR_CLIENTS);
     assertThat(gemfireProperties.get(JMX_MANAGER_HOSTNAME_FOR_CLIENTS)).isEqualTo(fakeHostname);
+  }
+
+  @Test
+  public void startServerUsesExpectedDefaultJvmArguments() throws Exception {
+    String startServerCommand = "start server --J=-Dgemfire.=true";
+
+    LauncherLifecycleCommands spy = commandRule.spyCommand(startServerCommand);
+    doReturn(mock(Gfsh.class)).when(spy).getGfsh();
+    commandRule.executeLastCommandWithInstance(spy);
+
+    ArgumentCaptor<Properties> gemfirePropertiesCaptor = ArgumentCaptor.forClass(Properties.class);
+    ArgumentCaptor<String[]> jvmArgsCaptor = ArgumentCaptor.forClass(String[].class);
+    verify(spy).createStartServerCommandLine(any(), any(), any(), gemfirePropertiesCaptor.capture(),
+        any(), any(), jvmArgsCaptor.capture(), any(), any(), any());
+
+    Properties gemfireProperties = gemfirePropertiesCaptor.getValue();
+    String[] jmvArgs = jvmArgsCaptor.getValue();
+
+   gemfireProperties.entrySet().forEach(entry -> System.out.println("Key: " + entry.getKey() + " value: " + entry.getValue()));
+   for (String jvmArg : jvmArgsCaptor.getValue()) {
+    System.out.println(" value: " + jvmArg);
+   }
+    assertThat(gemfireProperties).containsKey(JMX_MANAGER_HOSTNAME_FOR_CLIENTS);
   }
 }
