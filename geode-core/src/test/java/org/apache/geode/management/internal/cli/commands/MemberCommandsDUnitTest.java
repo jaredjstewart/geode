@@ -25,6 +25,7 @@ import static org.apache.geode.distributed.ConfigurationProperties.STATISTIC_SAM
 import static org.apache.geode.test.dunit.Assert.assertEquals;
 import static org.apache.geode.test.dunit.LogWriterUtils.getLogWriter;
 import static org.apache.geode.test.dunit.NetworkUtils.getServerHostName;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.CacheFactory;
@@ -45,8 +46,10 @@ import org.apache.geode.management.cli.Result.Status;
 import org.apache.geode.management.internal.cli.CliUtil;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.cli.remote.CommandProcessor;
+import org.apache.geode.management.internal.cli.result.ResultBuilder;
 import org.apache.geode.management.internal.cli.util.CommandStringBuilder;
 import org.apache.geode.test.dunit.Host;
+import org.apache.geode.test.dunit.IgnoredException;
 import org.apache.geode.test.dunit.SerializableRunnable;
 import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.cache.internal.JUnit4CacheTestCase;
@@ -83,11 +86,13 @@ public class MemberCommandsDUnitTest extends JUnit4CacheTestCase {
     // suite, prior tests
     // may mess up the environment causing this test to fail. Setting this prevents false failures.
     CliUtil.isGfshVM = false;
+    IgnoredException.addIgnoredException("No longer connected to GemFire Manager HTTP service");
   }
 
   @Override
   public final void postTearDownCacheTestCase() throws Exception {
     disconnectFromDS();
+    IgnoredException.removeAllExpectedExceptions();
   }
 
   private Properties createProperties(String name, String groups) {
@@ -222,8 +227,12 @@ public class MemberCommandsDUnitTest extends JUnit4CacheTestCase {
     CommandProcessor commandProcessor = new CommandProcessor();
     Result result =
         commandProcessor.createCommandStatement(CliStrings.LIST_MEMBER, EMPTY_ENV).process();
-    getLogWriter().info("#SB" + getResultAsString(result));
+    String resultOutput = getResultAsString(result);
+    getLogWriter().info(resultOutput);
     assertEquals(true, result.getStatus().equals(Status.OK));
+    assertTrue(resultOutput.contains("me:"));
+    assertTrue(resultOutput.contains("Server1:"));
+    assertTrue(resultOutput.contains("Server2:"));
   }
 
   /**

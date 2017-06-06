@@ -649,7 +649,7 @@ public class GemfireDataCommandsDUnitTest extends CliCommandTestBase {
   }
 
   private void validateSelectResult(CommandResult cmdResult, boolean expectedFlag, int expectedRows,
-                                    String[] cols) {
+      String[] cols) {
     if (ResultData.TYPE_COMPOSITE.equals(cmdResult.getType())) {
       CompositeResultData rd = (CompositeResultData) cmdResult.getResultData();
       SectionResultData section = rd.retrieveSectionByIndex(0);
@@ -810,46 +810,46 @@ public class GemfireDataCommandsDUnitTest extends CliCommandTestBase {
     }
   }
 
-//  @Category(FlakyTest.class) // GEODE-2006
-//  @Test
-//  public void testSelectCommand() {
-//    setupForSelect();
-//    doTestGetRegionAssociatedMembersForSelect();
-//    doTestSelectWithGfshEnvVariables(true);
-//    doTestSelectWithGfshEnvVariables(false);
-//    doTestSelectProjection();
-//    doTestBug48013();
-//    doTestSelectProjectionProcessCommand();
-//    doTestSelectProjectionWithNestedField();
-//    doTestSelectBeansAsResult();
-//    doTestSelectBeansWithNestedFieldAsResult();
-//  }
+  // @Category(FlakyTest.class) // GEODE-2006
+  // @Test
+  // public void testSelectCommand() {
+  // setupForSelect();
+  // doTestGetRegionAssociatedMembersForSelect();
+  // doTestSelectWithGfshEnvVariables(true);
+  // doTestSelectWithGfshEnvVariables(false);
+  // doTestSelectProjection();
+  // doTestBug48013();
+  // doTestSelectProjectionProcessCommand();
+  // doTestSelectProjectionWithNestedField();
+  // doTestSelectBeansAsResult();
+  // doTestSelectBeansWithNestedFieldAsResult();
+  // }
 
-//  @Test
-//  public void testPrimitivesWithDataCommands() {
-//    setupForGetPutRemoveLocateEntry("testPrimitives");
-//    Byte byteKey = Byte.parseByte("41");
-//    Byte byteValue = Byte.parseByte("31");
-//    Short shortKey = Short.parseShort("123");
-//    Short shortValue = Short.parseShort("121");
-//    Integer integerKey = Integer.parseInt("123456");
-//    Integer integerValue = Integer.parseInt("12345678");
-//    Float floatKey = Float.valueOf("12432.2325");
-//    Float flaotValue = Float.valueOf("111111.1111");
-//    Double doubleKey = Double.valueOf("12432.235425");
-//    Double doubleValue = Double.valueOf("111111.111111");
-//
-//    getLogWriter().info("Testing Byte Wrappers");
-//    testGetPutLocateEntryFromShellAndGemfire(byteKey, byteValue, Byte.class, true, true);
-//    getLogWriter().info("Testing Short Wrappers");
-//    testGetPutLocateEntryFromShellAndGemfire(shortKey, shortValue, Short.class, true, true);
-//    getLogWriter().info("Testing Integer Wrappers");
-//    testGetPutLocateEntryFromShellAndGemfire(integerKey, integerValue, Integer.class, true, true);
-//    getLogWriter().info("Testing Float Wrappers");
-//    testGetPutLocateEntryFromShellAndGemfire(floatKey, flaotValue, Float.class, true, true);
-//    getLogWriter().info("Testing Double Wrappers");
-//    testGetPutLocateEntryFromShellAndGemfire(doubleKey, doubleValue, Double.class, true, true);
-//  }
+  // @Test
+  // public void testPrimitivesWithDataCommands() {
+  // setupForGetPutRemoveLocateEntry("testPrimitives");
+  // Byte byteKey = Byte.parseByte("41");
+  // Byte byteValue = Byte.parseByte("31");
+  // Short shortKey = Short.parseShort("123");
+  // Short shortValue = Short.parseShort("121");
+  // Integer integerKey = Integer.parseInt("123456");
+  // Integer integerValue = Integer.parseInt("12345678");
+  // Float floatKey = Float.valueOf("12432.2325");
+  // Float flaotValue = Float.valueOf("111111.1111");
+  // Double doubleKey = Double.valueOf("12432.235425");
+  // Double doubleValue = Double.valueOf("111111.111111");
+  //
+  // getLogWriter().info("Testing Byte Wrappers");
+  // testGetPutLocateEntryFromShellAndGemfire(byteKey, byteValue, Byte.class, true, true);
+  // getLogWriter().info("Testing Short Wrappers");
+  // testGetPutLocateEntryFromShellAndGemfire(shortKey, shortValue, Short.class, true, true);
+  // getLogWriter().info("Testing Integer Wrappers");
+  // testGetPutLocateEntryFromShellAndGemfire(integerKey, integerValue, Integer.class, true, true);
+  // getLogWriter().info("Testing Float Wrappers");
+  // testGetPutLocateEntryFromShellAndGemfire(floatKey, flaotValue, Float.class, true, true);
+  // getLogWriter().info("Testing Double Wrappers");
+  // testGetPutLocateEntryFromShellAndGemfire(doubleKey, doubleValue, Double.class, true, true);
+  // }
 
 
   /**
@@ -985,1179 +985,1179 @@ public class GemfireDataCommandsDUnitTest extends CliCommandTestBase {
     vm2.invoke(checkPutKeys);
   }
 
-//  @Test
-//  @Category(FlakyTest.class) // GEODE-1249
-//  public void testSimplePutIfAbsentCommand() {
-//    final String keyPrefix = "testKey";
-//    final String valuePrefix = "testValue";
-//
-//    setupForGetPutRemoveLocateEntry("testSimplePutIfAbsent");
-//
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//    final VM vm2 = Host.getHost(0).getVM(2);
-//
-//    // Seed the region with some keys
-//    SerializableRunnable putKeys = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-//        assertNotNull(region);
-//        region.clear();
-//        for (int i = 0; i < COUNT; i++) {
-//          String key = keyPrefix + i;
-//          String value = valuePrefix + i;
-//          region.put(key, value);
-//        }
-//        assertEquals(COUNT, region.size());
-//      }
-//    };
-//    vm1.invoke(putKeys);
-//
-//    // Now try to replace all existing keys with new values to test --skip-if-exists. Values should
-//    // not be replaced if the key is present.
-//    for (int i = 0; i < COUNT; i++) {
-//      String command = "put";
-//      String key = keyPrefix + i;
-//      String value = valuePrefix + i + i;
-//      command = command + " " + "--key=" + key + " --value=" + value + " --region="
-//          + DATA_REGION_NAME_PATH + " --skip-if-exists=true";
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//    }
-//
-//    // Verify that none of the values were replaced
-//    SerializableRunnable checkPutIfAbsentKeys = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-//        assertNotNull(region);
-//        for (int i = 0; i < COUNT; i++) {
-//          String key = keyPrefix + i;
-//          String expected = valuePrefix + i;
-//          String actual = (String) region.get(key);
-//          assertEquals("--skip-if-exists=true failed to preserve value", expected, actual);
-//        }
-//      }
-//    };
-//
-//    vm1.invoke(checkPutIfAbsentKeys);
-//    vm2.invoke(checkPutIfAbsentKeys);
-//  }
-//
-//  @Category(FlakyTest.class) // GEODE-1496 (http)
-//  @Test
-//  public void testSimpleRemoveCommand() {
-//    final String keyPrefix = "testKey";
-//    final String valuePrefix = "testValue";
-//
-//    setupForGetPutRemoveLocateEntry("testSimpleRemove");
-//
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//    final VM vm2 = Host.getHost(0).getVM(2);
-//
-//
-//    SerializableRunnable putKeys = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-//        assertNotNull(region);
-//        region.clear();
-//        for (int i = 0; i < COUNT; i++) {
-//          String key = keyPrefix + i;
-//          String value = valuePrefix + i;
-//          region.put(key, value);
-//        }
-//        assertEquals(COUNT, region.size());
-//      }
-//    };
-//    vm1.invoke(putKeys);
-//
-//    for (int i = 0; i < COUNT; i++) {
-//      String command = "remove";
-//      String key = keyPrefix + i;
-//      String value = valuePrefix + i;
-//      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//    }
-//
-//    SerializableRunnable checkRemoveKeys = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-//        assertNotNull(region);
-//        for (int i = 0; i < COUNT; i++) {
-//          String key = keyPrefix + i;
-//          assertEquals(false, region.containsKey(key));
-//        }
-//        assertEquals(0, region.size());
-//      }
-//    };
-//
-//    vm1.invoke(checkRemoveKeys);
-//    vm2.invoke(checkRemoveKeys);
-//  }
+  // @Test
+  // @Category(FlakyTest.class) // GEODE-1249
+  // public void testSimplePutIfAbsentCommand() {
+  // final String keyPrefix = "testKey";
+  // final String valuePrefix = "testValue";
+  //
+  // setupForGetPutRemoveLocateEntry("testSimplePutIfAbsent");
+  //
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  // final VM vm2 = Host.getHost(0).getVM(2);
+  //
+  // // Seed the region with some keys
+  // SerializableRunnable putKeys = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+  // assertNotNull(region);
+  // region.clear();
+  // for (int i = 0; i < COUNT; i++) {
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // region.put(key, value);
+  // }
+  // assertEquals(COUNT, region.size());
+  // }
+  // };
+  // vm1.invoke(putKeys);
+  //
+  // // Now try to replace all existing keys with new values to test --skip-if-exists. Values should
+  // // not be replaced if the key is present.
+  // for (int i = 0; i < COUNT; i++) {
+  // String command = "put";
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i + i;
+  // command = command + " " + "--key=" + key + " --value=" + value + " --region="
+  // + DATA_REGION_NAME_PATH + " --skip-if-exists=true";
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // }
+  //
+  // // Verify that none of the values were replaced
+  // SerializableRunnable checkPutIfAbsentKeys = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+  // assertNotNull(region);
+  // for (int i = 0; i < COUNT; i++) {
+  // String key = keyPrefix + i;
+  // String expected = valuePrefix + i;
+  // String actual = (String) region.get(key);
+  // assertEquals("--skip-if-exists=true failed to preserve value", expected, actual);
+  // }
+  // }
+  // };
+  //
+  // vm1.invoke(checkPutIfAbsentKeys);
+  // vm2.invoke(checkPutIfAbsentKeys);
+  // }
+  //
+  // @Category(FlakyTest.class) // GEODE-1496 (http)
+  // @Test
+  // public void testSimpleRemoveCommand() {
+  // final String keyPrefix = "testKey";
+  // final String valuePrefix = "testValue";
+  //
+  // setupForGetPutRemoveLocateEntry("testSimpleRemove");
+  //
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  // final VM vm2 = Host.getHost(0).getVM(2);
+  //
+  //
+  // SerializableRunnable putKeys = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+  // assertNotNull(region);
+  // region.clear();
+  // for (int i = 0; i < COUNT; i++) {
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // region.put(key, value);
+  // }
+  // assertEquals(COUNT, region.size());
+  // }
+  // };
+  // vm1.invoke(putKeys);
+  //
+  // for (int i = 0; i < COUNT; i++) {
+  // String command = "remove";
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // }
+  //
+  // SerializableRunnable checkRemoveKeys = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+  // assertNotNull(region);
+  // for (int i = 0; i < COUNT; i++) {
+  // String key = keyPrefix + i;
+  // assertEquals(false, region.containsKey(key));
+  // }
+  // assertEquals(0, region.size());
+  // }
+  // };
+  //
+  // vm1.invoke(checkRemoveKeys);
+  // vm2.invoke(checkRemoveKeys);
+  // }
 
-//  @Test
-//  public void testSimpleGetLocateEntryCommand() {
-//    final String keyPrefix = "testKey";
-//    final String valuePrefix = "testValue";
-//
-//    setupForGetPutRemoveLocateEntry("testSimpleGetLocateEntry");
-//
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//    final VM vm2 = Host.getHost(0).getVM(2);
-//
-//    SerializableRunnable putKeys = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-//        assertNotNull(region);
-//        region.clear();
-//        for (int i = 0; i < COUNT; i++) {
-//          String key = keyPrefix + i;
-//          String value = valuePrefix + i;
-//          region.put(key, value);
-//        }
-//      }
-//    };
-//
-//    vm1.invoke(putKeys);
-//    for (int i = 0; i < COUNT; i++) {
-//      String command = "get";
-//      String key = keyPrefix + i;
-//      String value = valuePrefix + i;
-//      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//
-//      command = "locate entry";
-//      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
-//      cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//
-//    }
-//
-//  }
-//
-//  @Test
-//  public void testRecursiveLocateEntryCommand() {
-//    final String keyPrefix = "testKey";
-//    final String valuePrefix = "testValue";
-//
-//    setupForGetPutRemoveLocateEntry("testRecursiveLocateEntry");
-//
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//    final VM vm2 = Host.getHost(0).getVM(2);
-//
-//    SerializableRunnable putKeys = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-//        Region region2 = cache.getRegion(DATA_REGION_NAME_CHILD_1_PATH);
-//        Region region3 = cache.getRegion(DATA_REGION_NAME_CHILD_1_2_PATH);
-//        assertNotNull(region);
-//        region.clear();
-//        for (int i = 0; i < COUNT; i++) {
-//          String key = keyPrefix + i;
-//          String value = valuePrefix + i;
-//          region.put(key, value);
-//          region2.put(key, value);
-//          region3.put(key, value);
-//        }
-//      }
-//    };
-//
-//    vm1.invoke(putKeys);
-//    for (int i = 0; i < COUNT; i++) {
-//      String key = keyPrefix + i;
-//      String command = "locate entry";
-//      command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH
-//          + " --recursive=true";
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//      validateLocationsResult(cmdResult, 6); // 3 Regions X 2 members = 6
-//    }
-//  }
-//
-//  @Test
-//  public void testGetLocateEntryFromRegionOnDifferentVM() {
-//    final String keyPrefix = "testKey";
-//    final String valuePrefix = "testValue";
-//
-//    setupForGetPutRemoveLocateEntry("testGetLocateEntryFromRegionOnDifferentVM");
-//
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//    final VM vm2 = Host.getHost(0).getVM(2);
-//
-//    SerializableRunnable putKeys1 = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_VM1_PATH);
-//        Region parRegion = cache.getRegion(DATA_PAR_REGION_NAME_VM1_PATH);
-//        assertNotNull(region);
-//        region.clear();
-//        for (int i = 0; i < COUNT; i++) {
-//          if (i % 2 == 0) {
-//            String key = keyPrefix + i;
-//            String value = valuePrefix + i;
-//            region.put(key, value);
-//            parRegion.put(key, value);
-//          }
-//        }
-//      }
-//    };
-//
-//    SerializableRunnable putKeys2 = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_VM2_PATH);
-//        Region parRegion = cache.getRegion(DATA_PAR_REGION_NAME_VM2_PATH);
-//        assertNotNull(region);
-//        region.clear();
-//        for (int i = 0; i < COUNT; i++) {
-//          if (i % 2 != 0) {
-//            String key = keyPrefix + i;
-//            String value = valuePrefix + i;
-//            region.put(key, value);
-//            parRegion.put(key, value);
-//          }
-//        }
-//      }
-//    };
-//
-//    vm1.invoke(putKeys1);
-//    vm2.invoke(putKeys2);
-//    for (int i = 0; i < COUNT; i++) {
-//      String command = "get";
-//      String key = keyPrefix + i;
-//      String value = valuePrefix + i;
-//      if (i % 2 == 0)
-//        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM1_PATH;
-//      else if (i % 2 == 1)
-//        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM2_PATH;
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//
-//      command = "locate entry";
-//      if (i % 2 == 0)
-//        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM1_PATH;
-//      else if (i % 2 == 1)
-//        command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM2_PATH;
-//      cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//
-//
-//      command = "locate entry";
-//      if (i % 2 == 0)
-//        command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_VM1_PATH;
-//      else if (i % 2 == 1)
-//        command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_VM2_PATH;
-//      cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//      validateLocationsResult(cmdResult, 1); // 1 Regions X (2-1) 2 Copies but redundancy not
-//                                             // satisfied = 1
-//    }
-//  }
-//
-//  @Category(FlakyTest.class) // GEODE-1822
-//  @Test
-//  public void testGetLocateEntryLocationsForPR() {
-//    final String keyPrefix = "testKey";
-//    final String valuePrefix = "testValue";
-//
-//    setupForGetPutRemoveLocateEntry("testGetLocateEntryLocationsForPR");
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//
-//    SerializableRunnable putKeys1 = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_PAR_REGION_NAME_PATH);
-//        assertNotNull(region);
-//        for (int i = 0; i < COUNT; i++) {
-//          String key = keyPrefix + i;
-//          String value = valuePrefix + i;
-//          region.put(key, value);
-//        }
-//      }
-//    };
-//
-//    vm1.invoke(putKeys1);
-//
-//    for (int i = 0; i < COUNT; i++) {
-//      String key = keyPrefix + i;
-//      String command = "locate entry";
-//      command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_PATH;
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//      validateLocationsResult(cmdResult, 2); // 2 Members
-//    }
-//  }
-//
-//  @Test
-//  public void testPutFromRegionOnDifferentVM() {
-//    final String keyPrefix = "testKey";
-//    final String valuePrefix = "testValue";
-//
-//    setupForGetPutRemoveLocateEntry("testPutFromRegionOnDifferentVM");
-//
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//    final VM vm2 = Host.getHost(0).getVM(2);
-//
-//    for (int i = 0; i < COUNT; i++) {
-//      String command = "put";
-//      String key = keyPrefix + i;
-//      String value = valuePrefix + i;
-//      if (i % 2 == 0)
-//        command = command + " " + "--key=" + key + " --value=" + value + " --region="
-//            + DATA_REGION_NAME_VM1_PATH;
-//      else
-//        command = command + " " + "--key=" + key + " --value=" + value + " --region="
-//            + DATA_REGION_NAME_VM2_PATH;
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//    }
-//
-//    SerializableRunnable checkPutKeysInVM1 = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_VM1_PATH);
-//        assertNotNull(region);
-//        for (int i = 0; i < COUNT; i++) {
-//          if (i % 2 == 0) {
-//            String key = keyPrefix + i;
-//            assertEquals(true, region.containsKey(key));
-//          }
-//        }
-//      }
-//    };
-//
-//    SerializableRunnable checkPutKeysInVM2 = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_VM2_PATH);
-//        assertNotNull(region);
-//        for (int i = 0; i < COUNT; i++) {
-//          if (i % 2 != 0) {
-//            String key = keyPrefix + i;
-//            assertEquals(true, region.containsKey(key));
-//          }
-//        }
-//      }
-//    };
-//
-//    vm1.invoke(checkPutKeysInVM1);
-//    vm2.invoke(checkPutKeysInVM2);
-//  }
-//
-//  @Category(FlakyTest.class) // GEODE-1182: random ports, BindException, HeadlessGFSH,
-//                             // waitForCriterion, time sensitive
-//  @Test
-//  public void testGetLocateEntryJsonKeys() {
-//    final String keyPrefix = "testKey";
-//
-//    setupForGetPutRemoveLocateEntry("testGetLocateEntryJsonKeys");
-//
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//    final VM vm2 = Host.getHost(0).getVM(2);
-//
-//    SerializableRunnable putKeys = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-//        assertNotNull(region);
-//        region.clear();
-//        for (int i = 0; i < COUNT; i++) {
-//          String keyString = keyPrefix + i;
-//          Key1 key = new Key1();
-//          key.setId(keyString);
-//          key.setName("name" + keyString);
-//          Value2 value2 = new Value2();
-//          value2.setStateName("State" + keyString);
-//          value2.setCapitalCity("capital" + keyString);
-//          value2.setPopulation(i * 100);
-//          value2.setAreaInSqKm(i * 100.4365);
-//          region.put(key, value2);
-//        }
-//
-//        // Added for Bug #51175
-//        List<String> colors = new ArrayList<String>();
-//        colors.add("White");
-//        colors.add("Red");
-//        colors.add("Blue");
-//        Map<String, String> attrMap = new HashMap<String, String>();
-//        attrMap.put("power", "90hp");
-//        attrMap.put("turningRadius", "4mtr");
-//        attrMap.put("engineCapacity", "1248cc");
-//        attrMap.put("turboGeometry", "VGT");
-//
-//        Set<String> attrSet = new HashSet<String>();
-//        attrSet.add("power");
-//        attrSet.add("turningRadius");
-//
-//        for (int i = COUNT; i < COUNT + 5; i++) {
-//          String keyString = keyPrefix + i;
-//          Key1 key = new Key1();
-//          key.setId(keyString);
-//          key.setName("name" + keyString);
-//          Car car = new Car();
-//          car.setMake("Make" + keyString);
-//          car.setModel("Model" + keyString);
-//          car.setColors(colors);
-//          car.setAttributes(attrMap);
-//          car.setAttributeSet(attrSet);
-//          region.put(key, car);
-//        }
-//      }
-//    };
-//
-//    String expectedCols[] = {"id", "name", "stateName", "capitalCity", "population", "areaInSqKm"};
-//    vm1.invoke(putKeys);
-//    for (int i = 0; i < COUNT; i++) {
-//      String command = "get";
-//      String keyString = keyPrefix + i;
-//      String population = "" + i * 100;
-//      String area = "" + i * (100.4365);
-//      String keyJson = keyTemplate.replaceAll("\\?", keyString);
-//      String valueJson = valueTemplate.replaceAll("\\?1", population);
-//      valueJson = valueJson.replaceAll("\\?2", area);
-//      valueJson = valueJson.replaceAll("\\?", keyString);
-//      getLogWriter().info("Getting key with json key : " + keyJson);
-//      command = command + " " + "--key=" + keyJson + " --region=" + DATA_REGION_NAME_PATH
-//          + " --key-class=" + Key1.class.getCanonicalName();
-//      command = command + " --value-class=" + Value2.class.getCanonicalName();
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//      validateJSONGetResult(cmdResult, expectedCols);
-//
-//      command = "locate entry";
-//      command = command + " " + "--key=" + keyJson + " --region=" + DATA_REGION_NAME_PATH
-//          + " --key-class=" + Key1.class.getCanonicalName();
-//      command = command + " --value-class=" + Value2.class.getCanonicalName();
-//      cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//    }
-//
-//    // Added for Bug #51175
-//    expectedCols =
-//        new String[] {"id", "name", "attributes", "make", "model", "colors", "attributeSet"};
-//    for (int i = COUNT; i < COUNT + 5; i++) {
-//      String command = "get";
-//      String keyString = keyPrefix + i;
-//      String population = "" + i * 100;
-//      String area = "" + i * (100.4365);
-//      String keyJson = keyTemplate.replaceAll("\\?", keyString);
-//      String valueJson = valueTemplate.replaceAll("\\?1", population);
-//      valueJson = valueJson.replaceAll("\\?2", area);
-//      valueJson = valueJson.replaceAll("\\?", keyString);
-//      getLogWriter().info("Getting key with json key : " + keyJson);
-//      command = command + " " + "--key=" + keyJson + " --region=" + DATA_REGION_NAME_PATH
-//          + " --key-class=" + Key1.class.getCanonicalName();
-//      command = command + " --value-class=" + Value2.class.getCanonicalName();
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//      // validateJSONGetResult(cmdResult, expectedCols);
-//      validateJSONGetResultValues(cmdResult, expectedCols);
-//
-//      command = "locate entry";
-//      command = command + " " + "--key=" + keyJson + " --region=" + DATA_REGION_NAME_PATH
-//          + " --key-class=" + Key1.class.getCanonicalName();
-//      command = command + " --value-class=" + Value2.class.getCanonicalName();
-//      cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//    }
-//  }
-//
-//  @Category(FlakyTest.class) // GEODE-1430
-//  @Test
-//  public void testPutJsonKeys() {
-//    final String keyPrefix = "testKey";
-//
-//    setupForGetPutRemoveLocateEntry("testPutJsonKeys");
-//
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//    final VM vm2 = Host.getHost(0).getVM(2);
-//
-//    for (int i = 0; i < COUNT; i++) {
-//      String command = "put";
-//      String keyString = keyPrefix + i;
-//      String population = "" + i * 100;
-//      String area = "" + i * (100.4365);
-//      String keyJson = keyTemplate.replaceAll("\\?", keyString);
-//      String valueJson = valueTemplate.replaceAll("\\?1", population);
-//      valueJson = valueJson.replaceAll("\\?2", area);
-//      valueJson = valueJson.replaceAll("\\?", keyString);
-//      getLogWriter().info("Putting key with json key : " + keyJson);
-//      getLogWriter().info("Putting key with json valye : " + valueJson);
-//      command = command + " " + "--key=" + keyJson + " --value=" + valueJson + " --region="
-//          + DATA_REGION_NAME_PATH;
-//      command = command + " --key-class=" + Key1.class.getCanonicalName() + " --value-class="
-//          + Value2.class.getCanonicalName();
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//    }
-//
-//    // Bug #51175
-//    for (int i = COUNT; i < COUNT + 5; i++) {
-//      String command = "put";
-//      String keyString = keyPrefix + i;
-//      String id = "" + i * 100;
-//      String make = "" + i * (100.4365);
-//      String model = "" + i * (100.4365);
-//      String list = "['red','white','blue']";
-//      String set = "['red','white','blue']";
-//      String map = "{'power':'90hp'}";
-//      String keyJson = keyTemplate.replaceAll("\\?", keyString);
-//
-//      String valueJson = carTemplate.replaceAll("\\?make", make);
-//      valueJson = valueJson.replaceAll("\\?model", model);
-//      valueJson = valueJson.replaceAll("\\?list", list);
-//      valueJson = valueJson.replaceAll("\\?set", set);
-//      valueJson = valueJson.replaceAll("\\?map", map);
-//
-//      getLogWriter().info("Putting key with json key : " + keyJson);
-//      getLogWriter().info("Putting key with json valye : " + valueJson);
-//      command = command + " " + "--key=" + keyJson + " --value=" + valueJson + " --region="
-//          + DATA_REGION_NAME_PATH;
-//      command = command + " --key-class=" + Key1.class.getCanonicalName() + " --value-class="
-//          + Car.class.getCanonicalName();
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//    }
-//
-//    SerializableRunnable checkPutKeys = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-//        assertNotNull(region);
-//        for (int i = 0; i < COUNT + 5; i++) {
-//          String keyString = keyPrefix + i;
-//          Key1 key = new Key1();
-//          key.setId(keyString);
-//          key.setName("name" + keyString);
-//          assertEquals(true, region.containsKey(key));
-//
-//          // Bug #51175
-//          if (i >= COUNT) {
-//            Car car = (Car) region.get(key);
-//            assertNotNull(car.getAttributes());
-//            assertNotNull(car.getAttributeSet());
-//            assertNotNull(car.getColors());
-//          }
-//
-//        }
-//      }
-//    };
-//
-//    vm1.invoke(checkPutKeys);
-//    vm2.invoke(checkPutKeys);
-//
-//    doBugCheck50449();
-//  }
-//
-//  public void doBugCheck50449() {
-//    String command = "put --key-class=" + ObjectWithCharAttr.class.getCanonicalName()
-//        + " --value=456 --key=\"('name':'hesdfdsfy2','t':456, 'c':'d')\"" + " --region="
-//        + DATA_REGION_NAME_PATH;
-//    CommandResult cmdResult = executeCommand(command);
-//    printCommandOutput(cmdResult);
-//    assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    validateResult(cmdResult, true);
-//
-//    command = "put --key-class=" + ObjectWithCharAttr.class.getCanonicalName()
-//        + " --value=123 --key=\"('name':'hesdfdsfy2','t':123, 'c':'d')\"" + " --region="
-//        + DATA_REGION_NAME_PATH;
-//    cmdResult = executeCommand(command);
-//    printCommandOutput(cmdResult);
-//    assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    validateResult(cmdResult, true);
-//
-//    command = "get --key-class=" + ObjectWithCharAttr.class.getCanonicalName()
-//        + " --key=\"('name':'','t':123, 'c':'d')\"" + " --region=" + DATA_REGION_NAME_PATH;
-//    cmdResult = executeCommand(command);
-//    printCommandOutput(cmdResult);
-//    assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    validateResult(cmdResult, true);
-//
-//    command = "get --key-class=" + ObjectWithCharAttr.class.getCanonicalName()
-//        + " --key=\"('name':'','t':456, 'c':'d')\"" + " --region=" + DATA_REGION_NAME_PATH;
-//    cmdResult = executeCommand(command);
-//    printCommandOutput(cmdResult);
-//    assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    validateResult(cmdResult, true);
-//
-//    // check wrong key
-//    command = "get --key-class=" + ObjectWithCharAttr.class.getCanonicalName()
-//        + " --key=\"('name':'','t':999, 'c':'d')\"" + " --region=" + DATA_REGION_NAME_PATH;
-//    cmdResult = executeCommand(command);
-//    printCommandOutput(cmdResult);
-//    assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    validateResult(cmdResult, false);
-//  }
-//
-//  @Test
-//  public void testRemoveJsonCommand() {
-//    final String keyPrefix = "testKey";
-//
-//    setupForGetPutRemoveLocateEntry("testRemoveJsonCommand");
-//
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//    final VM vm2 = Host.getHost(0).getVM(2);
-//
-//    SerializableRunnable putKeys = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-//        assertNotNull(region);
-//        region.clear();
-//        for (int i = 0; i < COUNT; i++) {
-//          String keyString = keyPrefix + i;
-//          Key1 key = new Key1();
-//          key.setId(keyString);
-//          key.setName("name" + keyString);
-//          Value2 value2 = new Value2();
-//          value2.setStateName("State" + keyString);
-//          value2.setCapitalCity("capital" + keyString);
-//          value2.setPopulation(i * 100);
-//          value2.setAreaInSqKm(i * 100.4365);
-//          region.put(key, value2);
-//        }
-//      }
-//    };
-//
-//    vm1.invoke(putKeys);
-//
-//    for (int i = 0; i < COUNT; i++) {
-//      String command = "remove";
-//      String keyString = keyPrefix + i;
-//      String keyJson = keyTemplate.replaceAll("\\?", keyString);
-//      getLogWriter().info("Removing key with json key : " + keyJson);
-//      command = command + " " + "--key=" + keyJson + " --region=" + DATA_REGION_NAME_PATH
-//          + " --key-class=" + Key1.class.getCanonicalName();
-//      CommandResult cmdResult = executeCommand(command);
-//      printCommandOutput(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      validateResult(cmdResult, true);
-//    }
-//
-//    SerializableRunnable checkRemoveKeys = new SerializableRunnable() {
-//      @Override
-//      public void run() {
-//        Cache cache = getCache();
-//        Region region = cache.getRegion(DATA_REGION_NAME_PATH);
-//        assertNotNull(region);
-//        for (int i = 0; i < COUNT; i++) {
-//          String keyString = keyPrefix + i;
-//          Key1 key = new Key1();
-//          key.setId(keyString);
-//          key.setName("name" + keyString);
-//          assertEquals(false, region.containsKey(key));
-//        }
-//        assertEquals(0, region.size());
-//      }
-//    };
-//
-//    vm1.invoke(checkRemoveKeys);
-//    vm2.invoke(checkRemoveKeys);
-//  }
-//
-//  @Test
-//  public void testRebalanceCommandForTimeOut() {
-//    setupTestRebalanceForEntireDS();
-//
-//    // check if DistributedRegionMXBean is available so that command will not fail
-//    final VM manager = Host.getHost(0).getVM(0);
-//    manager.invoke(checkRegionMBeans);
-//    getLogWriter().info("testRebalanceCommandForTimeOut verified Mbean and executin command");
-//    String command = "rebalance --time-out=1";
-//    CommandResult cmdResult = executeCommand(command);
-//    getLogWriter().info("testRebalanceCommandForTimeOut just after executing " + cmdResult);
-//    if (cmdResult != null) {
-//      String stringResult = commandResultToString(cmdResult);
-//      getLogWriter().info("testRebalanceCommandForTimeOut stringResult : " + stringResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    } else {
-//      fail("testRebalanceCommandForTimeOut failed as did not get CommandResult");
-//    }
-//  }
-//
-//  @Test
-//  public void testRebalanceCommandForTimeOutForRegion() {
-//    setupTestRebalanceForEntireDS();
-//
-//    // check if DistributedRegionMXBean is available so that command will not fail
-//    final VM manager = Host.getHost(0).getVM(0);
-//    manager.invoke(checkRegionMBeans);
-//
-//    getLogWriter()
-//        .info("testRebalanceCommandForTimeOutForRegion verified Mbean and executin command");
-//
-//    String command = "rebalance --time-out=1 --include-region=" + "/" + REBALANCE_REGION_NAME;
-//    CommandResult cmdResult = executeCommand(command);
-//
-//    getLogWriter()
-//        .info("testRebalanceCommandForTimeOutForRegion just after executing " + cmdResult);
-//
-//    if (cmdResult != null) {
-//      String stringResult = commandResultToString(cmdResult);
-//      getLogWriter().info("testRebalanceCommandForTimeOutForRegion stringResult : " + stringResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    } else {
-//      fail("testRebalanceCommandForTimeOut failed as did not get CommandResult");
-//    }
-//  }
-//
-//  @Test
-//  public void testRebalanceCommandForSimulate() {
-//    setupTestRebalanceForEntireDS();
-//
-//    // check if DistributedRegionMXBean is available so that command will not fail
-//    final VM manager = Host.getHost(0).getVM(0);
-//    manager.invoke(checkRegionMBeans);
-//
-//    getLogWriter().info("testRebalanceCommandForSimulate verified Mbean and executing command");
-//    String command = "rebalance --simulate=true --include-region=" + "/" + REBALANCE_REGION_NAME;
-//    CommandResult cmdResult = executeCommand(command);
-//    getLogWriter().info("testRebalanceCommandForSimulate just after executing " + cmdResult);
-//    if (cmdResult != null) {
-//      String stringResult = commandResultToString(cmdResult);
-//      getLogWriter().info("testRebalanceCommandForSimulate stringResult : " + stringResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    } else {
-//      fail("testRebalanceCommandForSimulate failed as did not get CommandResult");
-//    }
-//  }
-//
-//  @Test
-//  public void testRebalanceCommandForSimulateWithNoMember() {
-//    setupTestRebalanceForEntireDS();
-//
-//    // check if DistributedRegionMXBean is available so that command will not fail
-//    final VM manager = Host.getHost(0).getVM(0);
-//    manager.invoke(checkRegionMBeans);
-//
-//    getLogWriter()
-//        .info("testRebalanceCommandForSimulateWithNoMember verified Mbean and executin command");
-//
-//    String command = "rebalance --simulate=true";
-//    CommandResult cmdResult = executeCommand(command);
-//
-//    getLogWriter()
-//        .info("testRebalanceCommandForSimulateWithNoMember just after executing " + cmdResult);
-//
-//    if (cmdResult != null) {
-//      String stringResult = commandResultToString(cmdResult);
-//      getLogWriter()
-//          .info("testRebalanceCommandForSimulateWithNoMember stringResult : " + stringResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    } else {
-//      fail("testRebalanceCommandForSimulateWithNoMember failed as did not get CommandResult");
-//    }
-//  }
-//
-//  @Test
-//  public void testRebalanceForIncludeRegionFunction() {
-//    // setup();
-//    setupWith2Regions();
-//
-//    // check if DistributedRegionMXBean is available so that command will not fail
-//    final VM manager = Host.getHost(0).getVM(0);
-//    manager.invoke(checkRegionMBeans);
-//    getLogWriter()
-//        .info("testRebalanceForIncludeRegionFunction verified Mbean and executin command");
-//    String command =
-//        "rebalance --include-region=" + "/" + REBALANCE_REGION_NAME + ",/" + REBALANCE_REGION2_NAME;
-//    CommandResult cmdResult = executeCommand(command);
-//    getLogWriter().info("testRebalanceForIncludeRegionFunction just after executing " + cmdResult);
-//    if (cmdResult != null) {
-//      String stringResult = commandResultToString(cmdResult);
-//      getLogWriter().info("testRebalanceForIncludeRegionFunction stringResult : " + stringResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    } else {
-//      fail("testRebalanceForIncludeRegionFunction failed as did not get CommandResult");
-//    }
-//  }
-//
-//  @Category(FlakyTest.class) // GEODE-1561
-//  @Test
-//  public void testSimulateForEntireDS() {
-//    setupTestRebalanceForEntireDS();
-//    // check if DistributedRegionMXBean is available so that command will not fail
-//    final VM manager = Host.getHost(0).getVM(0);
-//    manager.invoke(checkRegionMBeans);
-//
-//    getLogWriter().info("testSimulateForEntireDS verified MBean and executing command");
-//
-//    String command = "rebalance --simulate=true";
-//
-//    CommandResult cmdResult = executeCommand(command);
-//
-//    getLogWriter().info("testSimulateForEntireDS just after executing " + cmdResult);
-//
-//    if (cmdResult != null) {
-//      String stringResult = commandResultToString(cmdResult);
-//      getLogWriter().info("testSimulateForEntireDS stringResult : " + stringResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    } else {
-//      fail("testRebalanceForIncludeRegionFunction failed as did not get CommandResult");
-//    }
-//  }
-//
-//  @Test
-//  public void testSimulateForEntireDSWithTimeout() {
-//    setupTestRebalanceForEntireDS();
-//    // check if DistributedRegionMXBean is available so that command will not fail
-//    final VM manager = Host.getHost(0).getVM(0);
-//    manager.invoke(checkRegionMBeans);
-//
-//    getLogWriter().info("testSimulateForEntireDS verified MBean and executing command");
-//
-//    String command = "rebalance --simulate=true --time-out=-1";
-//
-//    CommandResult cmdResult = executeCommand(command);
-//
-//    getLogWriter().info("testSimulateForEntireDS just after executing " + cmdResult);
-//
-//    if (cmdResult != null) {
-//      String stringResult = commandResultToString(cmdResult);
-//      getLogWriter().info("testSimulateForEntireDS stringResult : " + stringResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    } else {
-//      fail("testRebalanceForIncludeRegionFunction failed as did not get CommandResult");
-//    }
-//  }
-//
-//  @Category(FlakyTest.class) // GEODE-1487
-//  @Test
-//  public void testRebalanceForEntireDS() {
-//    setupTestRebalanceForEntireDS();
-//    // check if DistributedRegionMXBean is available so that command will not fail
-//    final VM manager = Host.getHost(0).getVM(0);
-//    manager.invoke(checkRegionMBeans);
-//    getLogWriter().info("testRebalanceForEntireDS verified Mbean and executin command");
-//    String command = "rebalance";
-//    CommandResult cmdResult = executeCommand(command);
-//    getLogWriter().info("testRebalanceForEntireDS just after executing " + cmdResult);
-//    if (cmdResult != null) {
-//      String stringResult = commandResultToString(cmdResult);
-//      getLogWriter().info("testRebalanceForEntireDS stringResult : " + stringResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//    } else {
-//      fail("testRebalanceForIncludeRegionFunction failed as did not get CommandResult");
-//    }
-//  }
-//
-//  @Test
-//  public void testRebalanceForExcludeRegionFunction() {
-//    setupWith2Regions();
-//
-//    // check if DistributedRegionMXBean is available so that command will not fail
-//    final VM manager = Host.getHost(0).getVM(0);
-//    manager.invoke(checkRegionMBeans);
-//
-//    getLogWriter()
-//        .info("testRebalanceForExcludeRegionFunction verified Mbean and executing command");
-//
-//    String command = "rebalance --exclude-region=" + "/" + REBALANCE_REGION2_NAME;
-//    getLogWriter().info("testRebalanceForExcludeRegionFunction command : " + command);
-//    CommandResult cmdResult = executeCommand(command);
-//    getLogWriter().info("testRebalanceForExcludeRegionFunction just after executing " + cmdResult);
-//    if (cmdResult != null) {
-//      String stringResult = commandResultToString(cmdResult);
-//      getLogWriter().info("testRebalanceForExcludeRegionFunction stringResult : " + stringResult);
-//      assertEquals("CommandResult=" + cmdResult, Result.Status.OK, cmdResult.getStatus());
-//    } else {
-//      fail("testRebalanceForIncludeRegionFunction failed as did not get CommandResult");
-//    }
-//  }
-//
-//  @Test
-//  public void testRegionsViaMbeanAndFunctions() {
-//    setupForGetPutRemoveLocateEntry("tesSimplePut");
-//    waitForListClientMbean(DATA_REGION_NAME_PATH);
-//    final VM manager = Host.getHost(0).getVM(0);
-//
-//    String memSizeFromMbean = (String) manager.invoke(new SerializableCallable() {
-//      public Object call() {
-//        Cache cache = GemFireCacheImpl.getInstance();
-//        DistributedRegionMXBean bean = ManagementService.getManagementService(cache)
-//            .getDistributedRegionMXBean(DATA_REGION_NAME_PATH);
-//
-//        if (bean == null)// try with slash ahead
-//          bean = ManagementService.getManagementService(cache)
-//              .getDistributedRegionMXBean(Region.SEPARATOR + DATA_REGION_NAME_PATH);
-//
-//        if (bean == null) {
-//          return null;
-//        }
-//
-//        String[] membersName = bean.getMembers();
-//        return "" + membersName.length;
-//      }
-//    });
-//
-//    getLogWriter().info("testRegionsViaMbeanAndFunctions memSizeFromMbean= " + memSizeFromMbean);
-//
-//    String memSizeFromFunctionCall = (String) manager.invoke(new SerializableCallable() {
-//      public Object call() {
-//        InternalCache cache = GemFireCacheImpl.getInstance();
-//        CliUtil.getMembersForeRegionViaFunction(cache, DATA_REGION_NAME_PATH, true);
-//        return ""
-//            + CliUtil.getMembersForeRegionViaFunction(cache, DATA_REGION_NAME_PATH, true).size();
-//      }
-//    });
-//
-//    getLogWriter().info(
-//        "testRegionsViaMbeanAndFunctions memSizeFromFunctionCall= " + memSizeFromFunctionCall);
-//    assertTrue(memSizeFromFunctionCall.equals(memSizeFromMbean));
-//  }
-//
-//  @Test
-//  public void testRegionsViaMbeanAndFunctionsForPartRgn() {
-//    setupWith2Regions();
-//    waitForListClientMbean(REBALANCE_REGION_NAME);
-//    final VM manager = Host.getHost(0).getVM(0);
-//
-//    String memSizeFromMbean = (String) manager.invoke(new SerializableCallable() {
-//      public Object call() {
-//        Cache cache = GemFireCacheImpl.getInstance();
-//        DistributedRegionMXBean bean = ManagementService.getManagementService(cache)
-//            .getDistributedRegionMXBean(REBALANCE_REGION_NAME);
-//
-//        if (bean == null) {
-//          bean = ManagementService.getManagementService(cache)
-//              .getDistributedRegionMXBean(Region.SEPARATOR + REBALANCE_REGION_NAME);
-//        }
-//
-//        if (bean == null) {
-//          return null;
-//        }
-//
-//        String[] membersName = bean.getMembers();
-//        return "" + membersName.length;
-//      }
-//    });
-//
-//    getLogWriter()
-//        .info("testRegionsViaMbeanAndFunctionsForPartRgn memSizeFromMbean= " + memSizeFromMbean);
-//
-//    String memSizeFromFunctionCall = (String) manager.invoke(new SerializableCallable() {
-//      public Object call() {
-//        InternalCache cache = GemFireCacheImpl.getInstance();
-//        return ""
-//            + CliUtil.getMembersForeRegionViaFunction(cache, REBALANCE_REGION_NAME, true).size();
-//      }
-//    });
-//
-//    getLogWriter().info("testRegionsViaMbeanAndFunctionsForPartRgn memSizeFromFunctionCall= "
-//        + memSizeFromFunctionCall);
-//    assertTrue(memSizeFromFunctionCall.equals(memSizeFromMbean));
-//  }
-//
-//  @Category(FlakyTest.class) // GEODE-1404
-//  @Test
-//  public void testImportExportData() throws InterruptedException, IOException {
-//    final String regionName = "Region1";
-//    final String exportFileName = "export.gfd";
-//    final VM manager = Host.getHost(0).getVM(0);
-//    final VM vm1 = Host.getHost(0).getVM(1);
-//    final File exportFile = new File(exportFileName);
-//    final String filePath = exportFile.getCanonicalPath();
-//
-//    try {
-//      if (!exportFile.exists()) {
-//        exportFile.createNewFile();
-//      }
-//      exportFile.deleteOnExit();
-//
-//      setUpJmxManagerOnVm0ThenConnect(null);
-//
-//      manager.invoke(new SerializableRunnable() {
-//        public void run() {
-//          createParReg(regionName, getCache());
-//        }
-//      });
-//
-//      vm1.invoke(new SerializableRunnable() {
-//        @Override
-//        public void run() throws Exception {
-//          Region region = createParReg(regionName, getCache());
-//          for (int i = 0; i < 100; i++) {
-//            region.put(i, i);
-//          }
-//        }
-//      });
-//
-//      CommandStringBuilder csb = new CommandStringBuilder(CliStrings.EXPORT_DATA);
-//      csb.addOption(CliStrings.EXPORT_DATA__REGION, regionName);
-//      csb.addOption(CliStrings.EXPORT_DATA__MEMBER, "Manager");
-//      csb.addOption(CliStrings.EXPORT_DATA__FILE, filePath);
-//      String commandString = csb.toString();
-//
-//      CommandResult cmdResult = executeCommand(commandString);
-//      String resultAsString = commandResultToString(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//      getLogWriter().info("Command Output");
-//      getLogWriter().info(resultAsString);
-//
-//      vm1.invoke(new SerializableRunnable() {
-//        public void run() {
-//          Region region = getCache().getRegion(regionName);
-//          for (int i = 0; i < 100; i++) {
-//            region.destroy(i);
-//          }
-//        }
-//      });
-//
-//      /*
-//       * Add CacheListener
-//       */
-//
-//      manager.invoke(addCacheListenerInvocations(regionName));
-//      vm1.invoke(addCacheListenerInvocations(regionName));
-//
-//      /*
-//       * Import the data
-//       */
-//
-//      csb = new CommandStringBuilder(CliStrings.IMPORT_DATA);
-//      csb.addOption(CliStrings.IMPORT_DATA__REGION, regionName);
-//      csb.addOption(CliStrings.IMPORT_DATA__FILE, filePath);
-//      csb.addOption(CliStrings.IMPORT_DATA__MEMBER, "Manager");
-//
-//      commandString = csb.toString();
-//      cmdResult = executeCommand(commandString);
-//      resultAsString = commandResultToString(cmdResult);
-//
-//      getLogWriter().info("Result of import data");
-//      getLogWriter().info(resultAsString);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//
-//      /*
-//       * Validate the region entries after import They must match the entries before export
-//       */
-//
-//      manager.invoke(new SerializableRunnable() {
-//        public void run() {
-//          Region region = getCache().getRegion(regionName);
-//          for (int i = 0; i < 100; i++) {
-//            assertEquals(i, region.get(i));
-//          }
-//        }
-//      });
-//
-//      /*
-//       * Verify callbacks were not invoked
-//       */
-//
-//      manager.invoke(verifyCacheListenerInvocations(regionName, false));
-//      vm1.invoke(verifyCacheListenerInvocations(regionName, false));
-//
-//      /*
-//       * Import the data with invokeCallbacks=true
-//       */
-//
-//      vm1.invoke(new SerializableRunnable() {
-//        public void run() {
-//          Region region = getCache().getRegion(regionName);
-//          for (int i = 0; i < 100; i++) {
-//            region.destroy(i);
-//          }
-//        }
-//      });
-//
-//      csb = new CommandStringBuilder(CliStrings.IMPORT_DATA);
-//      csb.addOption(CliStrings.IMPORT_DATA__REGION, regionName);
-//      csb.addOption(CliStrings.IMPORT_DATA__FILE, filePath);
-//      csb.addOption(CliStrings.IMPORT_DATA__MEMBER, "Manager");
-//      csb.addOption(CliStrings.IMPORT_DATA__INVOKE_CALLBACKS, "true");
-//      commandString = csb.toString();
-//      cmdResult = executeCommand(commandString);
-//      commandResultToString(cmdResult);
-//      assertEquals(Result.Status.OK, cmdResult.getStatus());
-//
-//      /*
-//       * Verify callbacks were invoked
-//       */
-//
-//      manager.invoke(verifyCacheListenerInvocations(regionName, true));
-//      vm1.invoke(verifyCacheListenerInvocations(regionName, true));
-//
-//      // Test for bad input
-//      csb = new CommandStringBuilder(CliStrings.EXPORT_DATA);
-//      csb.addOption(CliStrings.EXPORT_DATA__REGION, "FDSERW");
-//      csb.addOption(CliStrings.EXPORT_DATA__FILE, filePath);
-//      csb.addOption(CliStrings.EXPORT_DATA__MEMBER, "Manager");
-//      commandString = csb.getCommandString();
-//
-//      cmdResult = executeCommand(commandString);
-//      resultAsString = commandResultToString(cmdResult);
-//      getLogWriter().info("Result of import data with wrong region name");
-//      getLogWriter().info(resultAsString);
-//      assertEquals(Result.Status.ERROR, cmdResult.getStatus());
-//
-//      csb = new CommandStringBuilder(CliStrings.IMPORT_DATA);
-//      csb.addOption(CliStrings.IMPORT_DATA__REGION, regionName);
-//      csb.addOption(CliStrings.IMPORT_DATA__FILE, "#WEQW");
-//      csb.addOption(CliStrings.IMPORT_DATA__MEMBER, "Manager");
-//      commandString = csb.getCommandString();
-//
-//      cmdResult = executeCommand(commandString);
-//      resultAsString = commandResultToString(cmdResult);
-//      getLogWriter().info("Result of import data with wrong file");
-//      getLogWriter().info(resultAsString);
-//      assertEquals(Result.Status.ERROR, cmdResult.getStatus());
-//
-//    } finally {
-//      exportFile.delete();
-//    }
-//  }
+  // @Test
+  // public void testSimpleGetLocateEntryCommand() {
+  // final String keyPrefix = "testKey";
+  // final String valuePrefix = "testValue";
+  //
+  // setupForGetPutRemoveLocateEntry("testSimpleGetLocateEntry");
+  //
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  // final VM vm2 = Host.getHost(0).getVM(2);
+  //
+  // SerializableRunnable putKeys = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+  // assertNotNull(region);
+  // region.clear();
+  // for (int i = 0; i < COUNT; i++) {
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // region.put(key, value);
+  // }
+  // }
+  // };
+  //
+  // vm1.invoke(putKeys);
+  // for (int i = 0; i < COUNT; i++) {
+  // String command = "get";
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  //
+  // command = "locate entry";
+  // command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH;
+  // cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  //
+  // }
+  //
+  // }
+  //
+  // @Test
+  // public void testRecursiveLocateEntryCommand() {
+  // final String keyPrefix = "testKey";
+  // final String valuePrefix = "testValue";
+  //
+  // setupForGetPutRemoveLocateEntry("testRecursiveLocateEntry");
+  //
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  // final VM vm2 = Host.getHost(0).getVM(2);
+  //
+  // SerializableRunnable putKeys = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+  // Region region2 = cache.getRegion(DATA_REGION_NAME_CHILD_1_PATH);
+  // Region region3 = cache.getRegion(DATA_REGION_NAME_CHILD_1_2_PATH);
+  // assertNotNull(region);
+  // region.clear();
+  // for (int i = 0; i < COUNT; i++) {
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // region.put(key, value);
+  // region2.put(key, value);
+  // region3.put(key, value);
+  // }
+  // }
+  // };
+  //
+  // vm1.invoke(putKeys);
+  // for (int i = 0; i < COUNT; i++) {
+  // String key = keyPrefix + i;
+  // String command = "locate entry";
+  // command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_PATH
+  // + " --recursive=true";
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // validateLocationsResult(cmdResult, 6); // 3 Regions X 2 members = 6
+  // }
+  // }
+  //
+  // @Test
+  // public void testGetLocateEntryFromRegionOnDifferentVM() {
+  // final String keyPrefix = "testKey";
+  // final String valuePrefix = "testValue";
+  //
+  // setupForGetPutRemoveLocateEntry("testGetLocateEntryFromRegionOnDifferentVM");
+  //
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  // final VM vm2 = Host.getHost(0).getVM(2);
+  //
+  // SerializableRunnable putKeys1 = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_VM1_PATH);
+  // Region parRegion = cache.getRegion(DATA_PAR_REGION_NAME_VM1_PATH);
+  // assertNotNull(region);
+  // region.clear();
+  // for (int i = 0; i < COUNT; i++) {
+  // if (i % 2 == 0) {
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // region.put(key, value);
+  // parRegion.put(key, value);
+  // }
+  // }
+  // }
+  // };
+  //
+  // SerializableRunnable putKeys2 = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_VM2_PATH);
+  // Region parRegion = cache.getRegion(DATA_PAR_REGION_NAME_VM2_PATH);
+  // assertNotNull(region);
+  // region.clear();
+  // for (int i = 0; i < COUNT; i++) {
+  // if (i % 2 != 0) {
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // region.put(key, value);
+  // parRegion.put(key, value);
+  // }
+  // }
+  // }
+  // };
+  //
+  // vm1.invoke(putKeys1);
+  // vm2.invoke(putKeys2);
+  // for (int i = 0; i < COUNT; i++) {
+  // String command = "get";
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // if (i % 2 == 0)
+  // command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM1_PATH;
+  // else if (i % 2 == 1)
+  // command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM2_PATH;
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  //
+  // command = "locate entry";
+  // if (i % 2 == 0)
+  // command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM1_PATH;
+  // else if (i % 2 == 1)
+  // command = command + " " + "--key=" + key + " --region=" + DATA_REGION_NAME_VM2_PATH;
+  // cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  //
+  //
+  // command = "locate entry";
+  // if (i % 2 == 0)
+  // command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_VM1_PATH;
+  // else if (i % 2 == 1)
+  // command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_VM2_PATH;
+  // cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // validateLocationsResult(cmdResult, 1); // 1 Regions X (2-1) 2 Copies but redundancy not
+  // // satisfied = 1
+  // }
+  // }
+  //
+  // @Category(FlakyTest.class) // GEODE-1822
+  // @Test
+  // public void testGetLocateEntryLocationsForPR() {
+  // final String keyPrefix = "testKey";
+  // final String valuePrefix = "testValue";
+  //
+  // setupForGetPutRemoveLocateEntry("testGetLocateEntryLocationsForPR");
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  //
+  // SerializableRunnable putKeys1 = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_PAR_REGION_NAME_PATH);
+  // assertNotNull(region);
+  // for (int i = 0; i < COUNT; i++) {
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // region.put(key, value);
+  // }
+  // }
+  // };
+  //
+  // vm1.invoke(putKeys1);
+  //
+  // for (int i = 0; i < COUNT; i++) {
+  // String key = keyPrefix + i;
+  // String command = "locate entry";
+  // command = command + " " + "--key=" + key + " --region=" + DATA_PAR_REGION_NAME_PATH;
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // validateLocationsResult(cmdResult, 2); // 2 Members
+  // }
+  // }
+  //
+  // @Test
+  // public void testPutFromRegionOnDifferentVM() {
+  // final String keyPrefix = "testKey";
+  // final String valuePrefix = "testValue";
+  //
+  // setupForGetPutRemoveLocateEntry("testPutFromRegionOnDifferentVM");
+  //
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  // final VM vm2 = Host.getHost(0).getVM(2);
+  //
+  // for (int i = 0; i < COUNT; i++) {
+  // String command = "put";
+  // String key = keyPrefix + i;
+  // String value = valuePrefix + i;
+  // if (i % 2 == 0)
+  // command = command + " " + "--key=" + key + " --value=" + value + " --region="
+  // + DATA_REGION_NAME_VM1_PATH;
+  // else
+  // command = command + " " + "--key=" + key + " --value=" + value + " --region="
+  // + DATA_REGION_NAME_VM2_PATH;
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // }
+  //
+  // SerializableRunnable checkPutKeysInVM1 = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_VM1_PATH);
+  // assertNotNull(region);
+  // for (int i = 0; i < COUNT; i++) {
+  // if (i % 2 == 0) {
+  // String key = keyPrefix + i;
+  // assertEquals(true, region.containsKey(key));
+  // }
+  // }
+  // }
+  // };
+  //
+  // SerializableRunnable checkPutKeysInVM2 = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_VM2_PATH);
+  // assertNotNull(region);
+  // for (int i = 0; i < COUNT; i++) {
+  // if (i % 2 != 0) {
+  // String key = keyPrefix + i;
+  // assertEquals(true, region.containsKey(key));
+  // }
+  // }
+  // }
+  // };
+  //
+  // vm1.invoke(checkPutKeysInVM1);
+  // vm2.invoke(checkPutKeysInVM2);
+  // }
+  //
+  // @Category(FlakyTest.class) // GEODE-1182: random ports, BindException, HeadlessGFSH,
+  // // waitForCriterion, time sensitive
+  // @Test
+  // public void testGetLocateEntryJsonKeys() {
+  // final String keyPrefix = "testKey";
+  //
+  // setupForGetPutRemoveLocateEntry("testGetLocateEntryJsonKeys");
+  //
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  // final VM vm2 = Host.getHost(0).getVM(2);
+  //
+  // SerializableRunnable putKeys = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+  // assertNotNull(region);
+  // region.clear();
+  // for (int i = 0; i < COUNT; i++) {
+  // String keyString = keyPrefix + i;
+  // Key1 key = new Key1();
+  // key.setId(keyString);
+  // key.setName("name" + keyString);
+  // Value2 value2 = new Value2();
+  // value2.setStateName("State" + keyString);
+  // value2.setCapitalCity("capital" + keyString);
+  // value2.setPopulation(i * 100);
+  // value2.setAreaInSqKm(i * 100.4365);
+  // region.put(key, value2);
+  // }
+  //
+  // // Added for Bug #51175
+  // List<String> colors = new ArrayList<String>();
+  // colors.add("White");
+  // colors.add("Red");
+  // colors.add("Blue");
+  // Map<String, String> attrMap = new HashMap<String, String>();
+  // attrMap.put("power", "90hp");
+  // attrMap.put("turningRadius", "4mtr");
+  // attrMap.put("engineCapacity", "1248cc");
+  // attrMap.put("turboGeometry", "VGT");
+  //
+  // Set<String> attrSet = new HashSet<String>();
+  // attrSet.add("power");
+  // attrSet.add("turningRadius");
+  //
+  // for (int i = COUNT; i < COUNT + 5; i++) {
+  // String keyString = keyPrefix + i;
+  // Key1 key = new Key1();
+  // key.setId(keyString);
+  // key.setName("name" + keyString);
+  // Car car = new Car();
+  // car.setMake("Make" + keyString);
+  // car.setModel("Model" + keyString);
+  // car.setColors(colors);
+  // car.setAttributes(attrMap);
+  // car.setAttributeSet(attrSet);
+  // region.put(key, car);
+  // }
+  // }
+  // };
+  //
+  // String expectedCols[] = {"id", "name", "stateName", "capitalCity", "population", "areaInSqKm"};
+  // vm1.invoke(putKeys);
+  // for (int i = 0; i < COUNT; i++) {
+  // String command = "get";
+  // String keyString = keyPrefix + i;
+  // String population = "" + i * 100;
+  // String area = "" + i * (100.4365);
+  // String keyJson = keyTemplate.replaceAll("\\?", keyString);
+  // String valueJson = valueTemplate.replaceAll("\\?1", population);
+  // valueJson = valueJson.replaceAll("\\?2", area);
+  // valueJson = valueJson.replaceAll("\\?", keyString);
+  // getLogWriter().info("Getting key with json key : " + keyJson);
+  // command = command + " " + "--key=" + keyJson + " --region=" + DATA_REGION_NAME_PATH
+  // + " --key-class=" + Key1.class.getCanonicalName();
+  // command = command + " --value-class=" + Value2.class.getCanonicalName();
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // validateJSONGetResult(cmdResult, expectedCols);
+  //
+  // command = "locate entry";
+  // command = command + " " + "--key=" + keyJson + " --region=" + DATA_REGION_NAME_PATH
+  // + " --key-class=" + Key1.class.getCanonicalName();
+  // command = command + " --value-class=" + Value2.class.getCanonicalName();
+  // cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // }
+  //
+  // // Added for Bug #51175
+  // expectedCols =
+  // new String[] {"id", "name", "attributes", "make", "model", "colors", "attributeSet"};
+  // for (int i = COUNT; i < COUNT + 5; i++) {
+  // String command = "get";
+  // String keyString = keyPrefix + i;
+  // String population = "" + i * 100;
+  // String area = "" + i * (100.4365);
+  // String keyJson = keyTemplate.replaceAll("\\?", keyString);
+  // String valueJson = valueTemplate.replaceAll("\\?1", population);
+  // valueJson = valueJson.replaceAll("\\?2", area);
+  // valueJson = valueJson.replaceAll("\\?", keyString);
+  // getLogWriter().info("Getting key with json key : " + keyJson);
+  // command = command + " " + "--key=" + keyJson + " --region=" + DATA_REGION_NAME_PATH
+  // + " --key-class=" + Key1.class.getCanonicalName();
+  // command = command + " --value-class=" + Value2.class.getCanonicalName();
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // // validateJSONGetResult(cmdResult, expectedCols);
+  // validateJSONGetResultValues(cmdResult, expectedCols);
+  //
+  // command = "locate entry";
+  // command = command + " " + "--key=" + keyJson + " --region=" + DATA_REGION_NAME_PATH
+  // + " --key-class=" + Key1.class.getCanonicalName();
+  // command = command + " --value-class=" + Value2.class.getCanonicalName();
+  // cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // }
+  // }
+  //
+  // @Category(FlakyTest.class) // GEODE-1430
+  // @Test
+  // public void testPutJsonKeys() {
+  // final String keyPrefix = "testKey";
+  //
+  // setupForGetPutRemoveLocateEntry("testPutJsonKeys");
+  //
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  // final VM vm2 = Host.getHost(0).getVM(2);
+  //
+  // for (int i = 0; i < COUNT; i++) {
+  // String command = "put";
+  // String keyString = keyPrefix + i;
+  // String population = "" + i * 100;
+  // String area = "" + i * (100.4365);
+  // String keyJson = keyTemplate.replaceAll("\\?", keyString);
+  // String valueJson = valueTemplate.replaceAll("\\?1", population);
+  // valueJson = valueJson.replaceAll("\\?2", area);
+  // valueJson = valueJson.replaceAll("\\?", keyString);
+  // getLogWriter().info("Putting key with json key : " + keyJson);
+  // getLogWriter().info("Putting key with json valye : " + valueJson);
+  // command = command + " " + "--key=" + keyJson + " --value=" + valueJson + " --region="
+  // + DATA_REGION_NAME_PATH;
+  // command = command + " --key-class=" + Key1.class.getCanonicalName() + " --value-class="
+  // + Value2.class.getCanonicalName();
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // }
+  //
+  // // Bug #51175
+  // for (int i = COUNT; i < COUNT + 5; i++) {
+  // String command = "put";
+  // String keyString = keyPrefix + i;
+  // String id = "" + i * 100;
+  // String make = "" + i * (100.4365);
+  // String model = "" + i * (100.4365);
+  // String list = "['red','white','blue']";
+  // String set = "['red','white','blue']";
+  // String map = "{'power':'90hp'}";
+  // String keyJson = keyTemplate.replaceAll("\\?", keyString);
+  //
+  // String valueJson = carTemplate.replaceAll("\\?make", make);
+  // valueJson = valueJson.replaceAll("\\?model", model);
+  // valueJson = valueJson.replaceAll("\\?list", list);
+  // valueJson = valueJson.replaceAll("\\?set", set);
+  // valueJson = valueJson.replaceAll("\\?map", map);
+  //
+  // getLogWriter().info("Putting key with json key : " + keyJson);
+  // getLogWriter().info("Putting key with json valye : " + valueJson);
+  // command = command + " " + "--key=" + keyJson + " --value=" + valueJson + " --region="
+  // + DATA_REGION_NAME_PATH;
+  // command = command + " --key-class=" + Key1.class.getCanonicalName() + " --value-class="
+  // + Car.class.getCanonicalName();
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // }
+  //
+  // SerializableRunnable checkPutKeys = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+  // assertNotNull(region);
+  // for (int i = 0; i < COUNT + 5; i++) {
+  // String keyString = keyPrefix + i;
+  // Key1 key = new Key1();
+  // key.setId(keyString);
+  // key.setName("name" + keyString);
+  // assertEquals(true, region.containsKey(key));
+  //
+  // // Bug #51175
+  // if (i >= COUNT) {
+  // Car car = (Car) region.get(key);
+  // assertNotNull(car.getAttributes());
+  // assertNotNull(car.getAttributeSet());
+  // assertNotNull(car.getColors());
+  // }
+  //
+  // }
+  // }
+  // };
+  //
+  // vm1.invoke(checkPutKeys);
+  // vm2.invoke(checkPutKeys);
+  //
+  // doBugCheck50449();
+  // }
+  //
+  // public void doBugCheck50449() {
+  // String command = "put --key-class=" + ObjectWithCharAttr.class.getCanonicalName()
+  // + " --value=456 --key=\"('name':'hesdfdsfy2','t':456, 'c':'d')\"" + " --region="
+  // + DATA_REGION_NAME_PATH;
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  //
+  // command = "put --key-class=" + ObjectWithCharAttr.class.getCanonicalName()
+  // + " --value=123 --key=\"('name':'hesdfdsfy2','t':123, 'c':'d')\"" + " --region="
+  // + DATA_REGION_NAME_PATH;
+  // cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  //
+  // command = "get --key-class=" + ObjectWithCharAttr.class.getCanonicalName()
+  // + " --key=\"('name':'','t':123, 'c':'d')\"" + " --region=" + DATA_REGION_NAME_PATH;
+  // cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  //
+  // command = "get --key-class=" + ObjectWithCharAttr.class.getCanonicalName()
+  // + " --key=\"('name':'','t':456, 'c':'d')\"" + " --region=" + DATA_REGION_NAME_PATH;
+  // cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  //
+  // // check wrong key
+  // command = "get --key-class=" + ObjectWithCharAttr.class.getCanonicalName()
+  // + " --key=\"('name':'','t':999, 'c':'d')\"" + " --region=" + DATA_REGION_NAME_PATH;
+  // cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, false);
+  // }
+  //
+  // @Test
+  // public void testRemoveJsonCommand() {
+  // final String keyPrefix = "testKey";
+  //
+  // setupForGetPutRemoveLocateEntry("testRemoveJsonCommand");
+  //
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  // final VM vm2 = Host.getHost(0).getVM(2);
+  //
+  // SerializableRunnable putKeys = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+  // assertNotNull(region);
+  // region.clear();
+  // for (int i = 0; i < COUNT; i++) {
+  // String keyString = keyPrefix + i;
+  // Key1 key = new Key1();
+  // key.setId(keyString);
+  // key.setName("name" + keyString);
+  // Value2 value2 = new Value2();
+  // value2.setStateName("State" + keyString);
+  // value2.setCapitalCity("capital" + keyString);
+  // value2.setPopulation(i * 100);
+  // value2.setAreaInSqKm(i * 100.4365);
+  // region.put(key, value2);
+  // }
+  // }
+  // };
+  //
+  // vm1.invoke(putKeys);
+  //
+  // for (int i = 0; i < COUNT; i++) {
+  // String command = "remove";
+  // String keyString = keyPrefix + i;
+  // String keyJson = keyTemplate.replaceAll("\\?", keyString);
+  // getLogWriter().info("Removing key with json key : " + keyJson);
+  // command = command + " " + "--key=" + keyJson + " --region=" + DATA_REGION_NAME_PATH
+  // + " --key-class=" + Key1.class.getCanonicalName();
+  // CommandResult cmdResult = executeCommand(command);
+  // printCommandOutput(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // validateResult(cmdResult, true);
+  // }
+  //
+  // SerializableRunnable checkRemoveKeys = new SerializableRunnable() {
+  // @Override
+  // public void run() {
+  // Cache cache = getCache();
+  // Region region = cache.getRegion(DATA_REGION_NAME_PATH);
+  // assertNotNull(region);
+  // for (int i = 0; i < COUNT; i++) {
+  // String keyString = keyPrefix + i;
+  // Key1 key = new Key1();
+  // key.setId(keyString);
+  // key.setName("name" + keyString);
+  // assertEquals(false, region.containsKey(key));
+  // }
+  // assertEquals(0, region.size());
+  // }
+  // };
+  //
+  // vm1.invoke(checkRemoveKeys);
+  // vm2.invoke(checkRemoveKeys);
+  // }
+  //
+  // @Test
+  // public void testRebalanceCommandForTimeOut() {
+  // setupTestRebalanceForEntireDS();
+  //
+  // // check if DistributedRegionMXBean is available so that command will not fail
+  // final VM manager = Host.getHost(0).getVM(0);
+  // manager.invoke(checkRegionMBeans);
+  // getLogWriter().info("testRebalanceCommandForTimeOut verified Mbean and executin command");
+  // String command = "rebalance --time-out=1";
+  // CommandResult cmdResult = executeCommand(command);
+  // getLogWriter().info("testRebalanceCommandForTimeOut just after executing " + cmdResult);
+  // if (cmdResult != null) {
+  // String stringResult = commandResultToString(cmdResult);
+  // getLogWriter().info("testRebalanceCommandForTimeOut stringResult : " + stringResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // } else {
+  // fail("testRebalanceCommandForTimeOut failed as did not get CommandResult");
+  // }
+  // }
+  //
+  // @Test
+  // public void testRebalanceCommandForTimeOutForRegion() {
+  // setupTestRebalanceForEntireDS();
+  //
+  // // check if DistributedRegionMXBean is available so that command will not fail
+  // final VM manager = Host.getHost(0).getVM(0);
+  // manager.invoke(checkRegionMBeans);
+  //
+  // getLogWriter()
+  // .info("testRebalanceCommandForTimeOutForRegion verified Mbean and executin command");
+  //
+  // String command = "rebalance --time-out=1 --include-region=" + "/" + REBALANCE_REGION_NAME;
+  // CommandResult cmdResult = executeCommand(command);
+  //
+  // getLogWriter()
+  // .info("testRebalanceCommandForTimeOutForRegion just after executing " + cmdResult);
+  //
+  // if (cmdResult != null) {
+  // String stringResult = commandResultToString(cmdResult);
+  // getLogWriter().info("testRebalanceCommandForTimeOutForRegion stringResult : " + stringResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // } else {
+  // fail("testRebalanceCommandForTimeOut failed as did not get CommandResult");
+  // }
+  // }
+  //
+  // @Test
+  // public void testRebalanceCommandForSimulate() {
+  // setupTestRebalanceForEntireDS();
+  //
+  // // check if DistributedRegionMXBean is available so that command will not fail
+  // final VM manager = Host.getHost(0).getVM(0);
+  // manager.invoke(checkRegionMBeans);
+  //
+  // getLogWriter().info("testRebalanceCommandForSimulate verified Mbean and executing command");
+  // String command = "rebalance --simulate=true --include-region=" + "/" + REBALANCE_REGION_NAME;
+  // CommandResult cmdResult = executeCommand(command);
+  // getLogWriter().info("testRebalanceCommandForSimulate just after executing " + cmdResult);
+  // if (cmdResult != null) {
+  // String stringResult = commandResultToString(cmdResult);
+  // getLogWriter().info("testRebalanceCommandForSimulate stringResult : " + stringResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // } else {
+  // fail("testRebalanceCommandForSimulate failed as did not get CommandResult");
+  // }
+  // }
+  //
+  // @Test
+  // public void testRebalanceCommandForSimulateWithNoMember() {
+  // setupTestRebalanceForEntireDS();
+  //
+  // // check if DistributedRegionMXBean is available so that command will not fail
+  // final VM manager = Host.getHost(0).getVM(0);
+  // manager.invoke(checkRegionMBeans);
+  //
+  // getLogWriter()
+  // .info("testRebalanceCommandForSimulateWithNoMember verified Mbean and executin command");
+  //
+  // String command = "rebalance --simulate=true";
+  // CommandResult cmdResult = executeCommand(command);
+  //
+  // getLogWriter()
+  // .info("testRebalanceCommandForSimulateWithNoMember just after executing " + cmdResult);
+  //
+  // if (cmdResult != null) {
+  // String stringResult = commandResultToString(cmdResult);
+  // getLogWriter()
+  // .info("testRebalanceCommandForSimulateWithNoMember stringResult : " + stringResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // } else {
+  // fail("testRebalanceCommandForSimulateWithNoMember failed as did not get CommandResult");
+  // }
+  // }
+  //
+  // @Test
+  // public void testRebalanceForIncludeRegionFunction() {
+  // // setup();
+  // setupWith2Regions();
+  //
+  // // check if DistributedRegionMXBean is available so that command will not fail
+  // final VM manager = Host.getHost(0).getVM(0);
+  // manager.invoke(checkRegionMBeans);
+  // getLogWriter()
+  // .info("testRebalanceForIncludeRegionFunction verified Mbean and executin command");
+  // String command =
+  // "rebalance --include-region=" + "/" + REBALANCE_REGION_NAME + ",/" + REBALANCE_REGION2_NAME;
+  // CommandResult cmdResult = executeCommand(command);
+  // getLogWriter().info("testRebalanceForIncludeRegionFunction just after executing " + cmdResult);
+  // if (cmdResult != null) {
+  // String stringResult = commandResultToString(cmdResult);
+  // getLogWriter().info("testRebalanceForIncludeRegionFunction stringResult : " + stringResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // } else {
+  // fail("testRebalanceForIncludeRegionFunction failed as did not get CommandResult");
+  // }
+  // }
+  //
+  // @Category(FlakyTest.class) // GEODE-1561
+  // @Test
+  // public void testSimulateForEntireDS() {
+  // setupTestRebalanceForEntireDS();
+  // // check if DistributedRegionMXBean is available so that command will not fail
+  // final VM manager = Host.getHost(0).getVM(0);
+  // manager.invoke(checkRegionMBeans);
+  //
+  // getLogWriter().info("testSimulateForEntireDS verified MBean and executing command");
+  //
+  // String command = "rebalance --simulate=true";
+  //
+  // CommandResult cmdResult = executeCommand(command);
+  //
+  // getLogWriter().info("testSimulateForEntireDS just after executing " + cmdResult);
+  //
+  // if (cmdResult != null) {
+  // String stringResult = commandResultToString(cmdResult);
+  // getLogWriter().info("testSimulateForEntireDS stringResult : " + stringResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // } else {
+  // fail("testRebalanceForIncludeRegionFunction failed as did not get CommandResult");
+  // }
+  // }
+  //
+  // @Test
+  // public void testSimulateForEntireDSWithTimeout() {
+  // setupTestRebalanceForEntireDS();
+  // // check if DistributedRegionMXBean is available so that command will not fail
+  // final VM manager = Host.getHost(0).getVM(0);
+  // manager.invoke(checkRegionMBeans);
+  //
+  // getLogWriter().info("testSimulateForEntireDS verified MBean and executing command");
+  //
+  // String command = "rebalance --simulate=true --time-out=-1";
+  //
+  // CommandResult cmdResult = executeCommand(command);
+  //
+  // getLogWriter().info("testSimulateForEntireDS just after executing " + cmdResult);
+  //
+  // if (cmdResult != null) {
+  // String stringResult = commandResultToString(cmdResult);
+  // getLogWriter().info("testSimulateForEntireDS stringResult : " + stringResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // } else {
+  // fail("testRebalanceForIncludeRegionFunction failed as did not get CommandResult");
+  // }
+  // }
+  //
+  // @Category(FlakyTest.class) // GEODE-1487
+  // @Test
+  // public void testRebalanceForEntireDS() {
+  // setupTestRebalanceForEntireDS();
+  // // check if DistributedRegionMXBean is available so that command will not fail
+  // final VM manager = Host.getHost(0).getVM(0);
+  // manager.invoke(checkRegionMBeans);
+  // getLogWriter().info("testRebalanceForEntireDS verified Mbean and executin command");
+  // String command = "rebalance";
+  // CommandResult cmdResult = executeCommand(command);
+  // getLogWriter().info("testRebalanceForEntireDS just after executing " + cmdResult);
+  // if (cmdResult != null) {
+  // String stringResult = commandResultToString(cmdResult);
+  // getLogWriter().info("testRebalanceForEntireDS stringResult : " + stringResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // } else {
+  // fail("testRebalanceForIncludeRegionFunction failed as did not get CommandResult");
+  // }
+  // }
+  //
+  // @Test
+  // public void testRebalanceForExcludeRegionFunction() {
+  // setupWith2Regions();
+  //
+  // // check if DistributedRegionMXBean is available so that command will not fail
+  // final VM manager = Host.getHost(0).getVM(0);
+  // manager.invoke(checkRegionMBeans);
+  //
+  // getLogWriter()
+  // .info("testRebalanceForExcludeRegionFunction verified Mbean and executing command");
+  //
+  // String command = "rebalance --exclude-region=" + "/" + REBALANCE_REGION2_NAME;
+  // getLogWriter().info("testRebalanceForExcludeRegionFunction command : " + command);
+  // CommandResult cmdResult = executeCommand(command);
+  // getLogWriter().info("testRebalanceForExcludeRegionFunction just after executing " + cmdResult);
+  // if (cmdResult != null) {
+  // String stringResult = commandResultToString(cmdResult);
+  // getLogWriter().info("testRebalanceForExcludeRegionFunction stringResult : " + stringResult);
+  // assertEquals("CommandResult=" + cmdResult, Result.Status.OK, cmdResult.getStatus());
+  // } else {
+  // fail("testRebalanceForIncludeRegionFunction failed as did not get CommandResult");
+  // }
+  // }
+  //
+  // @Test
+  // public void testRegionsViaMbeanAndFunctions() {
+  // setupForGetPutRemoveLocateEntry("tesSimplePut");
+  // waitForListClientMbean(DATA_REGION_NAME_PATH);
+  // final VM manager = Host.getHost(0).getVM(0);
+  //
+  // String memSizeFromMbean = (String) manager.invoke(new SerializableCallable() {
+  // public Object call() {
+  // Cache cache = GemFireCacheImpl.getInstance();
+  // DistributedRegionMXBean bean = ManagementService.getManagementService(cache)
+  // .getDistributedRegionMXBean(DATA_REGION_NAME_PATH);
+  //
+  // if (bean == null)// try with slash ahead
+  // bean = ManagementService.getManagementService(cache)
+  // .getDistributedRegionMXBean(Region.SEPARATOR + DATA_REGION_NAME_PATH);
+  //
+  // if (bean == null) {
+  // return null;
+  // }
+  //
+  // String[] membersName = bean.getMembers();
+  // return "" + membersName.length;
+  // }
+  // });
+  //
+  // getLogWriter().info("testRegionsViaMbeanAndFunctions memSizeFromMbean= " + memSizeFromMbean);
+  //
+  // String memSizeFromFunctionCall = (String) manager.invoke(new SerializableCallable() {
+  // public Object call() {
+  // InternalCache cache = GemFireCacheImpl.getInstance();
+  // CliUtil.getMembersForeRegionViaFunction(cache, DATA_REGION_NAME_PATH, true);
+  // return ""
+  // + CliUtil.getMembersForeRegionViaFunction(cache, DATA_REGION_NAME_PATH, true).size();
+  // }
+  // });
+  //
+  // getLogWriter().info(
+  // "testRegionsViaMbeanAndFunctions memSizeFromFunctionCall= " + memSizeFromFunctionCall);
+  // assertTrue(memSizeFromFunctionCall.equals(memSizeFromMbean));
+  // }
+  //
+  // @Test
+  // public void testRegionsViaMbeanAndFunctionsForPartRgn() {
+  // setupWith2Regions();
+  // waitForListClientMbean(REBALANCE_REGION_NAME);
+  // final VM manager = Host.getHost(0).getVM(0);
+  //
+  // String memSizeFromMbean = (String) manager.invoke(new SerializableCallable() {
+  // public Object call() {
+  // Cache cache = GemFireCacheImpl.getInstance();
+  // DistributedRegionMXBean bean = ManagementService.getManagementService(cache)
+  // .getDistributedRegionMXBean(REBALANCE_REGION_NAME);
+  //
+  // if (bean == null) {
+  // bean = ManagementService.getManagementService(cache)
+  // .getDistributedRegionMXBean(Region.SEPARATOR + REBALANCE_REGION_NAME);
+  // }
+  //
+  // if (bean == null) {
+  // return null;
+  // }
+  //
+  // String[] membersName = bean.getMembers();
+  // return "" + membersName.length;
+  // }
+  // });
+  //
+  // getLogWriter()
+  // .info("testRegionsViaMbeanAndFunctionsForPartRgn memSizeFromMbean= " + memSizeFromMbean);
+  //
+  // String memSizeFromFunctionCall = (String) manager.invoke(new SerializableCallable() {
+  // public Object call() {
+  // InternalCache cache = GemFireCacheImpl.getInstance();
+  // return ""
+  // + CliUtil.getMembersForeRegionViaFunction(cache, REBALANCE_REGION_NAME, true).size();
+  // }
+  // });
+  //
+  // getLogWriter().info("testRegionsViaMbeanAndFunctionsForPartRgn memSizeFromFunctionCall= "
+  // + memSizeFromFunctionCall);
+  // assertTrue(memSizeFromFunctionCall.equals(memSizeFromMbean));
+  // }
+  //
+  // @Category(FlakyTest.class) // GEODE-1404
+  // @Test
+  // public void testImportExportData() throws InterruptedException, IOException {
+  // final String regionName = "Region1";
+  // final String exportFileName = "export.gfd";
+  // final VM manager = Host.getHost(0).getVM(0);
+  // final VM vm1 = Host.getHost(0).getVM(1);
+  // final File exportFile = new File(exportFileName);
+  // final String filePath = exportFile.getCanonicalPath();
+  //
+  // try {
+  // if (!exportFile.exists()) {
+  // exportFile.createNewFile();
+  // }
+  // exportFile.deleteOnExit();
+  //
+  // setUpJmxManagerOnVm0ThenConnect(null);
+  //
+  // manager.invoke(new SerializableRunnable() {
+  // public void run() {
+  // createParReg(regionName, getCache());
+  // }
+  // });
+  //
+  // vm1.invoke(new SerializableRunnable() {
+  // @Override
+  // public void run() throws Exception {
+  // Region region = createParReg(regionName, getCache());
+  // for (int i = 0; i < 100; i++) {
+  // region.put(i, i);
+  // }
+  // }
+  // });
+  //
+  // CommandStringBuilder csb = new CommandStringBuilder(CliStrings.EXPORT_DATA);
+  // csb.addOption(CliStrings.EXPORT_DATA__REGION, regionName);
+  // csb.addOption(CliStrings.EXPORT_DATA__MEMBER, "Manager");
+  // csb.addOption(CliStrings.EXPORT_DATA__FILE, filePath);
+  // String commandString = csb.toString();
+  //
+  // CommandResult cmdResult = executeCommand(commandString);
+  // String resultAsString = commandResultToString(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  // getLogWriter().info("Command Output");
+  // getLogWriter().info(resultAsString);
+  //
+  // vm1.invoke(new SerializableRunnable() {
+  // public void run() {
+  // Region region = getCache().getRegion(regionName);
+  // for (int i = 0; i < 100; i++) {
+  // region.destroy(i);
+  // }
+  // }
+  // });
+  //
+  // /*
+  // * Add CacheListener
+  // */
+  //
+  // manager.invoke(addCacheListenerInvocations(regionName));
+  // vm1.invoke(addCacheListenerInvocations(regionName));
+  //
+  // /*
+  // * Import the data
+  // */
+  //
+  // csb = new CommandStringBuilder(CliStrings.IMPORT_DATA);
+  // csb.addOption(CliStrings.IMPORT_DATA__REGION, regionName);
+  // csb.addOption(CliStrings.IMPORT_DATA__FILE, filePath);
+  // csb.addOption(CliStrings.IMPORT_DATA__MEMBER, "Manager");
+  //
+  // commandString = csb.toString();
+  // cmdResult = executeCommand(commandString);
+  // resultAsString = commandResultToString(cmdResult);
+  //
+  // getLogWriter().info("Result of import data");
+  // getLogWriter().info(resultAsString);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  //
+  // /*
+  // * Validate the region entries after import They must match the entries before export
+  // */
+  //
+  // manager.invoke(new SerializableRunnable() {
+  // public void run() {
+  // Region region = getCache().getRegion(regionName);
+  // for (int i = 0; i < 100; i++) {
+  // assertEquals(i, region.get(i));
+  // }
+  // }
+  // });
+  //
+  // /*
+  // * Verify callbacks were not invoked
+  // */
+  //
+  // manager.invoke(verifyCacheListenerInvocations(regionName, false));
+  // vm1.invoke(verifyCacheListenerInvocations(regionName, false));
+  //
+  // /*
+  // * Import the data with invokeCallbacks=true
+  // */
+  //
+  // vm1.invoke(new SerializableRunnable() {
+  // public void run() {
+  // Region region = getCache().getRegion(regionName);
+  // for (int i = 0; i < 100; i++) {
+  // region.destroy(i);
+  // }
+  // }
+  // });
+  //
+  // csb = new CommandStringBuilder(CliStrings.IMPORT_DATA);
+  // csb.addOption(CliStrings.IMPORT_DATA__REGION, regionName);
+  // csb.addOption(CliStrings.IMPORT_DATA__FILE, filePath);
+  // csb.addOption(CliStrings.IMPORT_DATA__MEMBER, "Manager");
+  // csb.addOption(CliStrings.IMPORT_DATA__INVOKE_CALLBACKS, "true");
+  // commandString = csb.toString();
+  // cmdResult = executeCommand(commandString);
+  // commandResultToString(cmdResult);
+  // assertEquals(Result.Status.OK, cmdResult.getStatus());
+  //
+  // /*
+  // * Verify callbacks were invoked
+  // */
+  //
+  // manager.invoke(verifyCacheListenerInvocations(regionName, true));
+  // vm1.invoke(verifyCacheListenerInvocations(regionName, true));
+  //
+  // // Test for bad input
+  // csb = new CommandStringBuilder(CliStrings.EXPORT_DATA);
+  // csb.addOption(CliStrings.EXPORT_DATA__REGION, "FDSERW");
+  // csb.addOption(CliStrings.EXPORT_DATA__FILE, filePath);
+  // csb.addOption(CliStrings.EXPORT_DATA__MEMBER, "Manager");
+  // commandString = csb.getCommandString();
+  //
+  // cmdResult = executeCommand(commandString);
+  // resultAsString = commandResultToString(cmdResult);
+  // getLogWriter().info("Result of import data with wrong region name");
+  // getLogWriter().info(resultAsString);
+  // assertEquals(Result.Status.ERROR, cmdResult.getStatus());
+  //
+  // csb = new CommandStringBuilder(CliStrings.IMPORT_DATA);
+  // csb.addOption(CliStrings.IMPORT_DATA__REGION, regionName);
+  // csb.addOption(CliStrings.IMPORT_DATA__FILE, "#WEQW");
+  // csb.addOption(CliStrings.IMPORT_DATA__MEMBER, "Manager");
+  // commandString = csb.getCommandString();
+  //
+  // cmdResult = executeCommand(commandString);
+  // resultAsString = commandResultToString(cmdResult);
+  // getLogWriter().info("Result of import data with wrong file");
+  // getLogWriter().info(resultAsString);
+  // assertEquals(Result.Status.ERROR, cmdResult.getStatus());
+  //
+  // } finally {
+  // exportFile.delete();
+  // }
+  // }
 
   private Region<?, ?> createParReg(String regionName, Cache cache) {
     RegionFactory regionFactory = cache.createRegionFactory();
@@ -2331,6 +2331,7 @@ public class GemfireDataCommandsDUnitTest extends CliCommandTestBase {
     getLogWriter().info(sb.toString());
     getLogWriter().info("");
   }
+
   public static class Value1WithValue2 extends Value1 {
 
     private Value2 value2 = null;
@@ -2343,6 +2344,7 @@ public class GemfireDataCommandsDUnitTest extends CliCommandTestBase {
     public Value2 getValue2() {
       return value2;
     }
+
     public void setValue2(Value2 value2) {
       this.value2 = value2;
     }
