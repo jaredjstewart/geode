@@ -255,21 +255,20 @@ public class LauncherLifecycleCommands implements GfshCommand {
 
       Properties gemfireProperties = new Properties();
 
-      gemfireProperties.setProperty(GROUPS, StringUtils.defaultString(group));
-      gemfireProperties.setProperty(LOCATORS, StringUtils.defaultString(locators));
-      gemfireProperties.setProperty(LOG_LEVEL, StringUtils.defaultString(logLevel));
-      gemfireProperties.setProperty(MCAST_ADDRESS, StringUtils.defaultString(mcastBindAddress));
-      gemfireProperties.setProperty(MCAST_PORT, StringUtils.defaultString(mcastPort));
-      gemfireProperties.setProperty(ENABLE_CLUSTER_CONFIGURATION,
-          StringUtils.defaultString(enableSharedConfiguration));
-      gemfireProperties.setProperty(LOAD_CLUSTER_CONFIGURATION_FROM_DIR,
-          StringUtils.defaultString(loadSharedConfigurationFromDirectory));
-      gemfireProperties.setProperty(CLUSTER_CONFIGURATION_DIR,
-          StringUtils.defaultString(clusterConfigDir));
-      gemfireProperties.setProperty(HTTP_SERVICE_PORT, StringUtils.defaultString(httpServicePort));
-      gemfireProperties.setProperty(HTTP_SERVICE_BIND_ADDRESS,
-          StringUtils.defaultString(httpServiceBindAddress));
-      gemfireProperties.setProperty(JMX_MANAGER_HOSTNAME_FOR_CLIENTS, jmxManagerHostnameForClients);
+      setPropertyIfNotNull(gemfireProperties, GROUPS, group);
+      setPropertyIfNotNull(gemfireProperties, LOCATORS, locators);
+      setPropertyIfNotNull(gemfireProperties, LOG_LEVEL, logLevel);
+      setPropertyIfNotNull(gemfireProperties, MCAST_ADDRESS, mcastBindAddress);
+      setPropertyIfNotNull(gemfireProperties, MCAST_PORT, mcastPort);
+      setPropertyIfNotNull(gemfireProperties, ENABLE_CLUSTER_CONFIGURATION,
+          enableSharedConfiguration);
+      setPropertyIfNotNull(gemfireProperties, LOAD_CLUSTER_CONFIGURATION_FROM_DIR,
+          loadSharedConfigurationFromDirectory);
+      setPropertyIfNotNull(gemfireProperties, CLUSTER_CONFIGURATION_DIR, clusterConfigDir);
+      setPropertyIfNotNull(gemfireProperties, HTTP_SERVICE_PORT, httpServicePort);
+      setPropertyIfNotNull(gemfireProperties, HTTP_SERVICE_BIND_ADDRESS, httpServiceBindAddress);
+      setPropertyIfNotNull(gemfireProperties, JMX_MANAGER_HOSTNAME_FOR_CLIENTS,
+          jmxManagerHostnameForClients);
 
 
       // read the OSProcess enable redirect system property here -- TODO: replace with new GFSH
@@ -431,6 +430,12 @@ public class LauncherLifecycleCommands implements GfshCommand {
       return ResultBuilder.createShellClientErrorResult(errorMessage);
     } finally {
       Gfsh.redirectInternalJavaLoggers();
+    }
+  }
+
+  private void setPropertyIfNotNull(Properties properties, String key, Object value) {
+    if (key != null && value != null) {
+      properties.setProperty(key, value.toString());
     }
   }
 
@@ -1013,38 +1018,31 @@ public class LauncherLifecycleCommands implements GfshCommand {
 
       Properties gemfireProperties = new Properties();
 
-      gemfireProperties.setProperty(BIND_ADDRESS, StringUtils.defaultString(bindAddress));
-      gemfireProperties.setProperty(CACHE_XML_FILE, StringUtils.defaultString(cacheXmlPathname));
-      gemfireProperties.setProperty(ENABLE_TIME_STATISTICS,
-          StringUtils.defaultString(enableTimeStatistics));
-      gemfireProperties.setProperty(GROUPS, StringUtils.defaultString(group));
-      gemfireProperties.setProperty(JMX_MANAGER_HOSTNAME_FOR_CLIENTS,
-          StringUtils.defaultString(jmxManagerHostnameForClients));
-      gemfireProperties.setProperty(LOCATORS, StringUtils.defaultString(locators));
-      gemfireProperties.setProperty(LOCATOR_WAIT_TIME, StringUtils.defaultString(locatorWaitTime));
-      gemfireProperties.setProperty(LOG_LEVEL, StringUtils.defaultString(logLevel));
-      gemfireProperties.setProperty(MCAST_ADDRESS, StringUtils.defaultString(mcastBindAddress));
-      gemfireProperties.setProperty(MCAST_PORT, StringUtils.defaultString(mcastPort));
-      gemfireProperties.setProperty(MEMCACHED_PORT, StringUtils.defaultString(memcachedPort));
-      gemfireProperties.setProperty(MEMCACHED_PROTOCOL,
-          StringUtils.defaultString(memcachedProtocol));
-      gemfireProperties.setProperty(MEMCACHED_BIND_ADDRESS,
-          StringUtils.defaultString(memcachedBindAddress));
-      gemfireProperties.setProperty(REDIS_PORT, StringUtils.defaultString(redisPort));
-      gemfireProperties.setProperty(REDIS_BIND_ADDRESS,
-          StringUtils.defaultString(redisBindAddress));
-      gemfireProperties.setProperty(REDIS_PASSWORD, StringUtils.defaultString(redisPassword));
-      gemfireProperties.setProperty(STATISTIC_ARCHIVE_FILE,
-          StringUtils.defaultString(statisticsArchivePathname));
-      gemfireProperties.setProperty(USE_CLUSTER_CONFIGURATION,
-          StringUtils.defaultString(requestSharedConfiguration, Boolean.TRUE.toString()));
-      gemfireProperties.setProperty(LOCK_MEMORY, StringUtils.defaultString(lockMemory));
-      gemfireProperties.setProperty(OFF_HEAP_MEMORY_SIZE,
-          StringUtils.defaultString(offHeapMemorySize));
-      gemfireProperties.setProperty(START_DEV_REST_API, StringUtils.defaultString(startRestApi));
-      gemfireProperties.setProperty(HTTP_SERVICE_PORT, StringUtils.defaultString(httpServicePort));
-      gemfireProperties.setProperty(HTTP_SERVICE_BIND_ADDRESS,
-          StringUtils.defaultString(httpServiceBindAddress));
+      setPropertyIfNotNull(gemfireProperties, BIND_ADDRESS, bindAddress);
+      setPropertyIfNotNull(gemfireProperties, CACHE_XML_FILE, cacheXmlPathname);
+      setPropertyIfNotNull(gemfireProperties, ENABLE_TIME_STATISTICS, enableTimeStatistics);
+      setPropertyIfNotNull(gemfireProperties, GROUPS, group);
+      setPropertyIfNotNull(gemfireProperties, JMX_MANAGER_HOSTNAME_FOR_CLIENTS,
+          jmxManagerHostnameForClients);
+      setPropertyIfNotNull(gemfireProperties, LOCATORS, locators);
+      setPropertyIfNotNull(gemfireProperties, LOCATOR_WAIT_TIME, locatorWaitTime);
+      setPropertyIfNotNull(gemfireProperties, LOG_LEVEL, logLevel);
+      setPropertyIfNotNull(gemfireProperties, MCAST_ADDRESS, mcastBindAddress);
+      setPropertyIfNotNull(gemfireProperties, MCAST_PORT, mcastPort);
+      setPropertyIfNotNull(gemfireProperties, MEMCACHED_PORT, memcachedPort);
+      setPropertyIfNotNull(gemfireProperties, MEMCACHED_PROTOCOL, memcachedProtocol);
+      setPropertyIfNotNull(gemfireProperties, MEMCACHED_BIND_ADDRESS, memcachedBindAddress);
+      setPropertyIfNotNull(gemfireProperties, REDIS_PORT, redisPort);
+      setPropertyIfNotNull(gemfireProperties, REDIS_BIND_ADDRESS, redisBindAddress);
+      setPropertyIfNotNull(gemfireProperties, REDIS_PASSWORD, redisPassword);
+      setPropertyIfNotNull(gemfireProperties, STATISTIC_ARCHIVE_FILE, statisticsArchivePathname);
+      setPropertyIfNotNull(gemfireProperties, USE_CLUSTER_CONFIGURATION,
+          requestSharedConfiguration);
+      setPropertyIfNotNull(gemfireProperties, LOCK_MEMORY, lockMemory);
+      setPropertyIfNotNull(gemfireProperties, OFF_HEAP_MEMORY_SIZE, offHeapMemorySize);
+      setPropertyIfNotNull(gemfireProperties, START_DEV_REST_API, startRestApi);
+      setPropertyIfNotNull(gemfireProperties, HTTP_SERVICE_PORT, httpServicePort);
+      setPropertyIfNotNull(gemfireProperties, HTTP_SERVICE_BIND_ADDRESS, httpServiceBindAddress);
       // if username is specified in the command line, it will overwrite what's set in the
       // properties file
       if (StringUtils.isNotBlank(userName)) {

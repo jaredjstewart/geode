@@ -151,7 +151,7 @@ public class GfshParserAutoCompletionTest {
   public void testCompleteJ() throws Exception {
     buffer = "start server --name=name1 --J=";
     candidate = parser.complete(buffer);
-    assertThat(candidate.getCursor()).isEqualTo(buffer.length() -3);
+    assertThat(candidate.getCursor()).isEqualTo(buffer.length() - 3);
     assertThat(candidate.size()).isEqualTo(1);
   }
 
@@ -159,7 +159,7 @@ public class GfshParserAutoCompletionTest {
   public void testCompleteWithValue() throws Exception {
     buffer = "start server --name=name1 --J";
     candidate = parser.complete(buffer);
-    assertThat(candidate.getCursor()).isEqualTo(buffer.length() -3);
+    assertThat(candidate.getCursor()).isEqualTo(buffer.length() - 3);
     assertThat(candidate.size()).isEqualTo(1);
   }
 
