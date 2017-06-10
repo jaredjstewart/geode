@@ -34,6 +34,10 @@ public class GfshRule extends ExternalResource {
     this.gfshPath = gfshPath;
   }
 
+  public Process execute(String... commands) {
+    return execute(GfshScript.of(commands));
+  }
+
   public Process execute(GfshScript gfshScript) {
     Process process;
     try {
