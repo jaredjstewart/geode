@@ -16,6 +16,8 @@
 package org.apache.geode.management.internal.web.shell;
 
 import org.apache.commons.io.FileUtils;
+
+import org.apache.geode.distributed.ConfigurationProperties;
 import org.apache.geode.internal.GemFireVersion;
 import org.apache.geode.internal.lang.StringUtils;
 import org.apache.geode.internal.logging.LogService;
@@ -34,12 +36,18 @@ import org.apache.geode.management.internal.web.shell.support.HttpMBeanProxyFact
 import org.apache.geode.management.internal.web.util.UriUtils;
 import org.apache.geode.security.AuthenticationFailedException;
 import org.apache.geode.security.NotAuthorizedException;
+
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -50,6 +58,7 @@ import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -61,12 +70,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
 import javax.management.ObjectName;
 import javax.management.QueryExp;
+import javax.net.ssl.SSLContext;
 
 /**
  * The AbstractHttpOperationInvoker class is an abstract base class encapsulating common
@@ -159,6 +171,26 @@ public abstract class AbstractHttpOperationInvoker implements HttpOperationInvok
     this(gfsh, REST_API_URL, securityProperties);
   }
 
+  private RestTemplate buildRestTemplateForSSL(Map<String, String> securityProps) {
+    File keystore = new File(securityProperties.get(ConfigurationProperties.SSL_KEYSTORE));
+    String keystorePassword = securityProperties.get(ConfigurationProperties.SSL_KEYSTORE_PASSWORD);
+    try {
+      // todo: set connectTimeout
+      SSLContext sslContext =
+          new org.apache.http.ssl.SSLContextBuilder().loadTrustMaterial(keystore,
+              keystorePassword.toCharArray(), new TrustSelfSignedStrategy()).build();
+
+      CloseableHttpClient httpClient = HttpClients.custom().setSSLContext(sslContext)
+          .setSSLHostnameVerifier(new NoopHostnameVerifier()).build();
+
+      RestTemplate template = new RestTemplate();
+      template.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpClient));
+      return template;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   /**
    * Constructs an instance of the AbstractHttpOperationInvoker class with a reference to the
    * GemFire shell (Gfsh) instance using this HTTP-based OperationInvoker to send commands to the
@@ -186,7 +218,14 @@ public abstract class AbstractHttpOperationInvoker implements HttpOperationInvok
     this.executorService = Executors.newSingleThreadScheduledExecutor();
 
     // constructs an instance of the Spring RestTemplate for M&M REST API (interface) operations
-    this.restTemplate = new RestTemplate(new SimpleClientHttpRequestFactory());
+
+    // TODO: Refactor to pass in 'useSSL' rather than examining a String
+    boolean useSSL = baseUrl.startsWith("https:");
+    if (useSSL) {
+      this.restTemplate = buildRestTemplateForSSL(securityProperties);
+    } else {
+      this.restTemplate = new RestTemplate(new SimpleClientHttpRequestFactory());
+    }
 
     // add our custom HttpMessageConverter for serializing DTO Objects into the HTTP request message
     // body
@@ -814,7 +853,7 @@ public abstract class AbstractHttpOperationInvoker implements HttpOperationInvok
       request.addParameterValues("operationName", operationName);
       request.addParameterValues("signature", (Object[]) signature);
       request.addParameterValues("parameters", params); // TODO may need to convert method parameter
-                                                        // arguments
+      // arguments
 
       try {
         return IOUtils.deserializeObject(send(request, byte[].class));

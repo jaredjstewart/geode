@@ -15,23 +15,37 @@
 
 package org.apache.geode.management.internal.web.http.support;
 
+import java.io.File;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.geode.management.internal.cli.shell.Gfsh;
-import org.apache.geode.security.AuthenticationFailedException;
-import org.apache.geode.security.NotAuthorizedException;
+import javax.net.ssl.SSLContext;
 
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
+
+import org.apache.geode.distributed.ConfigurationProperties;
+import org.apache.geode.management.internal.cli.shell.Gfsh;
+import org.apache.geode.security.AuthenticationFailedException;
+import org.apache.geode.security.NotAuthorizedException;
 
 
 /**
@@ -56,12 +70,39 @@ public class SimpleHttpRequester {
 
   private Map<String, String> securityProperties;
 
-  /**
-   * Default constructor to create an instance of the SimpleHttpRequester class using the default
-   * connection timeout of 30 seconds.
-   */
-  public SimpleHttpRequester(Gfsh gfsh, Map<String, String> securityProperties) {
-    this(gfsh, DEFAULT_CONNECT_TIMEOUT, securityProperties);
+  private RestTemplate buildRestTemplate(int connectTimeout, boolean useSSL,
+      Map<String, String> securityProperties) {
+    RestTemplate template;
+    if (useSSL) {
+      try {
+        File keystore = new File(securityProperties.get(ConfigurationProperties.SSL_KEYSTORE));
+        String keystorePassword =
+            securityProperties.get(ConfigurationProperties.SSL_KEYSTORE_PASSWORD);
+
+        // todo: set connectTimeout
+        SSLContext sslContext =
+            new org.apache.http.ssl.SSLContextBuilder().loadTrustMaterial(keystore,
+                keystorePassword.toCharArray(), new TrustSelfSignedStrategy()).build();
+
+        CloseableHttpClient httpClient = HttpClients.custom().setSSLContext(sslContext)
+            .setSSLHostnameVerifier(new NoopHostnameVerifier()).build();
+
+        template = new RestTemplate();
+        template.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpClient));
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+    } else {
+      final SimpleClientHttpRequestFactory clientHttpRequestFactory =
+          new SimpleClientHttpRequestFactory();
+
+      clientHttpRequestFactory.setConnectTimeout(connectTimeout);
+
+      template = new RestTemplate(clientHttpRequestFactory);
+    }
+
+    return template;
   }
 
   /**
@@ -72,14 +113,10 @@ public class SimpleHttpRequester {
    *        establishing the HTTP connection to the HTTP server.
    */
   public SimpleHttpRequester(final Gfsh gfsh, final int connectTimeout,
-      Map<String, String> securityProperties) {
-    final SimpleClientHttpRequestFactory clientHttpRequestFactory =
-        new SimpleClientHttpRequestFactory();
-
-    clientHttpRequestFactory.setConnectTimeout(connectTimeout);
+      Map<String, String> securityProperties, boolean useSSL) {
 
     this.securityProperties = securityProperties;
-    this.restTemplate = new RestTemplate(clientHttpRequestFactory);
+    this.restTemplate = buildRestTemplate(connectTimeout, useSSL, securityProperties);
 
     this.restTemplate.setErrorHandler(new ResponseErrorHandler() {
       @Override
