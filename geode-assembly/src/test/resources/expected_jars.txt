@@ -3,6 +3,7 @@ antlr
 aopalliance
 classmate
 commons-beanutils
+commons-codec
 commons-collections
 commons-digester
 commons-fileupload
@@ -15,6 +16,8 @@ fastutil
 findbugs-annotations
 gfsh-dependencies.jar
 guava
+httpclient
+httpcore
 jackson-annotations
 jackson-core
 jackson-databind

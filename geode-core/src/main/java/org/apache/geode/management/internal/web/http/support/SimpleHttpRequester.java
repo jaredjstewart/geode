@@ -22,6 +22,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.net.ssl.SSLContext;
@@ -31,6 +32,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -43,6 +45,11 @@ import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 import org.apache.geode.distributed.ConfigurationProperties;
+import org.apache.geode.distributed.internal.DistributionConfigImpl;
+import org.apache.geode.internal.admin.SSLConfig;
+import org.apache.geode.internal.logging.LogService;
+import org.apache.geode.internal.net.SSLConfigurationFactory;
+import org.apache.geode.internal.security.SecurableCommunicationChannel;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.security.AuthenticationFailedException;
 import org.apache.geode.security.NotAuthorizedException;
@@ -59,7 +66,7 @@ import org.apache.geode.security.NotAuthorizedException;
  */
 @SuppressWarnings("unused")
 public class SimpleHttpRequester {
-
+  private final Logger logger = LogService.getLogger();
   protected static final int DEFAULT_CONNECT_TIMEOUT = (30 * 1000); // 30 seconds
 
   private final RestTemplate restTemplate;
@@ -90,6 +97,7 @@ public class SimpleHttpRequester {
         template = new RestTemplate();
         template.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpClient));
       } catch (Exception e) {
+        logger.error("Error building REST template", e);
         throw new RuntimeException(e);
       }
 
