@@ -49,7 +49,7 @@ public class StatusLocatorRealGfshTest {
   public GfshRule gfshRule = new GfshRule();
 
   @ClassRule
-  public static  TemporaryFolder temporaryFolder = new TemporaryFolder();
+  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static String sslSecurityPropsFile;
   private static String jksFile;
@@ -67,7 +67,7 @@ public class StatusLocatorRealGfshTest {
     securityProps.setProperty(SSL_PROTOCOLS, "TLSv1.2");
     securityProps.setProperty(SSL_CIPHERS, "any");
 
-    File  securityPropsFile = temporaryFolder.newFile("security.properties");
+    File securityPropsFile = temporaryFolder.newFile("security.properties");
     securityProps.store(new FileOutputStream(securityPropsFile), null);
 
     sslSecurityPropsFile = securityPropsFile.getAbsolutePath();
@@ -94,21 +94,30 @@ public class StatusLocatorRealGfshTest {
 
   @Test
   public void sslOverJmx() {
-    gfshRule.execute(GfshScript.of("start locator --name=locator1 --security-properties-file=" + sslSecurityPropsFile).awaitAtMost(1, TimeUnit.MINUTES)
-        .expectExitCode(0));
-
-    gfshRule.execute(GfshScript.of("connect --locator=localhost[10334] --security-properties-file=" + sslSecurityPropsFile, "list members")
+    gfshRule.execute(GfshScript
+        .of("start locator --name=locator1 --security-properties-file=" + sslSecurityPropsFile)
         .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(0));
+
+    gfshRule
+        .execute(GfshScript
+            .of("connect --locator=localhost[10334] --security-properties-file="
+                + sslSecurityPropsFile, "list members")
+            .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(0));
   }
 
   @Test
   public void sslOverHttp() {
-    gfshRule.execute(GfshScript.of("start locator --name=locator1 --security-properties-file=" + sslSecurityPropsFile).awaitAtMost(1, TimeUnit.MINUTES)
-        .expectExitCode(0));
-
-    gfshRule.execute(GfshScript.of("connect --use-http=true --use-ssl=true --trust-store=/Users/jstewart/projects/open/geode-core/build/resources/test/ssl/trusted.keystore --trust-store-password=password --security-properties-file="+sslSecurityPropsFile, "list members")
+    gfshRule.execute(GfshScript
+        .of("start locator --name=locator1 --security-properties-file=" + sslSecurityPropsFile)
         .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(0));
-    gfshRule.execute(GfshScript.of("connect --use-http=true --use-ssl=true --trust-store=/Users/jstewart/projects/open/geode-core/build/resources/test/ssl/trusted.keystore --trust-store-password=password --key-store-password=password --key-store=/Users/jstewart/projects/open/geode-core/build/resources/test/ssl/trusted.keystore --security-properties-file="+sslSecurityPropsFile, "list members")
+
+    gfshRule.execute(GfshScript
+        .of("connect --use-http=true --use-ssl=true --trust-store=/Users/jstewart/projects/open/geode-core/build/resources/test/ssl/trusted.keystore --trust-store-password=password --security-properties-file="
+            + sslSecurityPropsFile, "list members")
+        .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(0));
+    gfshRule.execute(GfshScript
+        .of("connect --use-http=true --use-ssl=true --trust-store=/Users/jstewart/projects/open/geode-core/build/resources/test/ssl/trusted.keystore --trust-store-password=password --key-store-password=password --key-store=/Users/jstewart/projects/open/geode-core/build/resources/test/ssl/trusted.keystore --security-properties-file="
+            + sslSecurityPropsFile, "list members")
         .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(0));
   }
 
