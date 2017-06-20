@@ -304,6 +304,8 @@ public class ShellCommands implements GfshCommand {
       @CliOption(key = {CliStrings.CONNECT__USE_SSL}, specifiedDefaultValue = "true",
           unspecifiedDefaultValue = "false",
           help = CliStrings.CONNECT__USE_SSL__HELP) final boolean useSsl) {
+    HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
+
     Result result;
     String passwordToUse = decrypt(password);
     String keystoreToUse = keystore;
