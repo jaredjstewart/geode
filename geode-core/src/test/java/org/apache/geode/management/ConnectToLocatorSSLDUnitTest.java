@@ -139,7 +139,7 @@ public class ConnectToLocatorSSLDUnitTest {
   }
 
   @Test
-  @Ignore("Fails due to GEODE-3097")
+//  @Ignore("Fails due to GEODE-3097")
   public void testConnectToLocatorOverHTTP_withSSL() throws Exception {
     setupSSLProperties();
     setUpLocatorAndConnect(securityProps, true);
