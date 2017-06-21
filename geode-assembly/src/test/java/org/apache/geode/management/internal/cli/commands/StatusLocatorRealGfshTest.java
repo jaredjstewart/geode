@@ -14,8 +14,6 @@
  */
 package org.apache.geode.management.internal.cli.commands;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -31,28 +29,16 @@ public class StatusLocatorRealGfshTest {
 
   @Test
   public void statusLocatorSucceedsWhenConnected() throws Exception {
-    gfshRule.execute(GfshScript.of("start locator --name=locator1").awaitAtMost(1, TimeUnit.MINUTES)
-        .expectExitCode(0));
+    GfshScript.of("start locator --name=locator1").execute(gfshRule);
 
-    gfshRule.execute(GfshScript.of("connect", "status locator --name=locator1")
-        .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(0));
+    GfshScript.of("connect", "status locator --name=locator1").execute(gfshRule);
   }
 
   @Test
   public void statusLocatorFailsWhenNotConnected() throws Exception {
-    gfshRule.execute(GfshScript.of("start locator --name=locator1").awaitAtMost(1, TimeUnit.MINUTES)
-        .expectExitCode(0));
+    GfshScript.of("start locator --name=locator1").withName("start locator").execute(gfshRule);
 
-    gfshRule.execute(GfshScript.of("status locator --name=locator1")
-        .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(1));
-  }
-
-  @Test
-  public void testDoubleConnect() throws Exception {
-    gfshRule.execute(GfshScript.of("start locator --name=locator1").awaitAtMost(1, TimeUnit.MINUTES)
-        .expectExitCode(0));
-
-    gfshRule.execute(
-        GfshScript.of("connect", "connect").awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(0));
+    GfshScript.of("status locator --name=locator1").withName("status locator").expectFailure()
+        .execute(gfshRule);
   }
 }
