@@ -19,7 +19,10 @@ package org.apache.geode.management.internal.cli.commands;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
 
 import java.util.Map;
 
@@ -31,6 +34,7 @@ import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.cli.util.ConnectionEndpoint;
 import org.apache.geode.management.internal.web.domain.LinkIndex;
 import org.apache.geode.management.internal.web.shell.CapturingHttpOperationInvoker;
+import org.apache.geode.management.internal.web.shell.SimpleHttpOperationInvoker;
 import org.apache.geode.test.junit.categories.UnitTest;
 
 @Category(UnitTest.class)
@@ -70,11 +74,15 @@ public class ConnectCommandTest {
     useHttp = true;
     url = "http://google.com";
     gfsh = mock(Gfsh.class);
+    doCallRealMethod().when(gfsh).getOperationInvoker();
+    doCallRealMethod().when(gfsh).setOperationInvoker(any());
+
 //    SimpleHttpOperationInvoker invoker = spy(SimpleHttpOperationInvoker.class);
 //    final ClientHttpRequest request, final Class<T> responseType
 //    ArgumentCaptor<ClientHttpRequest> requestCaptor = ArgumentCaptor.forClass(ClientHttpRequest.class);
 //
 //    doReturn(null).when(invoker).send(any(), any() );
+
 
     CapturingHttpOperationInvoker operationInvoker = new CapturingHttpOperationInvoker();
 
@@ -93,8 +101,6 @@ public class ConnectCommandTest {
 //    verify(invoker).send(requestCaptor.capture(), any());
 //
 
-
-    assertThat(operationInvoker.getRequest()).isNotNull();
-    assertThat(operationInvoker.getRequest().getURI()).isEqualTo(null);
+    assertThat(gfsh.getOperationInvoker()).isInstanceOf(SimpleHttpOperationInvoker.class);
   }
 }
