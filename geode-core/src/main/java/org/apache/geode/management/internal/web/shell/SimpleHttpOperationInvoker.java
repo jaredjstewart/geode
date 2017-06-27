@@ -15,16 +15,17 @@
 
 package org.apache.geode.management.internal.web.shell;
 
+import java.net.URI;
+import java.util.Map;
+
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import org.apache.geode.management.internal.cli.CommandRequest;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.web.domain.Link;
 import org.apache.geode.management.internal.web.http.ClientHttpRequest;
 import org.apache.geode.management.internal.web.http.HttpMethod;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URI;
-import java.util.Map;
 
 /**
  * The SimpleHttpOperationInvoker class is an implementation of the OperationInvoker interface that
@@ -115,7 +116,7 @@ public class SimpleHttpOperationInvoker extends AbstractHttpOperationInvoker {
    * @see org.apache.geode.management.internal.cli.CommandRequest
    * @see org.apache.geode.management.internal.web.domain.Link
    */
-  protected Link createLink(final CommandRequest command) {
+  public Link createLink(final CommandRequest command) {
     return createLink(LINK_RELATION, getHttpRequestUrl(command), HttpMethod.POST);
   }
 
@@ -129,7 +130,7 @@ public class SimpleHttpOperationInvoker extends AbstractHttpOperationInvoker {
    * @see org.apache.geode.management.internal.cli.CommandRequest
    * @see org.springframework.web.util.UriComponentsBuilder
    */
-  protected URI getHttpRequestUrl(final CommandRequest command) {
+  public URI getHttpRequestUrl(final CommandRequest command) {
     return UriComponentsBuilder.fromHttpUrl(getBaseUrl()).path(REST_API_MANAGEMENT_COMMANDS_URI)
         .queryParam(CMD_QUERY_PARAMETER, command.getInput()).build().encode().toUri();
   }

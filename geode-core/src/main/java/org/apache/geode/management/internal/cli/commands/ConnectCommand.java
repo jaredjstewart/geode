@@ -60,10 +60,10 @@ import org.apache.geode.management.internal.cli.result.InfoResultData;
 import org.apache.geode.management.internal.cli.result.ResultBuilder;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.cli.shell.JmxOperationInvoker;
+import org.apache.geode.management.internal.cli.shell.OperationInvoker;
 import org.apache.geode.management.internal.cli.util.ConnectionEndpoint;
 import org.apache.geode.management.internal.web.domain.LinkIndex;
 import org.apache.geode.management.internal.web.http.support.SimpleHttpRequester;
-import org.apache.geode.management.internal.web.shell.HttpOperationInvoker;
 import org.apache.geode.management.internal.web.shell.RestHttpOperationInvoker;
 import org.apache.geode.security.AuthenticationFailedException;
 
@@ -86,18 +86,36 @@ public class ConnectCommand {
   private Gfsh gfsh;
   private String gfSecurityPropertiesPath;
 
-  private String url;;
+  private String url;
+  ;
 
   private Result result;
+
+  private OperationInvoker invoker;
 
   // millis that connect --locator will wait for a response from the locator.
   private final static int CONNECT_LOCATOR_TIMEOUT_MS = 60000; // see bug 45971
 
 
-  public ConnectCommand(ConnectionEndpoint memberRmiHostPort, ConnectionEndpoint locatorTcpHostPort,
-      String userName, String password, String keystore, String keystorePassword, String truststore,
+  public ConnectCommand(
+      ConnectionEndpoint memberRmiHostPort,
+      ConnectionEndpoint locatorTcpHostPort, String userName, String password,
+      String keystore, String keystorePassword, String truststore,
       String truststorePassword, String sslCiphers, String sslProtocols, boolean useHttp,
       boolean useSsl, Gfsh gfsh, String gfSecurityPropertiesPath, String url) {
+
+    this(memberRmiHostPort, locatorTcpHostPort, userName, password, keystore, keystorePassword,
+        truststore, truststorePassword, sslCiphers, sslProtocols, useHttp, useSsl, gfsh,
+        gfSecurityPropertiesPath, url, null);
+  }
+
+  public ConnectCommand(ConnectionEndpoint memberRmiHostPort, ConnectionEndpoint locatorTcpHostPort,
+                        String userName, String password, String keystore, String keystorePassword,
+                        String truststore,
+                        String truststorePassword, String sslCiphers, String sslProtocols,
+                        boolean useHttp,
+                        boolean useSsl, Gfsh gfsh, String gfSecurityPropertiesPath, String url,
+                        OperationInvoker invoker) {
     this.memberRmiHostPort = memberRmiHostPort;
     this.locatorTcpHostPort = locatorTcpHostPort;
     this.userName = userName;
@@ -113,6 +131,7 @@ public class ConnectCommand {
     this.gfsh = gfsh;
     this.gfSecurityPropertiesPath = gfSecurityPropertiesPath;
     this.url = url;
+    this.invoker = invoker;
   }
 
   public Result run() throws IOException {
@@ -260,8 +279,10 @@ public class ConnectCommand {
   }
 
   private Result jmxConnect(Map<String, String> sslConfigProps,
-      ConnectionEndpoint memberRmiHostPort, ConnectionEndpoint locatorTcpHostPort, boolean useSsl,
-      String userName, String password, String gfSecurityPropertiesPath, boolean retry) {
+                            ConnectionEndpoint memberRmiHostPort,
+                            ConnectionEndpoint locatorTcpHostPort, boolean useSsl,
+                            String userName, String password, String gfSecurityPropertiesPath,
+                            boolean retry) {
     ConnectionEndpoint hostPortToConnect = null;
 
     try {
@@ -285,7 +306,7 @@ public class ConnectCommand {
         }
 
         Gfsh.println(CliStrings.format(CliStrings.CONNECT__MSG__CONNECTING_TO_LOCATOR_AT_0,
-            new Object[] {locatorTcpHostPort.toString(false)}));
+            new Object[]{locatorTcpHostPort.toString(false)}));
         ConnectToLocatorResult connectToLocatorResult =
             connectToLocator(locatorTcpHostPort.getHost(), locatorTcpHostPort.getPort(),
                 CONNECT_LOCATOR_TIMEOUT_MS, sslConfigProps);
@@ -310,15 +331,18 @@ public class ConnectCommand {
       // print out the connecting endpoint
       if (!retry) {
         Gfsh.println(CliStrings.format(CliStrings.CONNECT__MSG__CONNECTING_TO_MANAGER_AT_0,
-            new Object[] {hostPortToConnect.toString(false)}));
+            new Object[]{hostPortToConnect.toString(false)}));
       }
 
       InfoResultData infoResultData = ResultBuilder.createInfoResultData();
-      JmxOperationInvoker operationInvoker =
-          new JmxOperationInvoker(hostPortToConnect.getHost(), hostPortToConnect.getPort(),
-              userName, password, sslConfigProps, gfSecurityPropertiesPath);
 
-      gfsh.setOperationInvoker(operationInvoker);
+      if (invoker == null) {
+        invoker =
+            new JmxOperationInvoker(hostPortToConnect.getHost(), hostPortToConnect.getPort(),
+                userName, password, sslConfigProps, gfSecurityPropertiesPath);
+      }
+
+      gfsh.setOperationInvoker(invoker);
       infoResultData.addLine(
           CliStrings.format(CliStrings.CONNECT__MSG__SUCCESS, hostPortToConnect.toString(false)));
       LogWrapper.getInstance().info(
@@ -342,8 +366,9 @@ public class ConnectCommand {
         password = gfsh.readPassword(CliStrings.CONNECT__PASSWORD + ": ");
         // GEODE-2250 If no value for both username and password, at this point we need to error to
         // avoid a stack overflow.
-        if (userName == null && password == null)
+        if (userName == null && password == null) {
           return handleExcpetion(e, hostPortToConnect);
+        }
         return jmxConnect(sslConfigProps, hostPortToConnect, null, useSsl, userName, password,
             gfSecurityPropertiesPath, true);
       } catch (IOException ioe) {
@@ -355,7 +380,7 @@ public class ConnectCommand {
   }
 
   private Result httpConnect(Map<String, String> sslConfigProps, boolean useSsl, String url,
-      String userName, String password) {
+                             String userName, String password) {
     try {
       Map<String, String> securityProperties = new HashMap<String, String>();
 
@@ -381,26 +406,21 @@ public class ConnectCommand {
       // This is so that SSL termination results in https URLs being returned
       String query = (url.startsWith("https")) ? "?scheme=https" : "";
 
-      LogWrapper.getInstance().warning(String.format(
-          "Sending HTTP request for Link Index at (%1$s)...", url.concat("/index").concat(query)));
 
-      LinkIndex linkIndex =
-          new SimpleHttpRequester(gfsh, CONNECT_LOCATOR_TIMEOUT_MS, securityProperties)
-              .exchange(url.concat("/index").concat(query), LinkIndex.class);
+      LinkIndex linkIndex = getLinkIndex(securityProperties, query);
+      if (invoker == null) {
 
-      LogWrapper.getInstance()
-          .warning(String.format("Received Link Index (%1$s)", linkIndex.toString()));
+        invoker =
+            new RestHttpOperationInvoker(linkIndex, gfsh, url, securityProperties);
+      }
 
-      HttpOperationInvoker operationInvoker =
-          new RestHttpOperationInvoker(linkIndex, gfsh, url, securityProperties);
-
-      Initializer.init(operationInvoker);
-      gfsh.setOperationInvoker(operationInvoker);
+      Initializer.init(invoker);
+      gfsh.setOperationInvoker(invoker);
 
       LogWrapper.getInstance()
-          .info(CliStrings.format(CliStrings.CONNECT__MSG__SUCCESS, operationInvoker.toString()));
+          .info(CliStrings.format(CliStrings.CONNECT__MSG__SUCCESS, invoker.toString()));
       return ResultBuilder.createInfoResult(
-          CliStrings.format(CliStrings.CONNECT__MSG__SUCCESS, operationInvoker.toString()));
+          CliStrings.format(CliStrings.CONNECT__MSG__SUCCESS, invoker.toString()));
 
     } catch (Exception e) {
       // all other exceptions, just logs it and returns a connection error
@@ -427,14 +447,28 @@ public class ConnectCommand {
     }
   }
 
+  LinkIndex getLinkIndex(Map<String, String> securityProperties, String query){
+    LogWrapper.getInstance().warning(String.format(
+        "Sending HTTP request for Link Index at (%1$s)...", url.concat("/index").concat(query)));
+
+   LinkIndex linkIndex =  new SimpleHttpRequester(gfsh, CONNECT_LOCATOR_TIMEOUT_MS, securityProperties)
+        .exchange(url.concat("/index").concat(query), LinkIndex.class);
+
+    LogWrapper.getInstance()
+        .warning(String.format("Received Link Index (%1$s)", linkIndex.toString()));
+
+    return linkIndex;
+  }
+
   private Result handleExcpetion(Exception e, ConnectionEndpoint hostPortToConnect) {
-    String errorMessage = e.getMessage();
-    if (hostPortToConnect != null) {
-      errorMessage = CliStrings.format(CliStrings.CONNECT__MSG__ERROR,
-          hostPortToConnect.toString(false), e.getMessage());
-    }
-    LogWrapper.getInstance().severe(errorMessage, e);
-    return ResultBuilder.createConnectionErrorResult(errorMessage);
+    throw new RuntimeException(e);
+//    String errorMessage = e.getMessage();
+//    if (hostPortToConnect != null) {
+//      errorMessage = CliStrings.format(CliStrings.CONNECT__MSG__ERROR,
+//          hostPortToConnect.toString(false), e.getMessage());
+//    }
+//    LogWrapper.getInstance().severe(errorMessage, e);
+//    return ResultBuilder.createConnectionErrorResult(errorMessage);
   }
 
   // Copied from DistributedSystem.java
@@ -521,7 +555,8 @@ public class ConnectCommand {
   }
 
   public static ConnectToLocatorResult connectToLocator(String host, int port, int timeout,
-      Map<String, String> props) throws IOException {
+                                                        Map<String, String> props)
+      throws IOException {
     // register DSFID types first; invoked explicitly so that all message type
     // initializations do not happen in first deserialization on a possibly
     // "precious" thread
