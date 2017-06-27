@@ -84,6 +84,7 @@ import org.apache.geode.management.internal.web.domain.LinkIndex;
 import org.apache.geode.management.internal.web.http.support.SimpleHttpRequester;
 import org.apache.geode.management.internal.web.shell.HttpOperationInvoker;
 import org.apache.geode.management.internal.web.shell.RestHttpOperationInvoker;
+import org.apache.geode.management.internal.web.shell.SimpleHttpOperationInvoker;
 import org.apache.geode.security.AuthenticationFailedException;
 
 /**
@@ -388,8 +389,8 @@ public class ShellCommands implements GfshCommand {
       LogWrapper.getInstance()
           .warning(String.format("Received Link Index (%1$s)", linkIndex.toString()));
 
-      HttpOperationInvoker operationInvoker =
-          new RestHttpOperationInvoker(linkIndex, gfsh, url, securityProperties);
+      SimpleHttpOperationInvoker operationInvoker =
+          new SimpleHttpOperationInvoker(gfsh, url, securityProperties);
 
       Initializer.init(operationInvoker);
       gfsh.setOperationInvoker(operationInvoker);

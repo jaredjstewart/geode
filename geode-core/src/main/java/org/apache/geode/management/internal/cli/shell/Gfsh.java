@@ -161,7 +161,7 @@ public class Gfsh extends JLineShell {
   private boolean isScriptRunning;
   private AbstractSignalNotificationHandler signalHandler;
 
-  protected Gfsh() throws ClassNotFoundException, IOException {
+  public Gfsh() throws ClassNotFoundException, IOException {
     this(null);
   }
 

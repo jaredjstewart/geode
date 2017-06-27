@@ -12,33 +12,24 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.geode.management.cli;
 
-import java.util.Map;
+package org.apache.geode.management.internal.web.shell;
 
-/**
- * Represents GemFire Command Line Interface (CLI) command strings. A <code>CommandStatement</code>
- * instance can be used multiple times to process the same command string repeatedly.
- * 
- * 
- * @since GemFire 7.0
- */
-public interface CommandStatement {
+import org.apache.geode.management.internal.web.http.ClientHttpRequest;
 
-  /**
-   * Returns the user specified command string.
-   */
-  public String getCommandString();
+public class CapturingHttpOperationInvoker extends SimpleHttpOperationInvoker {
 
-  /**
-   * Returns the CLI environment variables.
-   */
-  public Map<String, String> getEnv();
+  public ClientHttpRequest getRequest() {
+    return request;
+  }
 
-  /**
-   * Processes this command statement with the user specified command string and environment
-   * 
-   * @return The {@link Result} of the execution of this command statement.
-   */
-  public Result process();
+  private ClientHttpRequest request;
+
+  @Override
+  public <T> T send(ClientHttpRequest request, Class<T> responseType) {
+    this.request = request;
+
+    // throw new Error();
+    return null;
+  }
 }

@@ -71,31 +71,6 @@ public class CommandStatementImpl implements CommandStatement {
     return cmdProcessor.executeCommand(this);
   }
 
-  /**
-   * @return the parseResult
-   */
-  ParseResult getParseResult() {
-    return parseResult;
-  }
-
-  /**
-   * @param parseResult the parseResult to set
-   */
-  void setParseResult(ParseResult parseResult) {
-    this.parseResult = parseResult;
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.apache.geode.management.internal.cli.remote.CommandStatement#validate()
-   */
-  @Override
-  public boolean validate() {
-    // TODO-Abhishek: is not null check enough?
-    return parseResult != null;
-  }
-
   /*
    * (non-Javadoc)
    * 
