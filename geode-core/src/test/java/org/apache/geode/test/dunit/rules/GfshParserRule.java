@@ -16,22 +16,20 @@
 package org.apache.geode.test.dunit.rules;
 
 import static org.mockito.Mockito.spy;
-import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.junit.rules.ExternalResource;
+import org.springframework.shell.core.Completion;
+import org.springframework.shell.core.Converter;
+import org.springframework.util.ReflectionUtils;
 
 import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.internal.cli.CommandManager;
 import org.apache.geode.management.internal.cli.GfshParseResult;
 import org.apache.geode.management.internal.cli.GfshParser;
-import org.apache.geode.management.internal.cli.remote.RemoteExecutionStrategy;
-import org.junit.rules.ExternalResource;
-import org.springframework.shell.core.CommandMarker;
-import org.springframework.shell.core.Completion;
-import org.springframework.shell.core.Converter;
-import org.springframework.util.ReflectionUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 public class GfshParserRule extends ExternalResource {
 
