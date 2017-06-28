@@ -14,8 +14,11 @@
  */
 package org.apache.geode.test.dunit.rules.gfsh;
 
+import static java.util.stream.Collectors.joining;
+
 import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GfshExecution {
   private final Process process;
@@ -30,6 +33,10 @@ public class GfshExecution {
 
   public List<String> getStdOutLines() {
     return processLogger.getStdOutLines();
+  }
+
+  public String getStdOutText() {
+    return getStdOutLines().stream().collect(joining("\n"));
   }
 
   public List<String> getStdErrLines() {
