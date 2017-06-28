@@ -14,16 +14,15 @@
  */
 package org.apache.geode.management.internal.cli.commands;
 
-import org.apache.geode.test.dunit.rules.gfsh.GfshRule;
-import org.apache.geode.test.dunit.rules.gfsh.GfshScript;
-import org.apache.geode.test.junit.categories.DistributedTest;
-import org.apache.geode.test.junit.categories.IntegrationTest;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.File;
-import java.util.concurrent.TimeUnit;
+import org.apache.geode.test.dunit.rules.gfsh.GfshRule;
+import org.apache.geode.test.dunit.rules.gfsh.GfshScript;
+import org.apache.geode.test.junit.categories.DistributedTest;
 
 @Category(DistributedTest.class)
 public class StatusLocatorRealGfshTest {
@@ -46,5 +45,13 @@ public class StatusLocatorRealGfshTest {
 
     gfshRule.execute(GfshScript.of("status locator --name=locator1")
         .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(1));
+  }
+  @Test
+  public void testDoubleConnect() throws Exception {
+    gfshRule.execute(GfshScript.of("start locator --name=locator1").awaitAtMost(1, TimeUnit.MINUTES)
+        .expectExitCode(0));
+
+    gfshRule.execute(GfshScript.of("connect", "connect")
+        .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(0));
   }
 }

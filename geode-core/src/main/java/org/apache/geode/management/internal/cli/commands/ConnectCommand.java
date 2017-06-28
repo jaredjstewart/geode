@@ -64,7 +64,7 @@ import org.apache.geode.management.internal.cli.shell.OperationInvoker;
 import org.apache.geode.management.internal.cli.util.ConnectionEndpoint;
 import org.apache.geode.management.internal.web.domain.LinkIndex;
 import org.apache.geode.management.internal.web.http.support.SimpleHttpRequester;
-import org.apache.geode.management.internal.web.shell.RestHttpOperationInvoker;
+import org.apache.geode.management.internal.web.shell.SimpleHttpOperationInvoker;
 import org.apache.geode.security.AuthenticationFailedException;
 
 public class ConnectCommand {
@@ -91,31 +91,17 @@ public class ConnectCommand {
 
   private Result result;
 
-  private OperationInvoker invoker;
-
   // millis that connect --locator will wait for a response from the locator.
   private final static int CONNECT_LOCATOR_TIMEOUT_MS = 60000; // see bug 45971
 
-
-  public ConnectCommand(
-      ConnectionEndpoint memberRmiHostPort,
-      ConnectionEndpoint locatorTcpHostPort, String userName, String password,
-      String keystore, String keystorePassword, String truststore,
-      String truststorePassword, String sslCiphers, String sslProtocols, boolean useHttp,
-      boolean useSsl, Gfsh gfsh, String gfSecurityPropertiesPath, String url) {
-
-    this(memberRmiHostPort, locatorTcpHostPort, userName, password, keystore, keystorePassword,
-        truststore, truststorePassword, sslCiphers, sslProtocols, useHttp, useSsl, gfsh,
-        gfSecurityPropertiesPath, url, null);
-  }
 
   public ConnectCommand(ConnectionEndpoint memberRmiHostPort, ConnectionEndpoint locatorTcpHostPort,
                         String userName, String password, String keystore, String keystorePassword,
                         String truststore,
                         String truststorePassword, String sslCiphers, String sslProtocols,
                         boolean useHttp,
-                        boolean useSsl, Gfsh gfsh, String gfSecurityPropertiesPath, String url,
-                        OperationInvoker invoker) {
+                        boolean useSsl, Gfsh gfsh, String gfSecurityPropertiesPath, String url
+                        ) {
     this.memberRmiHostPort = memberRmiHostPort;
     this.locatorTcpHostPort = locatorTcpHostPort;
     this.userName = userName;
@@ -131,7 +117,6 @@ public class ConnectCommand {
     this.gfsh = gfsh;
     this.gfSecurityPropertiesPath = gfSecurityPropertiesPath;
     this.url = url;
-    this.invoker = invoker;
   }
 
   public Result run() throws IOException {
@@ -336,11 +321,11 @@ public class ConnectCommand {
 
       InfoResultData infoResultData = ResultBuilder.createInfoResultData();
 
-      if (invoker == null) {
-        invoker =
+
+      OperationInvoker  invoker =
             new JmxOperationInvoker(hostPortToConnect.getHost(), hostPortToConnect.getPort(),
                 userName, password, sslConfigProps, gfSecurityPropertiesPath);
-      }
+
 
       gfsh.setOperationInvoker(invoker);
       infoResultData.addLine(
@@ -407,12 +392,11 @@ public class ConnectCommand {
       String query = (url.startsWith("https")) ? "?scheme=https" : "";
 
 
-      LinkIndex linkIndex = getLinkIndex(securityProperties, query);
-      if (invoker == null) {
+      verifyAuthenticatedConnection(securityProperties, query);
 
-        invoker =
-            new RestHttpOperationInvoker(linkIndex, gfsh, url, securityProperties);
-      }
+      OperationInvoker   invoker =
+            new SimpleHttpOperationInvoker(gfsh, url, securityProperties);
+
 
       Initializer.init(invoker);
       gfsh.setOperationInvoker(invoker);
@@ -447,7 +431,7 @@ public class ConnectCommand {
     }
   }
 
-  LinkIndex getLinkIndex(Map<String, String> securityProperties, String query){
+  void verifyAuthenticatedConnection(Map<String, String> securityProperties, String query){
     LogWrapper.getInstance().warning(String.format(
         "Sending HTTP request for Link Index at (%1$s)...", url.concat("/index").concat(query)));
 
@@ -456,8 +440,6 @@ public class ConnectCommand {
 
     LogWrapper.getInstance()
         .warning(String.format("Received Link Index (%1$s)", linkIndex.toString()));
-
-    return linkIndex;
   }
 
   private Result handleExcpetion(Exception e, ConnectionEndpoint hostPortToConnect) {

@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.withSettings;
 
 import java.util.Map;
 
@@ -32,8 +31,6 @@ import org.junit.experimental.categories.Category;
 import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.cli.util.ConnectionEndpoint;
-import org.apache.geode.management.internal.web.domain.LinkIndex;
-import org.apache.geode.management.internal.web.shell.CapturingHttpOperationInvoker;
 import org.apache.geode.management.internal.web.shell.SimpleHttpOperationInvoker;
 import org.apache.geode.test.junit.categories.UnitTest;
 
@@ -70,37 +67,24 @@ public class ConnectCommandTest {
   }
 
   @Test
-  public void x() throws Exception {
+  public void connectSetsSimpleHttpOperationInvoker() throws Exception {
     useHttp = true;
-    url = "http://google.com";
+    url = "";
     gfsh = mock(Gfsh.class);
     doCallRealMethod().when(gfsh).getOperationInvoker();
     doCallRealMethod().when(gfsh).setOperationInvoker(any());
-
-//    SimpleHttpOperationInvoker invoker = spy(SimpleHttpOperationInvoker.class);
-//    final ClientHttpRequest request, final Class<T> responseType
-//    ArgumentCaptor<ClientHttpRequest> requestCaptor = ArgumentCaptor.forClass(ClientHttpRequest.class);
-//
-//    doReturn(null).when(invoker).send(any(), any() );
-
-
-    CapturingHttpOperationInvoker operationInvoker = new CapturingHttpOperationInvoker();
 
     ConnectCommand
         command =
         new ConnectCommand(memberRmiHostPort, locatorTcpHostPort, userName, password, keystore,
             keystorePassword, truststore, truststorePassword, sslCiphers, sslProtocols, useHttp,
-            useSsl, gfsh, gfSecurityPropertiesPath, url, operationInvoker) {
+            useSsl, gfsh, gfSecurityPropertiesPath, url) {
           @Override
-          public LinkIndex getLinkIndex(Map<String, String> securityProps, String query) {
-            return null;
+          public void verifyAuthenticatedConnection(Map<String, String> securityProps, String query) {
           }
         };
 
-    Result result = command.run();
-//    verify(invoker).send(requestCaptor.capture(), any());
-//
-
+    command.run();
     assertThat(gfsh.getOperationInvoker()).isInstanceOf(SimpleHttpOperationInvoker.class);
   }
 }
