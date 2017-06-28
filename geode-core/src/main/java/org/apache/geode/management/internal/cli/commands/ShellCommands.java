@@ -287,11 +287,11 @@ public class ShellCommands implements GfshCommand {
           help = CliStrings.CONNECT__USE_SSL__HELP) final boolean useSsl) {
 
     ConnectCommand command;
-//    if (useHttp) {
-//      command = new HttpConnectCommand();
-//    } else {
-//      command = new JmxConnectCommand();
-//    }
+    // if (useHttp) {
+    // command = new HttpConnectCommand();
+    // } else {
+    // command = new JmxConnectCommand();
+    // }
     command = new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, userName, decrypt(password),
         keystore, keystorePassword, truststore, truststorePassword, sslCiphers, sslProtocols,
         useHttp, useSsl, getGfsh(), gfSecurityPropertiesPath, url);

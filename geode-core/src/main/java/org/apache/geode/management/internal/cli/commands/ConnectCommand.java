@@ -86,8 +86,7 @@ public class ConnectCommand {
   private Gfsh gfsh;
   private String gfSecurityPropertiesPath;
 
-  private String url;
-  ;
+  private String url;;
 
   private Result result;
 
@@ -96,12 +95,9 @@ public class ConnectCommand {
 
 
   public ConnectCommand(ConnectionEndpoint memberRmiHostPort, ConnectionEndpoint locatorTcpHostPort,
-                        String userName, String password, String keystore, String keystorePassword,
-                        String truststore,
-                        String truststorePassword, String sslCiphers, String sslProtocols,
-                        boolean useHttp,
-                        boolean useSsl, Gfsh gfsh, String gfSecurityPropertiesPath, String url
-                        ) {
+      String userName, String password, String keystore, String keystorePassword, String truststore,
+      String truststorePassword, String sslCiphers, String sslProtocols, boolean useHttp,
+      boolean useSsl, Gfsh gfsh, String gfSecurityPropertiesPath, String url) {
     this.memberRmiHostPort = memberRmiHostPort;
     this.locatorTcpHostPort = locatorTcpHostPort;
     this.userName = userName;
@@ -264,10 +260,8 @@ public class ConnectCommand {
   }
 
   private Result jmxConnect(Map<String, String> sslConfigProps,
-                            ConnectionEndpoint memberRmiHostPort,
-                            ConnectionEndpoint locatorTcpHostPort, boolean useSsl,
-                            String userName, String password, String gfSecurityPropertiesPath,
-                            boolean retry) {
+      ConnectionEndpoint memberRmiHostPort, ConnectionEndpoint locatorTcpHostPort, boolean useSsl,
+      String userName, String password, String gfSecurityPropertiesPath, boolean retry) {
     ConnectionEndpoint hostPortToConnect = null;
 
     try {
@@ -291,7 +285,7 @@ public class ConnectCommand {
         }
 
         Gfsh.println(CliStrings.format(CliStrings.CONNECT__MSG__CONNECTING_TO_LOCATOR_AT_0,
-            new Object[]{locatorTcpHostPort.toString(false)}));
+            new Object[] {locatorTcpHostPort.toString(false)}));
         ConnectToLocatorResult connectToLocatorResult =
             connectToLocator(locatorTcpHostPort.getHost(), locatorTcpHostPort.getPort(),
                 CONNECT_LOCATOR_TIMEOUT_MS, sslConfigProps);
@@ -316,15 +310,15 @@ public class ConnectCommand {
       // print out the connecting endpoint
       if (!retry) {
         Gfsh.println(CliStrings.format(CliStrings.CONNECT__MSG__CONNECTING_TO_MANAGER_AT_0,
-            new Object[]{hostPortToConnect.toString(false)}));
+            new Object[] {hostPortToConnect.toString(false)}));
       }
 
       InfoResultData infoResultData = ResultBuilder.createInfoResultData();
 
 
-      OperationInvoker  invoker =
-            new JmxOperationInvoker(hostPortToConnect.getHost(), hostPortToConnect.getPort(),
-                userName, password, sslConfigProps, gfSecurityPropertiesPath);
+      OperationInvoker invoker =
+          new JmxOperationInvoker(hostPortToConnect.getHost(), hostPortToConnect.getPort(),
+              userName, password, sslConfigProps, gfSecurityPropertiesPath);
 
 
       gfsh.setOperationInvoker(invoker);
@@ -365,7 +359,7 @@ public class ConnectCommand {
   }
 
   private Result httpConnect(Map<String, String> sslConfigProps, boolean useSsl, String url,
-                             String userName, String password) {
+      String userName, String password) {
     try {
       Map<String, String> securityProperties = new HashMap<String, String>();
 
@@ -394,8 +388,7 @@ public class ConnectCommand {
 
       verifyAuthenticatedConnection(securityProperties, query);
 
-      OperationInvoker   invoker =
-            new SimpleHttpOperationInvoker(gfsh, url, securityProperties);
+      OperationInvoker invoker = new SimpleHttpOperationInvoker(gfsh, url, securityProperties);
 
 
       Initializer.init(invoker);
@@ -431,12 +424,13 @@ public class ConnectCommand {
     }
   }
 
-  void verifyAuthenticatedConnection(Map<String, String> securityProperties, String query){
+  void verifyAuthenticatedConnection(Map<String, String> securityProperties, String query) {
     LogWrapper.getInstance().warning(String.format(
         "Sending HTTP request for Link Index at (%1$s)...", url.concat("/index").concat(query)));
 
-   LinkIndex linkIndex =  new SimpleHttpRequester(gfsh, CONNECT_LOCATOR_TIMEOUT_MS, securityProperties)
-        .exchange(url.concat("/index").concat(query), LinkIndex.class);
+    LinkIndex linkIndex =
+        new SimpleHttpRequester(gfsh, CONNECT_LOCATOR_TIMEOUT_MS, securityProperties)
+            .exchange(url.concat("/index").concat(query), LinkIndex.class);
 
     LogWrapper.getInstance()
         .warning(String.format("Received Link Index (%1$s)", linkIndex.toString()));
@@ -444,13 +438,13 @@ public class ConnectCommand {
 
   private Result handleExcpetion(Exception e, ConnectionEndpoint hostPortToConnect) {
     throw new RuntimeException(e);
-//    String errorMessage = e.getMessage();
-//    if (hostPortToConnect != null) {
-//      errorMessage = CliStrings.format(CliStrings.CONNECT__MSG__ERROR,
-//          hostPortToConnect.toString(false), e.getMessage());
-//    }
-//    LogWrapper.getInstance().severe(errorMessage, e);
-//    return ResultBuilder.createConnectionErrorResult(errorMessage);
+    // String errorMessage = e.getMessage();
+    // if (hostPortToConnect != null) {
+    // errorMessage = CliStrings.format(CliStrings.CONNECT__MSG__ERROR,
+    // hostPortToConnect.toString(false), e.getMessage());
+    // }
+    // LogWrapper.getInstance().severe(errorMessage, e);
+    // return ResultBuilder.createConnectionErrorResult(errorMessage);
   }
 
   // Copied from DistributedSystem.java
@@ -537,8 +531,7 @@ public class ConnectCommand {
   }
 
   public static ConnectToLocatorResult connectToLocator(String host, int port, int timeout,
-                                                        Map<String, String> props)
-      throws IOException {
+      Map<String, String> props) throws IOException {
     // register DSFID types first; invoked explicitly so that all message type
     // initializations do not happen in first deserialization on a possibly
     // "precious" thread

@@ -14,6 +14,13 @@
  */
 package org.apache.geode.management.internal.cli.commands;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.springframework.shell.core.annotation.CliCommand;
+import org.springframework.shell.core.annotation.CliOption;
+
 import org.apache.geode.cache.CacheClosedException;
 import org.apache.geode.cache.execute.FunctionInvocationTargetException;
 import org.apache.geode.cache.execute.ResultCollector;
@@ -34,13 +41,6 @@ import org.apache.geode.security.ResourcePermission;
 import org.apache.geode.security.ResourcePermission.Operation;
 import org.apache.geode.security.ResourcePermission.Resource;
 
-import org.springframework.shell.core.annotation.CliCommand;
-import org.springframework.shell.core.annotation.CliOption;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 /**
  * @since GemFire 7.0
  */
@@ -51,7 +51,8 @@ public class MemberCommands implements GfshCommand {
 
   @CliCommand(value = {CliStrings.LIST_MEMBER}, help = CliStrings.LIST_MEMBER__HELP)
   @CliMetaData(shellOnly = false, relatedTopic = CliStrings.TOPIC_GEODE_SERVER)
-  @ResourceOperation(resource = ResourcePermission.Resource.CLUSTER, operation = ResourcePermission.Operation.READ)
+  @ResourceOperation(resource = ResourcePermission.Resource.CLUSTER,
+      operation = ResourcePermission.Operation.READ)
   public Result listMember(@CliOption(key = {CliStrings.GROUP}, unspecifiedDefaultValue = "",
       optionContext = ConverterHint.MEMBERGROUP,
       help = CliStrings.LIST_MEMBER__GROUP__HELP) String group) {

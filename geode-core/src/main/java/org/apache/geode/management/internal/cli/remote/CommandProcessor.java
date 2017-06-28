@@ -40,7 +40,7 @@ import org.apache.geode.security.ResourcePermission;
  * @since GemFire 7.0
  */
 public class CommandProcessor {
-  protected RemoteExecutionStrategy executionStrategy;
+  protected CommandExecutor executor;
   private GfshParser gfshParser;
   private int lastExecutionStatus;
   private LogWrapper logWrapper;
@@ -59,14 +59,14 @@ public class CommandProcessor {
   public CommandProcessor(Properties cacheProperties, SecurityService securityService)
       throws ClassNotFoundException, IOException {
     this.gfshParser = new GfshParser(new CommandManager(cacheProperties));
-    this.executionStrategy = new RemoteExecutionStrategy();
+    this.executor = new CommandExecutor();
     this.logWrapper = LogWrapper.getInstance();
     this.securityService = securityService;
   }
 
-  protected RemoteExecutionStrategy getExecutionStrategy() {
+  protected CommandExecutor getExecutionStrategy() {
     synchronized (LOCK) {
-      return executionStrategy;
+      return executor;
     }
   }
 
@@ -95,7 +95,7 @@ public class CommandProcessor {
     if (commentLessLine != null && !commentLessLine.isEmpty()) {
       CommandExecutionContext.setShellEnv(cmdStmt.getEnv());
 
-      final RemoteExecutionStrategy executionStrategy = getExecutionStrategy();
+      final CommandExecutor commandExecutor = getExecutionStrategy();
       try {
         ParseResult parseResult = ((CommandStatementImpl) cmdStmt).getParseResult();
 
@@ -116,7 +116,7 @@ public class CommandProcessor {
               resourceOperation.operation(), resourceOperation.target(), ResourcePermission.ALL);
         }
 
-        result = executionStrategy.execute(parseResult);
+        result = commandExecutor.execute(parseResult);
         if (result instanceof Result) {
           commandResult = (Result) result;
         } else {
@@ -166,10 +166,6 @@ public class CommandProcessor {
     return new CommandStatementImpl(commandString, env, this);
   }
 
-  public int getLastExecutionStatus() {
-    return lastExecutionStatus;
-  }
-
   public void setLastExecutionStatus(int lastExecutionStatus) {
     this.lastExecutionStatus = lastExecutionStatus;
   }
@@ -181,7 +177,7 @@ public class CommandProcessor {
   public void stop() {
     synchronized (LOCK) {
       this.gfshParser = null;
-      this.executionStrategy = null;
+      this.executor = null;
       this.isStopped = true;
     }
   }

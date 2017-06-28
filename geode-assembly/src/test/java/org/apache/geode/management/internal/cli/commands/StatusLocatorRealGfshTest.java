@@ -46,12 +46,13 @@ public class StatusLocatorRealGfshTest {
     gfshRule.execute(GfshScript.of("status locator --name=locator1")
         .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(1));
   }
+
   @Test
   public void testDoubleConnect() throws Exception {
     gfshRule.execute(GfshScript.of("start locator --name=locator1").awaitAtMost(1, TimeUnit.MINUTES)
         .expectExitCode(0));
 
-    gfshRule.execute(GfshScript.of("connect", "connect")
-        .awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(0));
+    gfshRule.execute(
+        GfshScript.of("connect", "connect").awaitAtMost(1, TimeUnit.MINUTES).expectExitCode(0));
   }
 }
