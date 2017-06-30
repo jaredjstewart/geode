@@ -23,6 +23,7 @@ import static org.mockito.Mockito.spy;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import org.apache.geode.management.internal.cli.shell.OperationInvoker;
 import org.apache.geode.management.internal.web.domain.Link;
@@ -30,7 +31,9 @@ import org.apache.geode.management.internal.web.shell.SimpleHttpOperationInvoker
 import org.apache.geode.security.SimpleTestSecurityManager;
 import org.apache.geode.test.dunit.rules.GfshShellConnectionRule;
 import org.apache.geode.test.dunit.rules.ServerStarterRule;
+import org.apache.geode.test.junit.categories.DistributedTest;
 
+@Category(DistributedTest.class)
 public class ConnectOverHttpTest {
 
   @ClassRule
