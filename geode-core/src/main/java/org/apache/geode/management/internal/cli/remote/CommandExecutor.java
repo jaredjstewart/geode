@@ -33,8 +33,7 @@ public class CommandExecutor {
 
   public Object execute(ParseResult parseResult) {
     try {
-      Object result = ReflectionUtils.invokeMethod(parseResult.getMethod(),
-          parseResult.getInstance(), parseResult.getArguments());
+      Object result = invokeCommand(parseResult);
 
       if (result == null) {
         return ResultBuilder.createGemFireErrorResult("Command returned null: " + parseResult);
@@ -50,4 +49,10 @@ public class CommandExecutor {
           + "> Reason : " + ExceptionUtils.getStackTrace(e));
     }
   }
+
+  protected Object invokeCommand(ParseResult parseResult) {
+    return ReflectionUtils.invokeMethod(parseResult.getMethod(), parseResult.getInstance(),
+        parseResult.getArguments());
+  }
+
 }

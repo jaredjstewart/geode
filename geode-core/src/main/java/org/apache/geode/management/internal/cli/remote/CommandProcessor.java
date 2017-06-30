@@ -23,6 +23,7 @@ import org.springframework.shell.core.Parser;
 import org.springframework.shell.event.ParseResult;
 import org.springframework.util.StringUtils;
 
+import org.apache.geode.annotations.TestingConstructor;
 import org.apache.geode.internal.security.SecurityService;
 import org.apache.geode.internal.security.SecurityServiceFactory;
 import org.apache.geode.management.cli.CommandProcessingException;
@@ -49,6 +50,7 @@ public class CommandProcessor {
 
   private final SecurityService securityService;
 
+  @TestingConstructor
   public CommandProcessor() throws ClassNotFoundException, IOException {
     this(new Properties(), SecurityServiceFactory.create());
   }
@@ -58,7 +60,9 @@ public class CommandProcessor {
     this(cacheProperties, securityService, new CommandExecutor());
   }
 
-  public CommandProcessor(Properties cacheProperties, SecurityService securityService, CommandExecutor commandExecutor){
+  @TestingConstructor
+  public CommandProcessor(Properties cacheProperties, SecurityService securityService,
+      CommandExecutor commandExecutor) {
     this.gfshParser = new GfshParser(new CommandManager(cacheProperties));
     this.executor = commandExecutor;
     this.securityService = securityService;
