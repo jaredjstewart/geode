@@ -30,11 +30,9 @@ import org.apache.geode.management.cli.CommandStatement;
 import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.internal.cli.CommandManager;
 import org.apache.geode.management.internal.cli.GfshParser;
-import org.apache.geode.management.internal.cli.LogWrapper;
 import org.apache.geode.management.internal.cli.result.ResultBuilder;
 import org.apache.geode.management.internal.cli.util.CommentSkipHelper;
 import org.apache.geode.management.internal.security.ResourceOperation;
-import org.apache.geode.security.NotAuthorizedException;
 import org.apache.geode.security.ResourcePermission;
 
 /**
@@ -43,7 +41,6 @@ import org.apache.geode.security.ResourcePermission;
 public class CommandProcessor {
   protected CommandExecutor executor;
   private GfshParser gfshParser;
-  private LogWrapper logWrapper;
 
   // Lock to synchronize getters & stop
   private final Object LOCK = new Object();
@@ -53,14 +50,17 @@ public class CommandProcessor {
   private final SecurityService securityService;
 
   public CommandProcessor() throws ClassNotFoundException, IOException {
-    this(null, SecurityServiceFactory.create());
+    this(new Properties(), SecurityServiceFactory.create());
   }
 
   public CommandProcessor(Properties cacheProperties, SecurityService securityService)
       throws ClassNotFoundException, IOException {
+    this(cacheProperties, securityService, new CommandExecutor());
+  }
+
+  public CommandProcessor(Properties cacheProperties, SecurityService securityService, CommandExecutor commandExecutor){
     this.gfshParser = new GfshParser(new CommandManager(cacheProperties));
-    this.executor = new CommandExecutor();
-    this.logWrapper = LogWrapper.getInstance();
+    this.executor = commandExecutor;
     this.securityService = securityService;
   }
 

@@ -16,11 +16,18 @@ package org.apache.geode.management.internal.cli.shell;
 
 import static org.apache.geode.management.internal.cli.multistep.CLIMultiStepHelper.execCLISteps;
 
+import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.util.Map;
+
 import org.apache.commons.lang.StringUtils;
+import org.springframework.shell.core.ExecutionStrategy;
+import org.springframework.shell.core.Shell;
+import org.springframework.shell.event.ParseResult;
+import org.springframework.util.Assert;
 
 import org.apache.geode.internal.ClassPathLoader;
 import org.apache.geode.management.cli.CliMetaData;
-import org.apache.geode.management.cli.CommandProcessingException;
 import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.cli.Result.Status;
 import org.apache.geode.management.internal.cli.CliAroundInterceptor;
@@ -35,16 +42,6 @@ import org.apache.geode.management.internal.cli.remote.CommandExecutor;
 import org.apache.geode.management.internal.cli.result.FileResult;
 import org.apache.geode.management.internal.cli.result.ResultBuilder;
 import org.apache.geode.security.NotAuthorizedException;
-
-import org.springframework.shell.core.ExecutionStrategy;
-import org.springframework.shell.core.Shell;
-import org.springframework.shell.event.ParseResult;
-import org.springframework.util.Assert;
-import org.springframework.util.ReflectionUtils;
-
-import java.lang.reflect.Method;
-import java.nio.file.Path;
-import java.util.Map;
 
 /**
  * Defines the {@link ExecutionStrategy} for commands that are executed in GemFire Shell (gfsh).
@@ -120,7 +117,7 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
   /**
    * Indicates commands are able to be presented. This generally means all important system startup
    * activities have completed. Copied from {@link ExecutionStrategy#isReadyForCommands()}.
-   * 
+   *
    * @return whether commands can be presented for processing at this time
    */
   @Override
