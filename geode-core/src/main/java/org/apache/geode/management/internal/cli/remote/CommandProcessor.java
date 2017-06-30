@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import org.springframework.shell.core.Parser;
 import org.springframework.shell.event.ParseResult;
+import org.springframework.util.StringUtils;
 
 import org.apache.geode.internal.security.SecurityService;
 import org.apache.geode.internal.security.SecurityServiceFactory;
@@ -29,21 +30,17 @@ import org.apache.geode.management.cli.CommandStatement;
 import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.internal.cli.CommandManager;
 import org.apache.geode.management.internal.cli.GfshParser;
-import org.apache.geode.management.internal.cli.LogWrapper;
 import org.apache.geode.management.internal.cli.result.ResultBuilder;
 import org.apache.geode.management.internal.cli.util.CommentSkipHelper;
 import org.apache.geode.management.internal.security.ResourceOperation;
-import org.apache.geode.security.NotAuthorizedException;
 import org.apache.geode.security.ResourcePermission;
 
 /**
  * @since GemFire 7.0
  */
 public class CommandProcessor {
-  protected RemoteExecutionStrategy executionStrategy;
+  protected CommandExecutor executor;
   private GfshParser gfshParser;
-  private int lastExecutionStatus;
-  private LogWrapper logWrapper;
 
   // Lock to synchronize getters & stop
   private final Object LOCK = new Object();
@@ -53,20 +50,23 @@ public class CommandProcessor {
   private final SecurityService securityService;
 
   public CommandProcessor() throws ClassNotFoundException, IOException {
-    this(null, SecurityServiceFactory.create());
+    this(new Properties(), SecurityServiceFactory.create());
   }
 
   public CommandProcessor(Properties cacheProperties, SecurityService securityService)
       throws ClassNotFoundException, IOException {
+    this(cacheProperties, securityService, new CommandExecutor());
+  }
+
+  public CommandProcessor(Properties cacheProperties, SecurityService securityService, CommandExecutor commandExecutor){
     this.gfshParser = new GfshParser(new CommandManager(cacheProperties));
-    this.executionStrategy = new RemoteExecutionStrategy();
-    this.logWrapper = LogWrapper.getInstance();
+    this.executor = commandExecutor;
     this.securityService = securityService;
   }
 
-  protected RemoteExecutionStrategy getExecutionStrategy() {
+  protected CommandExecutor getExecutionStrategy() {
     synchronized (LOCK) {
-      return executionStrategy;
+      return executor;
     }
   }
 
@@ -86,92 +86,33 @@ public class CommandProcessor {
   }
 
   public Result executeCommand(CommandStatement cmdStmt) {
-    Object result;
-    Result commandResult = null;
-
     CommentSkipHelper commentSkipper = new CommentSkipHelper();
     String commentLessLine = commentSkipper.skipComments(cmdStmt.getCommandString());
-
-    if (commentLessLine != null && !commentLessLine.isEmpty()) {
-      CommandExecutionContext.setShellEnv(cmdStmt.getEnv());
-
-      final RemoteExecutionStrategy executionStrategy = getExecutionStrategy();
-      try {
-        ParseResult parseResult = ((CommandStatementImpl) cmdStmt).getParseResult();
-
-        if (parseResult == null) {
-          parseResult = parseCommand(commentLessLine);
-          if (parseResult == null) {// TODO-Abhishek: Handle this in GfshParser Implementation
-            setLastExecutionStatus(1);
-            return ResultBuilder.createParsingErrorResult(cmdStmt.getCommandString());
-          }
-          ((CommandStatementImpl) cmdStmt).setParseResult(parseResult);
-        }
-
-        // do general authorization check here
-        Method method = parseResult.getMethod();
-        ResourceOperation resourceOperation = method.getAnnotation(ResourceOperation.class);
-        if (resourceOperation != null) {
-          this.securityService.authorize(resourceOperation.resource(),
-              resourceOperation.operation(), resourceOperation.target(), ResourcePermission.ALL);
-        }
-
-        result = executionStrategy.execute(parseResult);
-        if (result instanceof Result) {
-          commandResult = (Result) result;
-        } else {
-          if (logWrapper.fineEnabled()) {
-            logWrapper.fine("Unknown result type, using toString : " + String.valueOf(result));
-          }
-          commandResult = ResultBuilder.createInfoResult(String.valueOf(result));
-        }
-      } catch (CommandProcessingException e) { // expected from Parser
-        setLastExecutionStatus(1);
-        if (logWrapper.infoEnabled()) {
-          logWrapper.info("Could not parse \"" + cmdStmt.getCommandString() + "\".", e);
-        }
-        return ResultBuilder.createParsingErrorResult(e.getMessage());
-      } catch (NotAuthorizedException e) {
-        setLastExecutionStatus(1);
-        if (logWrapper.infoEnabled()) {
-          logWrapper.info("Could not execute \"" + cmdStmt.getCommandString() + "\".", e);
-        }
-        // for NotAuthorizedException, will catch this later in the code
-        throw e;
-      } catch (RuntimeException e) {
-        setLastExecutionStatus(1);
-        if (logWrapper.infoEnabled()) {
-          logWrapper.info("Could not execute \"" + cmdStmt.getCommandString() + "\".", e);
-        }
-        return ResultBuilder.createGemFireErrorResult("Error while processing command <"
-            + cmdStmt.getCommandString() + "> Reason : " + e.getMessage());
-      } catch (Exception e) {
-        setLastExecutionStatus(1);
-        if (logWrapper.warningEnabled()) {
-          logWrapper.warning("Could not execute \"" + cmdStmt.getCommandString() + "\".", e);
-        }
-        return ResultBuilder.createGemFireErrorResult("Unexpected error while processing command <"
-            + cmdStmt.getCommandString() + "> Reason : " + e.getMessage());
-      }
-      if (logWrapper.fineEnabled()) {
-        logWrapper.fine("Executed " + commentLessLine);
-      }
-      setLastExecutionStatus(0);
+    if (StringUtils.isEmpty(commentLessLine)) {
+      return null;
     }
 
-    return commandResult;
+    CommandExecutionContext.setShellEnv(cmdStmt.getEnv());
+
+    final CommandExecutor commandExecutor = getExecutionStrategy();
+    ParseResult parseResult = parseCommand(commentLessLine);
+    if (parseResult == null) {// TODO-Abhishek: Handle this in GfshParser Implementation
+      return ResultBuilder.createParsingErrorResult(cmdStmt.getCommandString());
+    }
+
+    // do general authorization check here
+    Method method = parseResult.getMethod();
+    ResourceOperation resourceOperation = method.getAnnotation(ResourceOperation.class);
+    if (resourceOperation != null) {
+      this.securityService.authorize(resourceOperation.resource(), resourceOperation.operation(),
+          resourceOperation.target(), ResourcePermission.ALL);
+    }
+
+    return (Result) commandExecutor.execute(parseResult);
   }
 
   public CommandStatement createCommandStatement(String commandString, Map<String, String> env) {
     return new CommandStatementImpl(commandString, env, this);
-  }
-
-  public int getLastExecutionStatus() {
-    return lastExecutionStatus;
-  }
-
-  public void setLastExecutionStatus(int lastExecutionStatus) {
-    this.lastExecutionStatus = lastExecutionStatus;
   }
 
   public boolean isStopped() {
@@ -181,7 +122,7 @@ public class CommandProcessor {
   public void stop() {
     synchronized (LOCK) {
       this.gfshParser = null;
-      this.executionStrategy = null;
+      this.executor = null;
       this.isStopped = true;
     }
   }

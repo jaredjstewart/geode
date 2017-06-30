@@ -16,10 +16,18 @@ package org.apache.geode.management.internal.cli.shell;
 
 import static org.apache.geode.management.internal.cli.multistep.CLIMultiStepHelper.execCLISteps;
 
+import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.util.Map;
+
 import org.apache.commons.lang.StringUtils;
+import org.springframework.shell.core.ExecutionStrategy;
+import org.springframework.shell.core.Shell;
+import org.springframework.shell.event.ParseResult;
+import org.springframework.util.Assert;
+
 import org.apache.geode.internal.ClassPathLoader;
 import org.apache.geode.management.cli.CliMetaData;
-import org.apache.geode.management.cli.CommandProcessingException;
 import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.cli.Result.Status;
 import org.apache.geode.management.internal.cli.CliAroundInterceptor;
@@ -30,22 +38,13 @@ import org.apache.geode.management.internal.cli.GfshParseResult;
 import org.apache.geode.management.internal.cli.LogWrapper;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
 import org.apache.geode.management.internal.cli.multistep.MultiStepCommand;
+import org.apache.geode.management.internal.cli.remote.CommandExecutor;
 import org.apache.geode.management.internal.cli.result.FileResult;
 import org.apache.geode.management.internal.cli.result.ResultBuilder;
 import org.apache.geode.security.NotAuthorizedException;
-import org.springframework.shell.core.ExecutionStrategy;
-import org.springframework.shell.core.Shell;
-import org.springframework.shell.event.ParseResult;
-import org.springframework.util.Assert;
-import org.springframework.util.ReflectionUtils;
-
-import java.lang.reflect.Method;
-import java.nio.file.Path;
-import java.util.Map;
 
 /**
- * Defines the {@link ExecutionStrategy} for commands that are executed in GemFire SHell (gfsh).
- * 
+ * Defines the {@link ExecutionStrategy} for commands that are executed in GemFire Shell (gfsh).
  * 
  * @since GemFire 7.0
  */
@@ -59,8 +58,6 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
     this.logWrapper = LogWrapper.getInstance();
   }
 
-  //////////////// ExecutionStrategy interface Methods Start ///////////////////
-  ///////////////////////// Implemented Methods ////////////////////////////////
   /**
    * Executes the method indicated by the {@link ParseResult} which would always be
    * {@link GfshParseResult} for GemFire defined commands. If the command Method is decorated with
@@ -75,49 +72,28 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
   public Object execute(ParseResult parseResult) {
     Result result = null;
     Method method = parseResult.getMethod();
-    try {
-      // Check if it's a multi-step command
-      MultiStepCommand cmd = method.getAnnotation(MultiStepCommand.class);
-      if (cmd != null) {
-        return execCLISteps(cmd, logWrapper, shell, parseResult);
-      }
-
-      // check if it's a shell only command
-      if (isShellOnly(method)) {
-        Assert.notNull(parseResult, "Parse result required");
-        synchronized (mutex) {
-          Assert.isTrue(isReadyForCommands(),
-              "ProcessManagerHostedExecutionStrategy not yet ready for commands");
-          return ReflectionUtils.invokeMethod(parseResult.getMethod(), parseResult.getInstance(),
-              parseResult.getArguments());
-        }
-      }
-
-      // check if it's a GfshParseResult
-      if (!GfshParseResult.class.isInstance(parseResult)) {
-        throw new IllegalStateException("Configuration error!");
-      }
-
-      result = executeOnRemote((GfshParseResult) parseResult);
-    } catch (NotAuthorizedException e) {
-      result = ResultBuilder
-          .createGemFireUnAuthorizedErrorResult("Unauthorized. Reason: " + e.getMessage());
-    } catch (JMXInvocationException | IllegalStateException e) {
-      Gfsh.getCurrentInstance().logWarning(e.getMessage(), e);
-    } catch (CommandProcessingException e) {
-      Gfsh.getCurrentInstance().logWarning(e.getMessage(), null);
-      Object errorData = e.getErrorData();
-      if (errorData != null && errorData instanceof Throwable) {
-        logWrapper.warning(e.getMessage(), (Throwable) errorData);
-      } else {
-        logWrapper.warning(e.getMessage());
-      }
-    } catch (Exception e) {
-      Gfsh.getCurrentInstance().logWarning("Unexpected exception occurred. " + e.getMessage(), e);
-      // Log other exceptions in gfsh log
-      logWrapper.warning("Unexpected error occurred while executing command : "
-          + ((GfshParseResult) parseResult).getUserInput(), e);
+    // Check if it's a multi-step command
+    MultiStepCommand cmd = method.getAnnotation(MultiStepCommand.class);
+    if (cmd != null) {
+      return execCLISteps(cmd, logWrapper, shell, parseResult);
     }
+
+    // check if it's a shell only command
+    if (isShellOnly(method)) {
+      Assert.notNull(parseResult, "Parse result required");
+      synchronized (mutex) {
+        Assert.isTrue(isReadyForCommands(), "Not yet ready for commands");
+
+        return new CommandExecutor().execute(parseResult);
+      }
+    }
+
+    // check if it's a GfshParseResult
+    if (!GfshParseResult.class.isInstance(parseResult)) {
+      throw new IllegalStateException("Configuration error!");
+    }
+
+    result = executeOnRemote((GfshParseResult) parseResult);
     return result;
   }
 
@@ -138,18 +114,10 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
     return cliMetadata != null ? cliMetadata.interceptor() : CliMetaData.ANNOTATION_NULL_VALUE;
   }
 
-  // Not used currently
-  // private static String getCommandName(ParseResult result) {
-  // Method method = result.getMethod();
-  // CliCommand cliCommand = method.getAnnotation(CliCommand.class);
-  //
-  // return cliCommand != null ? cliCommand.value() [0] : null;
-  // }
-
   /**
    * Indicates commands are able to be presented. This generally means all important system startup
    * activities have completed. Copied from {@link ExecutionStrategy#isReadyForCommands()}.
-   *
+   * 
    * @return whether commands can be presented for processing at this time
    */
   @Override
@@ -167,16 +135,12 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
     // TODO: Is additional cleanup required?
     shell = null;
   }
-  //////////////// ExecutionStrategy interface Methods End /////////////////////
 
   /**
    * Sends the user input (command string) via {@link OperationInvoker} to a remote GemFire node for
    * processing & execution.
-   *
-   * @param parseResult
    * 
    * @return result of execution/processing of the command
-   * 
    * @throws IllegalStateException if gfsh doesn't have an active connection.
    */
   private Result executeOnRemote(GfshParseResult parseResult) {
@@ -224,21 +188,19 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
       response = shell.getOperationInvoker()
           .processCommand(new CommandRequest(parseResult, env, fileData));
 
+      if (response == null) {
+        return ResultBuilder
+            .createBadResponseErrorResult("Response was null for: " + parseResult.getUserInput());
+      }
     } catch (NotAuthorizedException e) {
       return ResultBuilder
           .createGemFireUnAuthorizedErrorResult("Unauthorized. Reason : " + e.getMessage());
     } catch (Exception e) {
       shell.logSevere(e.getMessage(), e);
+      return ResultBuilder.createBadResponseErrorResult(
+          "Error occurred while executing \"" + parseResult.getUserInput() + "\" on manager.");
     } finally {
       env.clear();
-    }
-
-    if (response == null) {
-      shell.logWarning("Response was null for: \"" + parseResult.getUserInput()
-          + "\". (gfsh.isConnected=" + shell.isConnectedAndReady() + ")", null);
-      return ResultBuilder.createBadResponseErrorResult(
-          " Error occurred while " + "executing \"" + parseResult.getUserInput() + "\" on manager. "
-              + "Please check manager logs for error.");
     }
 
     // the response could be a string which is a json representation of the CommandResult object
@@ -254,8 +216,6 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
 
       String debugInfo = commandResponse.getDebugInfo();
       if (StringUtils.isNotBlank(debugInfo)) {
-        // TODO - Abhishek When debug is ON, log response in gfsh logs
-        // TODO - Abhishek handle \n better. Is it coming from GemFire formatter
         debugInfo = debugInfo.replaceAll("\n\n\n", "\n");
         debugInfo = debugInfo.replaceAll("\n\n", "\n");
         debugInfo =
