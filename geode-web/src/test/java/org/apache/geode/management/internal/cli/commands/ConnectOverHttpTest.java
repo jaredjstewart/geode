@@ -31,6 +31,8 @@ import org.apache.geode.management.internal.web.shell.SimpleHttpOperationInvoker
 import org.apache.geode.security.SimpleTestSecurityManager;
 import org.apache.geode.test.dunit.rules.GfshShellConnectionRule;
 import org.apache.geode.test.dunit.rules.ServerStarterRule;
+import org.apache.geode.test.junit.ResultCaptor;
+
 import org.apache.geode.test.junit.categories.DistributedTest;
 
 @Category(DistributedTest.class)

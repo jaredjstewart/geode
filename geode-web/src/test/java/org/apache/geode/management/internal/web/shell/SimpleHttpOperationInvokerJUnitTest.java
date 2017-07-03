@@ -19,6 +19,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collections;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.springframework.web.client.ResourceAccessException;
+
 import org.apache.geode.management.internal.cli.CommandRequest;
 import org.apache.geode.management.internal.web.AbstractWebTestCase;
 import org.apache.geode.management.internal.web.domain.Link;
@@ -26,13 +34,6 @@ import org.apache.geode.management.internal.web.http.ClientHttpRequest;
 import org.apache.geode.management.internal.web.http.HttpHeader;
 import org.apache.geode.management.internal.web.http.HttpMethod;
 import org.apache.geode.test.junit.categories.UnitTest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.springframework.web.client.ResourceAccessException;
-
-import java.util.Collections;
 
 /**
  * The SimpleHttpOperationInvokerJUnitTest class is a test suite of test cases testing the contract
@@ -128,7 +129,7 @@ public class SimpleHttpOperationInvokerJUnitTest extends AbstractWebTestCase {
 
       @Override
       @SuppressWarnings("unchecked")
-      protected <T> T send(final ClientHttpRequest request, final Class<T> responseType) {
+      public <T> T send(final ClientHttpRequest request, final Class<T> responseType) {
         return (T) expectedResult;
       }
     };
@@ -150,7 +151,7 @@ public class SimpleHttpOperationInvokerJUnitTest extends AbstractWebTestCase {
       }
 
       @Override
-      protected <T> T send(final ClientHttpRequest request, final Class<T> responseType) {
+      public <T> T send(final ClientHttpRequest request, final Class<T> responseType) {
         throw new ResourceAccessException("test");
       }
 
