@@ -97,9 +97,9 @@ public class ConnectCommand {
 
 
   public ConnectCommand(ConnectionEndpoint memberRmiHostPort, ConnectionEndpoint locatorTcpHostPort,
-                        String userName, String password, String keystore, String keystorePassword, String truststore,
-                        String truststorePassword, String sslCiphers, String sslProtocols, boolean useHttp,
-                        boolean useSsl, CommandContext gfsh, String gfSecurityPropertiesPath, String url) {
+      String userName, String password, String keystore, String keystorePassword, String truststore,
+      String truststorePassword, String sslCiphers, String sslProtocols, boolean useHttp,
+      boolean useSsl, CommandContext gfsh, String gfSecurityPropertiesPath, String url) {
     this.memberRmiHostPort = memberRmiHostPort;
     this.locatorTcpHostPort = locatorTcpHostPort;
     this.userName = userName;

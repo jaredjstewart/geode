@@ -876,7 +876,7 @@ public class DiskStoreCommands implements GfshCommand {
     } else { // unknown and unexpected return type...
       final Throwable cause = (result instanceof Throwable ? (Throwable) result : null);
 
-      if (isLogging()) {
+      if (getGfsh() != null) {
         if (cause != null) {
           getGfsh().logSevere(String.format(
               "Exception (%1$s) occurred while executing '%2$s' on member (%3$s) with disk store (%4$s).",

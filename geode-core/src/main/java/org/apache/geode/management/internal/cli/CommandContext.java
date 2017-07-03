@@ -16,27 +16,38 @@ package org.apache.geode.management.internal.cli;
 
 import java.io.IOException;
 
-import org.apache.geode.i18n.StringId;
 import org.apache.geode.management.internal.cli.shell.OperationInvoker;
 
+// Extracted from Gfsh, determined by necessity in connect command.
 public interface CommandContext {
 
   void setOperationInvoker(OperationInvoker invoker);
+
   OperationInvoker getOperationInvoker();
 
-
   boolean isConnectedAndReady();
+
   boolean isQuietMode();
 
-
   String readPassword(String s) throws IOException;
+
   String readText(String s) throws IOException;
 
-
   boolean logToFile(String s, Throwable t);
+
+  boolean getDebug();
+
   void logInfo(String s, Throwable t);
+
   void printAsSevere(String format);
 
+  void logSevere(String body, Throwable e);
+
+  void printAsInfo(String format);
+
+  void printAsWarning(String format);
+
+  void notifyDisconnect(String s);
 
 
 

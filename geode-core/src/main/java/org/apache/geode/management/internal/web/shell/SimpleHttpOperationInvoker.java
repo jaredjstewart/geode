@@ -21,6 +21,7 @@ import java.util.Map;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import org.apache.geode.management.internal.cli.CommandContext;
 import org.apache.geode.management.internal.cli.CommandRequest;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.web.domain.Link;
@@ -82,7 +83,7 @@ public class SimpleHttpOperationInvoker extends AbstractHttpOperationInvoker {
    * @param baseUrl the base URL to the GemFire Manager's HTTP service.
    * @see org.apache.geode.management.internal.cli.shell.Gfsh
    */
-  public SimpleHttpOperationInvoker(final Gfsh gfsh, final String baseUrl,
+  public SimpleHttpOperationInvoker(final CommandContext gfsh, final String baseUrl,
       Map<String, String> securityProperties) {
     super(gfsh, baseUrl, securityProperties);
   }
