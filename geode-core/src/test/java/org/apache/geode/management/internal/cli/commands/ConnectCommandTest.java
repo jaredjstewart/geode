@@ -58,6 +58,8 @@ public class ConnectCommandTest {
         password, keystore, keystorePassword, truststore, truststorePassword, sslCiphers,
         sslProtocols, useHttp, useSsl, gfsh, gfSecurityPropertiesPath, url);
 
+    // This throws an NPE internally, but isn't that the intended response now? To let errors
+    // percolate up and be handled by the caller of the command class?
     Result result = command.run();
     assertThat(result.getStatus()).describedAs(result.toString()).isEqualTo(Result.Status.ERROR);
   }

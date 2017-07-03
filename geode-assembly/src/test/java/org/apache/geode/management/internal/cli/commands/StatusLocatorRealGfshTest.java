@@ -62,8 +62,7 @@ public class StatusLocatorRealGfshTest {
   private void startLocatorAndConnect(boolean useHttp) throws Exception {
     GfshScript.of("start locator --name=locator1").execute(gfshRule);
 
-    GfshExecution
-        gfshExecution =
+    GfshExecution gfshExecution =
         GfshScript.of("connect --use-http=" + useHttp, "list members").execute(gfshRule);
 
     assertThat(gfshExecution.getStdOutText()).contains("Successfully connected to:");

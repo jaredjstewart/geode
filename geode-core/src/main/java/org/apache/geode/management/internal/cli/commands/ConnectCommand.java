@@ -40,6 +40,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+import javax.security.sasl.AuthenticationException;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -129,8 +130,9 @@ public class ConnectCommand {
         password = gfsh.readPassword(CliStrings.CONNECT__PASSWORD + ": ");
       }
       if (password == null || password.length() == 0) {
-        return ResultBuilder
-            .createConnectionErrorResult(CliStrings.CONNECT__MSG__JMX_PASSWORD_MUST_BE_SPECIFIED);
+        throw new AuthenticationException(CliStrings.CONNECT__MSG__JMX_PASSWORD_MUST_BE_SPECIFIED);
+        // return ResultBuilder
+        // .createConnectionErrorResult(CliStrings.CONNECT__MSG__JMX_PASSWORD_MUST_BE_SPECIFIED);
       }
     }
 
@@ -330,13 +332,15 @@ public class ConnectCommand {
     } catch (Exception e) {
       // all other exceptions, just logs it and returns a connection error
       if (!(e instanceof SecurityException) && !(e instanceof AuthenticationFailedException)) {
-        return handleExcpetion(e, hostPortToConnect);
+        throw new RuntimeException(e);
+        // return handleException(e, hostPortToConnect);
       }
 
       // if it's security exception, and we already sent in username and password, still returns the
       // connection error
       if (userName != null) {
-        return handleExcpetion(e, hostPortToConnect);
+        throw new RuntimeException(e);
+        // return handleException(e, hostPortToConnect);
       }
 
       // otherwise, prompt for username and password and retry the conenction
@@ -346,12 +350,14 @@ public class ConnectCommand {
         // GEODE-2250 If no value for both username and password, at this point we need to error to
         // avoid a stack overflow.
         if (userName == null && password == null) {
-          return handleExcpetion(e, hostPortToConnect);
+          throw new RuntimeException(e);
+          // return handleException(e, hostPortToConnect);
         }
         return jmxConnect(sslConfigProps, hostPortToConnect, null, useSsl, userName, password,
             gfSecurityPropertiesPath, true);
       } catch (IOException ioe) {
-        return handleExcpetion(ioe, hostPortToConnect);
+        throw new RuntimeException(e);
+        // return handleException(ioe, hostPortToConnect);
       }
     } finally {
       Gfsh.redirectInternalJavaLoggers();
@@ -402,22 +408,25 @@ public class ConnectCommand {
     } catch (Exception e) {
       // all other exceptions, just logs it and returns a connection error
       if (!(e instanceof SecurityException) && !(e instanceof AuthenticationFailedException)) {
-        return handleExcpetion(e, null);
+        throw new RuntimeException(e);
+        // return handleException(e, null);
       }
 
       // if it's security exception, and we already sent in username and password, still retuns the
       // connection error
       if (userName != null) {
-        return handleExcpetion(e, null);
+        throw new RuntimeException(e);
+        // return handleException(e, null);
       }
 
-      // otherwise, prompt for username and password and retry the conenction
+      // otherwise, prompt for username and password and retry the connection
       try {
         userName = gfsh.readText(CliStrings.CONNECT__USERNAME + ": ");
         password = gfsh.readPassword(CliStrings.CONNECT__PASSWORD + ": ");
         return httpConnect(sslConfigProps, useSsl, url, userName, password);
       } catch (IOException ioe) {
-        return handleExcpetion(ioe, null);
+        throw new RuntimeException(e);
+        // return handleException(ioe, null);
       }
     } finally {
       Gfsh.redirectInternalJavaLoggers();
@@ -436,7 +445,7 @@ public class ConnectCommand {
         .warning(String.format("Received Link Index (%1$s)", linkIndex.toString()));
   }
 
-  private Result handleExcpetion(Exception e, ConnectionEndpoint hostPortToConnect) {
+  private Result handleException(Exception e, ConnectionEndpoint hostPortToConnect) {
     throw new RuntimeException(e);
     // String errorMessage = e.getMessage();
     // if (hostPortToConnect != null) {

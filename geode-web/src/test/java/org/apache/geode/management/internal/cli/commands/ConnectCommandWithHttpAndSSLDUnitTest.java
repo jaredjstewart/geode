@@ -56,7 +56,7 @@ public class ConnectCommandWithHttpAndSSLDUnitTest extends CliCommandTestBase {
   @Parameterized.Parameter
   public String urlContext;
 
-  @Parameterized.Parameters
+  @Parameterized.Parameters(name = "{index}: urlContext={0}")
   public static Collection<String> data() {
     return Arrays.asList("/geode-mgmt", "/gemfire");
   }
