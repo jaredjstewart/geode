@@ -286,13 +286,7 @@ public class ShellCommands implements GfshCommand {
           unspecifiedDefaultValue = "false",
           help = CliStrings.CONNECT__USE_SSL__HELP) final boolean useSsl) {
 
-    ConnectCommand command;
-    // if (useHttp) {
-    // command = new HttpConnectCommand();
-    // } else {
-    // command = new JmxConnectCommand();
-    // }
-    command = new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, userName, decrypt(password),
+    ConnectCommand command = new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, userName, decrypt(password),
         keystore, keystorePassword, truststore, truststorePassword, sslCiphers, sslProtocols,
         useHttp, useSsl, getGfsh(), gfSecurityPropertiesPath, url);
 
@@ -358,25 +352,8 @@ public class ShellCommands implements GfshCommand {
   @CliCommand(value = {CliStrings.DESCRIBE_CONNECTION}, help = CliStrings.DESCRIBE_CONNECTION__HELP)
   @CliMetaData(shellOnly = true, relatedTopic = {CliStrings.TOPIC_GFSH, CliStrings.TOPIC_GEODE_JMX})
   public Result describeConnection() {
-    Result result = null;
-    try {
-      TabularResultData tabularResultData = ResultBuilder.createTabularResultData();
-      Gfsh gfshInstance = getGfsh();
-      if (gfshInstance.isConnectedAndReady()) {
-        OperationInvoker operationInvoker = gfshInstance.getOperationInvoker();
-        // tabularResultData.accumulate("Monitored GemFire DS", operationInvoker.toString());
-        tabularResultData.accumulate("Connection Endpoints", operationInvoker.toString());
-      } else {
-        tabularResultData.accumulate("Connection Endpoints", "Not connected");
-      }
-      result = ResultBuilder.buildResult(tabularResultData);
-    } catch (Exception e) {
-      ErrorResultData errorResultData = ResultBuilder.createErrorResultData()
-          .setErrorCode(ResultBuilder.ERRORCODE_DEFAULT).addLine(e.getMessage());
-      result = ResultBuilder.buildResult(errorResultData);
-    }
-
-    return result;
+    DescribeConnectionCommand command = new DescribeConnectionCommand(getGfsh());
+    return command.run();
   }
 
   @CliCommand(value = {CliStrings.ECHO}, help = CliStrings.ECHO__HELP)
@@ -439,25 +416,13 @@ public class ShellCommands implements GfshCommand {
   public Result debug(
       @CliOption(key = CliStrings.DEBUG__STATE, unspecifiedDefaultValue = "OFF", mandatory = true,
           optionContext = "debug", help = CliStrings.DEBUG__STATE__HELP) String state) {
-    Gfsh gfshInstance = Gfsh.getCurrentInstance();
-    if (gfshInstance != null) {
-      // Handle state
-      if (state.equalsIgnoreCase("ON")) {
-        gfshInstance.setDebug(true);
-      } else if (state.equalsIgnoreCase("OFF")) {
-        gfshInstance.setDebug(false);
-      } else {
-        return ResultBuilder.createUserErrorResult(
-            CliStrings.format(CliStrings.DEBUG__MSG_0_INVALID_STATE_VALUE, state));
-      }
-
-    } else {
-      ErrorResultData errorResultData =
-          ResultBuilder.createErrorResultData().setErrorCode(ResultBuilder.ERRORCODE_DEFAULT)
-              .addLine(CliStrings.ECHO__MSG__NO_GFSH_INSTANCE);
-      return ResultBuilder.buildResult(errorResultData);
+    DebugCommand.Debug debugState = DebugCommand.Debug.valueOf(state.toUpperCase());
+    DebugCommand command = new DebugCommand(Gfsh.getCurrentInstance(), debugState);
+    try {
+      return command.run();
+    } catch (Exception e) {
+      return handleException(e, null);
     }
-    return ResultBuilder.createInfoResult(CliStrings.DEBUG__MSG_DEBUG_STATE_IS + state);
   }
 
   @CliCommand(value = CliStrings.HISTORY, help = CliStrings.HISTORY__HELP)

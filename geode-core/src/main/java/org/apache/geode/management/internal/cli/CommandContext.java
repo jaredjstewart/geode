@@ -49,6 +49,6 @@ public interface CommandContext {
 
   void notifyDisconnect(String s);
 
-
+  void setDebug(boolean debug);
 
 }

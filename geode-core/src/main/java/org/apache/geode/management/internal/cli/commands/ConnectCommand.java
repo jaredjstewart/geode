@@ -96,12 +96,12 @@ public class ConnectCommand {
   private final static int CONNECT_LOCATOR_TIMEOUT_MS = 60000; // see bug 45971
 
 
-  public ConnectCommand(ConnectionEndpoint memberRmiHostPort, ConnectionEndpoint locatorTcpHostPort,
+  public ConnectCommand(ConnectionEndpoint locatorTcpHostPort, ConnectionEndpoint memberRmiHostPort,
       String userName, String password, String keystore, String keystorePassword, String truststore,
       String truststorePassword, String sslCiphers, String sslProtocols, boolean useHttp,
       boolean useSsl, CommandContext gfsh, String gfSecurityPropertiesPath, String url) {
-    this.memberRmiHostPort = memberRmiHostPort;
     this.locatorTcpHostPort = locatorTcpHostPort;
+    this.memberRmiHostPort = memberRmiHostPort;
     this.userName = userName;
     this.password = password;
     this.keystore = keystore;
@@ -118,7 +118,6 @@ public class ConnectCommand {
   }
 
   public Result run() throws IOException {
-
     if (gfsh != null && gfsh.isConnectedAndReady()) {
       return ResultBuilder
           .createInfoResult("Already connected to: " + gfsh.getOperationInvoker().toString());
@@ -152,7 +151,6 @@ public class ConnectCommand {
    * Common code to read SSL information. Used by JMX, Locator & HTTP mode connect
    */
   private Map<String, String> readSSLConfiguration() throws IOException {
-
     final Map<String, String> sslConfigProps = new LinkedHashMap<String, String>();
 
     // JMX SSL Config 1:
