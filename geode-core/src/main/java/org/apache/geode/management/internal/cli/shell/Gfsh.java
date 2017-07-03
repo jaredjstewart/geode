@@ -71,17 +71,17 @@ import java.util.logging.Logger;
 /**
  * Extends an interactive shell provided by
  * <a href="https://github.com/SpringSource/spring-shell">Spring Shell</a> library.
- * <p />
+ *
+ * <p>
  * This class is used to plug-in implementations of the following Spring (Roo) Shell components
  * customized to suite GemFire Command Line Interface (CLI) requirements:
  * <ul>
  * <li><code>org.springframework.roo.shell.ExecutionStrategy</code>
  * <li><code>org.springframework.roo.shell.Parser</code>
  * </ul>
- * <p />
- * Additionally, this class is used to maintain GemFire SHell (gfsh) specific information like:
- * environment TODO
  *
+ * <p>
+ * Additionally, this class is used to maintain GemFire SHell (gfsh) specific information
  *
  * @since GemFire 7.0
  */
@@ -1151,62 +1151,5 @@ public class Gfsh extends JLineShell implements CommandContext {
       output = output.replace(foundInLine, envProperty);
     }
     return output;
-  }
-}
-
-
-class ScriptExecutionDetails {
-  private final String filePath;
-  private final List<CommandAndStatus> commandAndStatusList;
-
-  ScriptExecutionDetails(String filePath) {
-    this.filePath = filePath;
-    this.commandAndStatusList = new ArrayList<CommandAndStatus>();
-  }
-
-  void addCommandAndStatus(String command, String status) {
-    this.commandAndStatusList.add(new CommandAndStatus(command, status));
-  }
-
-  Result getResult() {
-    CompositeResultData compositeResultData = ResultBuilder.createCompositeResultData();
-    compositeResultData.setHeader(
-        "************************* Execution Summary ***********************\nScript file: "
-            + filePath);
-
-    for (int i = 0; i < this.commandAndStatusList.size(); i++) {
-      int commandSrNo = i + 1;
-      SectionResultData section = compositeResultData.addSection("" + (i + 1));
-      CommandAndStatus commandAndStatus = commandAndStatusList.get(i);
-      section.addData("Command-" + String.valueOf(commandSrNo), commandAndStatus.command);
-      section.addData("Status", commandAndStatus.status);
-      if (commandAndStatus.status.equals("FAILED")) {
-        compositeResultData.setStatus(org.apache.geode.management.cli.Result.Status.ERROR);
-      }
-      if (i != this.commandAndStatusList.size()) {
-        section.setFooter(Gfsh.LINE_SEPARATOR);
-      }
-    }
-
-    return ResultBuilder.buildResult(compositeResultData);
-  }
-
-  void logScriptExecutionInfo(LogWrapper logWrapper, Result result) {
-    logWrapper.info(ResultBuilder.resultAsString(result));
-  }
-
-  static class CommandAndStatus {
-    private final String command;
-    private final String status;
-
-    public CommandAndStatus(String command, String status) {
-      this.command = command;
-      this.status = status;
-    }
-
-    @Override
-    public String toString() {
-      return command + "     " + status;
-    }
   }
 }
