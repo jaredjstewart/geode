@@ -50,9 +50,7 @@ public class ListMembersCommand {
         result = ResultBuilder.createInfoResult(CliStrings.LIST_MEMBER__MSG__NO_MEMBER_FOUND);
       } else {
         TabularResultData resultData = ResultBuilder.createTabularResultData();
-        Iterator<DistributedMember> memberIters = memberSet.iterator();
-        while (memberIters.hasNext()) {
-          DistributedMember member = memberIters.next();
+        for (DistributedMember member : memberSet) {
           resultData.accumulate("Name", member.getName());
           resultData.accumulate("Id", member.getId());
         }

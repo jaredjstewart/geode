@@ -26,6 +26,7 @@ import org.apache.geode.internal.util.SunAPINotFoundException;
 import org.apache.geode.management.cli.CommandProcessingException;
 import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.internal.cli.CliUtil;
+import org.apache.geode.management.internal.cli.CommandContext;
 import org.apache.geode.management.internal.cli.CommandManager;
 import org.apache.geode.management.internal.cli.GfshParser;
 import org.apache.geode.management.internal.cli.LogWrapper;
@@ -84,7 +85,7 @@ import java.util.logging.Logger;
  *
  * @since GemFire 7.0
  */
-public class Gfsh extends JLineShell {
+public class Gfsh extends JLineShell implements CommandContext {
   public static final int DEFAULT_APP_FETCH_SIZE = 1000;
   public static final int DEFAULT_APP_LAST_EXIT_STATUS = 0;
   public static final int DEFAULT_APP_COLLECTION_LIMIT = 20;
@@ -135,16 +136,15 @@ public class Gfsh extends JLineShell {
   // private static final String ANIMATION_SLOT = "A"; //see 46072
   protected static PrintStream gfshout = System.out;
   protected static PrintStream gfsherr = System.err;
-  protected static ThreadLocal<Gfsh> gfshThreadLocal = new ThreadLocal<Gfsh>();
   private static Gfsh instance;
   // This flag is used to restrict column trimming to table only types
-  private static ThreadLocal<Boolean> resultTypeTL = new ThreadLocal<Boolean>();
+  private static ThreadLocal<Boolean> resultTypeTL = new ThreadLocal<>();
   private static String OS = System.getProperty("os.name").toLowerCase();
-  private final Map<String, String> env = new TreeMap<String, String>();
-  private final List<String> readonlyAppEnv = new ArrayList<String>();
+  private final Map<String, String> env = new TreeMap<>();
+  private final List<String> readonlyAppEnv = new ArrayList<>();
   // Map to keep reference to actual user specified Command String
   // Should always have one value at the max
-  private final Map<String, String> expandedPropCommandsMap = new HashMap<String, String>();
+  private final Map<String, String> expandedPropCommandsMap = new HashMap<>();
   private final ExecutionStrategy executionStrategy;
   private final GfshParser parser;
   private final LogWrapper gfshFileLogger;

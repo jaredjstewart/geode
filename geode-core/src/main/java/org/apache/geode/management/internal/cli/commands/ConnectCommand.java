@@ -54,6 +54,7 @@ import org.apache.geode.management.internal.JmxManagerLocatorRequest;
 import org.apache.geode.management.internal.JmxManagerLocatorResponse;
 import org.apache.geode.management.internal.SSLUtil;
 import org.apache.geode.management.internal.cli.CliUtil;
+import org.apache.geode.management.internal.cli.CommandContext;
 import org.apache.geode.management.internal.cli.LogWrapper;
 import org.apache.geode.management.internal.cli.domain.ConnectToLocatorResult;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
@@ -84,7 +85,7 @@ public class ConnectCommand {
 
   private boolean useHttp;
   private boolean useSsl;
-  private Gfsh gfsh;
+  private CommandContext gfsh;
   private String gfSecurityPropertiesPath;
 
   private String url;;
@@ -96,9 +97,9 @@ public class ConnectCommand {
 
 
   public ConnectCommand(ConnectionEndpoint memberRmiHostPort, ConnectionEndpoint locatorTcpHostPort,
-      String userName, String password, String keystore, String keystorePassword, String truststore,
-      String truststorePassword, String sslCiphers, String sslProtocols, boolean useHttp,
-      boolean useSsl, Gfsh gfsh, String gfSecurityPropertiesPath, String url) {
+                        String userName, String password, String keystore, String keystorePassword, String truststore,
+                        String truststorePassword, String sslCiphers, String sslProtocols, boolean useHttp,
+                        boolean useSsl, CommandContext gfsh, String gfSecurityPropertiesPath, String url) {
     this.memberRmiHostPort = memberRmiHostPort;
     this.locatorTcpHostPort = locatorTcpHostPort;
     this.userName = userName;
@@ -356,7 +357,7 @@ public class ConnectCommand {
         return jmxConnect(sslConfigProps, hostPortToConnect, null, useSsl, userName, password,
             gfSecurityPropertiesPath, true);
       } catch (IOException ioe) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(ioe);
         // return handleException(ioe, hostPortToConnect);
       }
     } finally {

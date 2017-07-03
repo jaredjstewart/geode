@@ -299,11 +299,11 @@ public class ShellCommands implements GfshCommand {
     try {
       return command.run();
     } catch (Exception e) {
-      return handleExcpetion(e, null);
+      return handleException(e, null);
     }
   }
 
-  private Result handleExcpetion(Exception e, ConnectionEndpoint hostPortToConnect) {
+  private Result handleException(Exception e, ConnectionEndpoint hostPortToConnect) {
     String errorMessage = e.getMessage();
     if (hostPortToConnect != null) {
       errorMessage = CliStrings.format(CliStrings.CONNECT__MSG__ERROR,
