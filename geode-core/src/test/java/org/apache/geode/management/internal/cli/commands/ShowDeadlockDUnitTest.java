@@ -28,7 +28,7 @@ import org.apache.geode.management.cli.CommandStatement;
 import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.cli.Result.Status;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
-import org.apache.geode.management.internal.cli.remote.CommandProcessor;
+import org.apache.geode.management.internal.cli.remote.OnlineCommandProcessor;
 import org.apache.geode.management.internal.cli.util.CommandStringBuilder;
 import org.apache.geode.test.dunit.Host;
 import org.apache.geode.test.dunit.SerializableCallable;
@@ -109,7 +109,7 @@ public class ShowDeadlockDUnitTest extends JUnit4CacheTestCase {
     String showDeadlockCommand = new CommandStringBuilder(CliStrings.SHOW_DEADLOCK)
         .addOption(CliStrings.SHOW_DEADLOCK__DEPENDENCIES__FILE, outputFile.getName()).toString();
 
-    Result result = new CommandProcessor()
+    Result result = new OnlineCommandProcessor()
         .createCommandStatement(showDeadlockCommand, Collections.emptyMap()).process();
     String commandOutput = getResultAsString(result);
 
@@ -133,7 +133,7 @@ public class ShowDeadlockDUnitTest extends JUnit4CacheTestCase {
     String showDeadlockCommand = new CommandStringBuilder(CliStrings.SHOW_DEADLOCK)
         .addOption(CliStrings.SHOW_DEADLOCK__DEPENDENCIES__FILE, outputFile.getName()).toString();
     CommandStatement showDeadlocksCommand =
-        new CommandProcessor().createCommandStatement(showDeadlockCommand, Collections.emptyMap());
+        new OnlineCommandProcessor().createCommandStatement(showDeadlockCommand, Collections.emptyMap());
 
     Awaitility.await().atMost(1, TimeUnit.MINUTES).until(() -> {
       Result result = showDeadlocksCommand.process();

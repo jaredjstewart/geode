@@ -36,12 +36,12 @@ import org.apache.geode.security.NotAuthorizedException;
 import org.apache.geode.test.junit.categories.UnitTest;
 
 @Category(UnitTest.class)
-public class CommandProcessorTest {
+public class OnlineCommandProcessorTest {
 
   Properties properties;
   SecurityService securityService;
   CommandExecutor executor;
-  CommandProcessor commandProcessor;
+  OnlineCommandProcessor onlineCommandProcessor;
   Result result;
 
   @Before
@@ -52,13 +52,13 @@ public class CommandProcessorTest {
     result = mock(Result.class);
     when(executor.execute(any())).thenReturn(result);
 
-    commandProcessor = new CommandProcessor(properties, securityService, executor);
+    onlineCommandProcessor = new OnlineCommandProcessor(properties, securityService, executor);
   }
 
   @Test
   public void createCommandStatement() throws Exception {
     CommandStatement stmt =
-        commandProcessor.createCommandStatement("start locator", Collections.emptyMap());
+        onlineCommandProcessor.createCommandStatement("start locator", Collections.emptyMap());
     assertThat(stmt).isNotNull();
     assertThat(stmt.getCommandString()).isEqualTo("start locator");
   }
@@ -67,24 +67,24 @@ public class CommandProcessorTest {
 
   @Test
   public void executeWithNullThrowsNPE() throws Exception {
-    assertThatThrownBy(() -> commandProcessor.executeCommand(null))
+    assertThatThrownBy(() -> onlineCommandProcessor.executeCommand(null))
         .isInstanceOf(NullPointerException.class);
   }
 
   @Test
   public void executeWithEmpty() throws Exception {
-    assertThat(commandProcessor.executeCommand(createCommandStatement(""))).isNull();
+    assertThat(onlineCommandProcessor.executeCommand(createCommandStatement(""))).isNull();
   }
 
   @Test
   public void executeStripsComments() throws Exception {
-    Result commandResult = commandProcessor.executeCommand(createCommandStatement("/*comment*/"));
+    Result commandResult = onlineCommandProcessor.executeCommand(createCommandStatement("/*comment*/"));
     assertThat(commandResult).isNull();
   }
 
   @Test
   public void executeReturnsExecutorResult() throws Exception {
-    Result commandResult = commandProcessor.executeCommand(createCommandStatement("start locator"));
+    Result commandResult = onlineCommandProcessor.executeCommand(createCommandStatement("start locator"));
     assertThat(commandResult).isSameAs(result);
   }
 
@@ -92,18 +92,18 @@ public class CommandProcessorTest {
   public void handlesNotAuthorizedException() throws Exception {
     when(executor.execute(any())).thenThrow(new NotAuthorizedException("not authorized"));
     assertThatThrownBy(
-        () -> commandProcessor.executeCommand(createCommandStatement("start locator")))
+        () -> onlineCommandProcessor.executeCommand(createCommandStatement("start locator")))
             .isInstanceOf(NotAuthorizedException.class);
   }
 
   @Test
   public void handlesParsingError() throws Exception {
-    Result commandResult = commandProcessor.executeCommand(createCommandStatement("foo --bar"));
+    Result commandResult = onlineCommandProcessor.executeCommand(createCommandStatement("foo --bar"));
     assertThat(commandResult).isInstanceOf(CommandResult.class);
     assertThat(commandResult.toString()).contains("Could not parse command string. foo --bar");
   }
 
   private CommandStatement createCommandStatement(String command) {
-    return commandProcessor.createCommandStatement(command, Collections.emptyMap());
+    return onlineCommandProcessor.createCommandStatement(command, Collections.emptyMap());
   }
 }

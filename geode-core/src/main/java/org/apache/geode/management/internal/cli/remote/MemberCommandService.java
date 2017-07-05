@@ -27,12 +27,12 @@ public class MemberCommandService extends CommandService {
   private final Object modLock = new Object();
 
   private InternalCache cache;
-  private CommandProcessor commandProcessor;
+  private OnlineCommandProcessor onlineCommandProcessor;
 
   public MemberCommandService(InternalCache cache) throws CommandServiceException {
     this.cache = cache;
     try {
-      this.commandProcessor = new CommandProcessor(cache.getDistributedSystem().getProperties(),
+      this.onlineCommandProcessor = new OnlineCommandProcessor(cache.getDistributedSystem().getProperties(),
           cache.getSecurityService());
     } catch (ClassNotFoundException e) {
       throw new CommandServiceException("Could not load commands.", e);
@@ -60,7 +60,7 @@ public class MemberCommandService extends CommandService {
       throw new IllegalStateException("Cache instance is not available.");
     }
     synchronized (modLock) {
-      return commandProcessor.createCommandStatement(commandString, env);
+      return onlineCommandProcessor.createCommandStatement(commandString, env);
     }
   }
 

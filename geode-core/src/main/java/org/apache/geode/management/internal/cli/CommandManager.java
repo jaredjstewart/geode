@@ -73,7 +73,7 @@ public class CommandManager {
 
   /**
    * this is used when getting the instance in a cache server. We are getting the
-   * user-command-package from distribution properties. used by CommandProcessor.
+   * user-command-package from distribution properties. used by OnlineCommandProcessor.
    */
   public CommandManager(final Properties cacheProperties) {
     if (cacheProperties != null) {

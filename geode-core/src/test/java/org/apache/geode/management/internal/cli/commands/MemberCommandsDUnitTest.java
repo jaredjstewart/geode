@@ -44,7 +44,7 @@ import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.cli.Result.Status;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
-import org.apache.geode.management.internal.cli.remote.CommandProcessor;
+import org.apache.geode.management.internal.cli.remote.OnlineCommandProcessor;
 import org.apache.geode.management.internal.cli.util.CommandStringBuilder;
 import org.apache.geode.test.dunit.Host;
 import org.apache.geode.test.dunit.SerializableRunnable;
@@ -217,9 +217,9 @@ public class MemberCommandsDUnitTest extends JUnit4CacheTestCase {
   @Test
   public void testListMemberAll() throws IOException, ClassNotFoundException {
     setupSystem();
-    CommandProcessor commandProcessor = new CommandProcessor();
+    OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
     Result result =
-        commandProcessor.createCommandStatement(CliStrings.LIST_MEMBER, EMPTY_ENV).process();
+        onlineCommandProcessor.createCommandStatement(CliStrings.LIST_MEMBER, EMPTY_ENV).process();
     String resultOutput = getResultAsString(result);
     getLogWriter().info(resultOutput);
     assertEquals(true, result.getStatus().equals(Status.OK));
@@ -245,9 +245,9 @@ public class MemberCommandsDUnitTest extends JUnit4CacheTestCase {
     try {
 
       final Properties props = createProperties(host, openPorts[0]);
-      CommandProcessor commandProcessor = new CommandProcessor();
+      OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
       Result result =
-          commandProcessor.createCommandStatement(CliStrings.LIST_MEMBER, EMPTY_ENV).process();
+          onlineCommandProcessor.createCommandStatement(CliStrings.LIST_MEMBER, EMPTY_ENV).process();
 
       getLogWriter().info("#SB" + getResultAsString(result));
       assertEquals(true, result.getStatus().equals(Status.ERROR));
@@ -265,10 +265,10 @@ public class MemberCommandsDUnitTest extends JUnit4CacheTestCase {
   @Test
   public void testListMemberWithGroups() throws IOException, ClassNotFoundException {
     setupSystem();
-    CommandProcessor commandProcessor = new CommandProcessor();
+    OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
     CommandStringBuilder csb = new CommandStringBuilder(CliStrings.LIST_MEMBER);
     csb.addOption(CliStrings.GROUP, "G1");
-    Result result = commandProcessor.createCommandStatement(csb.toString(), EMPTY_ENV).process();
+    Result result = onlineCommandProcessor.createCommandStatement(csb.toString(), EMPTY_ENV).process();
     getLogWriter().info("#SB" + getResultAsString(result));
     assertEquals(true, result.getStatus().equals(Status.OK));
   }
@@ -282,7 +282,7 @@ public class MemberCommandsDUnitTest extends JUnit4CacheTestCase {
   @Test
   public void testDescribeMember() throws IOException, ClassNotFoundException {
     setupSystem();
-    CommandProcessor commandProcessor = new CommandProcessor();
+    OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
     GemFireCacheImpl cache = (GemFireCacheImpl) CacheFactory.getAnyInstance();
     Set<DistributedMember> members = cache.getDistributedSystem().getAllOtherMembers();
 
@@ -290,7 +290,7 @@ public class MemberCommandsDUnitTest extends JUnit4CacheTestCase {
 
     while (iters.hasNext()) {
       DistributedMember member = iters.next();
-      Result result = commandProcessor
+      Result result = onlineCommandProcessor
           .createCommandStatement("describe member --name=" + member.getId(), EMPTY_ENV).process();
       assertEquals(true, result.getStatus().equals(Status.OK));
       getLogWriter().info("#SB" + getResultAsString(result));

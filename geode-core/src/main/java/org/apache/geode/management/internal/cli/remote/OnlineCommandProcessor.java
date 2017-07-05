@@ -39,7 +39,7 @@ import org.apache.geode.security.ResourcePermission;
 /**
  * @since GemFire 7.0
  */
-public class CommandProcessor {
+public class OnlineCommandProcessor {
   protected CommandExecutor executor;
   private GfshParser gfshParser;
 
@@ -51,18 +51,18 @@ public class CommandProcessor {
   private final SecurityService securityService;
 
   @TestingConstructor
-  public CommandProcessor() throws ClassNotFoundException, IOException {
+  public OnlineCommandProcessor() throws ClassNotFoundException, IOException {
     this(new Properties(), SecurityServiceFactory.create());
   }
 
-  public CommandProcessor(Properties cacheProperties, SecurityService securityService)
+  public OnlineCommandProcessor(Properties cacheProperties, SecurityService securityService)
       throws ClassNotFoundException, IOException {
     this(cacheProperties, securityService, new CommandExecutor());
   }
 
   @TestingConstructor
-  public CommandProcessor(Properties cacheProperties, SecurityService securityService,
-      CommandExecutor commandExecutor) {
+  public OnlineCommandProcessor(Properties cacheProperties, SecurityService securityService,
+                                CommandExecutor commandExecutor) {
     this.gfshParser = new GfshParser(new CommandManager(cacheProperties));
     this.executor = commandExecutor;
     this.securityService = securityService;

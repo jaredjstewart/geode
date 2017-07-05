@@ -25,7 +25,7 @@ import org.apache.geode.management.*;
 import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.cli.Result.Status;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
-import org.apache.geode.management.internal.cli.remote.CommandProcessor;
+import org.apache.geode.management.internal.cli.remote.OnlineCommandProcessor;
 import org.apache.geode.management.internal.cli.result.CommandResult;
 import org.apache.geode.test.dunit.*;
 import org.apache.geode.test.junit.categories.DistributedTest;
@@ -90,8 +90,8 @@ public class ShowMetricsDUnitTest extends CliCommandTestBase {
       public Object call() throws Exception {
         WaitCriterion wc = createMBeanWaitCriterion(1, "", null, 0);
         waitForCriterion(wc, 5000, 500, true);
-        CommandProcessor commandProcessor = new CommandProcessor();
-        Result result = commandProcessor
+        OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
+        Result result = onlineCommandProcessor
             .createCommandStatement("show metrics", Collections.EMPTY_MAP).process();
         String resultStr = commandResultToString((CommandResult) result);
         getLogWriter().info(resultStr);
@@ -140,8 +140,8 @@ public class ShowMetricsDUnitTest extends CliCommandTestBase {
       public Object call() throws Exception {
         WaitCriterion wc = createMBeanWaitCriterion(2, regionName, null, 0);
         waitForCriterion(wc, 5000, 500, true);
-        CommandProcessor commandProcessor = new CommandProcessor();
-        Result result = commandProcessor
+        OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
+        Result result = onlineCommandProcessor
             .createCommandStatement("show metrics --region=REGION1", Collections.EMPTY_MAP)
             .process();
         String resultAsString = commandResultToString((CommandResult) result);
@@ -248,9 +248,9 @@ public class ShowMetricsDUnitTest extends CliCommandTestBase {
             + distributedMember.getId() + " --" + CliStrings.SHOW_METRICS__CACHESERVER__PORT + "="
             + cacheServerPort + " --" + CliStrings.SHOW_METRICS__FILE + "=" + exportFileName;
 
-        CommandProcessor commandProcessor = new CommandProcessor();
+        OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
         Result result =
-            commandProcessor.createCommandStatement(command, Collections.EMPTY_MAP).process();
+            onlineCommandProcessor.createCommandStatement(command, Collections.EMPTY_MAP).process();
         String resultAsString = commandResultToString((CommandResult) result);
         assertEquals(resultAsString, true, result.getStatus().equals(Status.OK));
         assertTrue(result.hasIncomingFiles());
@@ -291,8 +291,8 @@ public class ShowMetricsDUnitTest extends CliCommandTestBase {
 
         WaitCriterion wc = createMBeanWaitCriterion(4, regionName, distributedMember, 0);
         waitForCriterion(wc, 5000, 500, true);
-        CommandProcessor commandProcessor = new CommandProcessor();
-        Result result = commandProcessor
+        OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
+        Result result = onlineCommandProcessor
             .createCommandStatement("show metrics --region=" + regionName + " --member="
                 + distributedMember.getName() + " --file=" + exportFileName, Collections.EMPTY_MAP)
             .process();
@@ -334,8 +334,8 @@ public class ShowMetricsDUnitTest extends CliCommandTestBase {
 
         WaitCriterion wc = createMBeanWaitCriterion(4, regionName, distributedMember, 0);
         waitForCriterion(wc, 5000, 500, true);
-        CommandProcessor commandProcessor = new CommandProcessor();
-        Result result = commandProcessor.createCommandStatement(
+        OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
+        Result result = onlineCommandProcessor.createCommandStatement(
             "show metrics --region=" + regionName + " --member=" + distributedMember.getName()
                 + " --file=" + exportFileName + " --categories=region,eviction",
             Collections.EMPTY_MAP).process();
