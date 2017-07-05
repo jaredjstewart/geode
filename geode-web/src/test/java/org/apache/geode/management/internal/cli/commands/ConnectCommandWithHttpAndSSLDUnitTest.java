@@ -210,7 +210,6 @@ public class ConnectCommandWithHttpAndSSLDUnitTest extends CliCommandTestBase {
     setUpJmxManagerOnVm0ThenConnect(localProps);
   }
 
-  @Ignore("TODO: disabled for unknown reason")
   @Test
   public void testSSLWithCipherSuite() throws Exception {
     Properties localProps = new Properties();
