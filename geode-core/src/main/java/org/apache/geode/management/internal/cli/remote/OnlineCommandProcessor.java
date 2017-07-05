@@ -41,12 +41,10 @@ import org.apache.geode.security.ResourcePermission;
  */
 public class OnlineCommandProcessor {
   protected final CommandExecutor executor;
-  private GfshParser gfshParser;
+  private final GfshParser gfshParser;
 
   // Lock to synchronize getters & stop
   private final Object LOCK = new Object();
-
-  private volatile boolean isStopped = false;
 
   private final SecurityService securityService;
 
