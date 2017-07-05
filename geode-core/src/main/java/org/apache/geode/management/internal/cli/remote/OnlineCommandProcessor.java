@@ -40,7 +40,7 @@ import org.apache.geode.security.ResourcePermission;
  * @since GemFire 7.0
  */
 public class OnlineCommandProcessor {
-  protected CommandExecutor executor;
+  protected final CommandExecutor executor;
   private GfshParser gfshParser;
 
   // Lock to synchronize getters & stop
@@ -117,17 +117,5 @@ public class OnlineCommandProcessor {
 
   public CommandStatement createCommandStatement(String commandString, Map<String, String> env) {
     return new CommandStatementImpl(commandString, env, this);
-  }
-
-  public boolean isStopped() {
-    return isStopped;
-  }
-
-  public void stop() {
-    synchronized (LOCK) {
-      this.gfshParser = null;
-      this.executor = null;
-      this.isStopped = true;
-    }
   }
 }

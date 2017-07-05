@@ -30,7 +30,6 @@ import java.security.KeyStore;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -50,6 +49,7 @@ import org.apache.geode.internal.DSFIDFactory;
 import org.apache.geode.internal.lang.Initializer;
 import org.apache.geode.internal.util.IOUtils;
 import org.apache.geode.management.cli.Result;
+import org.apache.geode.management.internal.Credential;
 import org.apache.geode.management.internal.JmxManagerLocatorRequest;
 import org.apache.geode.management.internal.JmxManagerLocatorResponse;
 import org.apache.geode.management.internal.SSLUtil;
@@ -73,8 +73,7 @@ public class ConnectCommand {
 
   private ConnectionEndpoint memberRmiHostPort;
   private ConnectionEndpoint locatorTcpHostPort;
-  private String userName;
-  private String password;
+  private Credential user;
 
   private String keystore;
   private String keystorePassword;
@@ -97,13 +96,12 @@ public class ConnectCommand {
 
 
   public ConnectCommand(ConnectionEndpoint locatorTcpHostPort, ConnectionEndpoint memberRmiHostPort,
-      String userName, String password, String keystore, String keystorePassword, String truststore,
-      String truststorePassword, String sslCiphers, String sslProtocols, boolean useHttp,
-      boolean useSsl, CommandContext gfsh, String gfSecurityPropertiesPath, String url) {
+                        Credential user, String keystore, String keystorePassword, String truststore,
+                        String truststorePassword, String sslCiphers, String sslProtocols, boolean useHttp,
+                        boolean useSsl, CommandContext gfsh, String gfSecurityPropertiesPath, String url) {
     this.locatorTcpHostPort = locatorTcpHostPort;
     this.memberRmiHostPort = memberRmiHostPort;
-    this.userName = userName;
-    this.password = password;
+    this.user = user;
     this.keystore = keystore;
     this.keystorePassword = keystorePassword;
     this.truststore = truststore;
@@ -123,26 +121,23 @@ public class ConnectCommand {
           .createInfoResult("Already connected to: " + gfsh.getOperationInvoker().toString());
     }
 
-    Map<String, String> sslConfigProps = null;
+    Map<String, String> sslConfigProps;
 
-    if (userName != null && userName.length() > 0) {
-      if (password == null || password.length() == 0) {
-        password = gfsh.readPassword(CliStrings.CONNECT__PASSWORD + ": ");
-      }
-      if (password == null || password.length() == 0) {
+    if (user.hasResource() && !user.hasPassword()) {
+      String newPassword = gfsh.readPassword(CliStrings.CONNECT__PASSWORD + ": ");
+      if (StringUtils.isBlank(newPassword)) {
         throw new AuthenticationException(CliStrings.CONNECT__MSG__JMX_PASSWORD_MUST_BE_SPECIFIED);
-        // return ResultBuilder
-        // .createConnectionErrorResult(CliStrings.CONNECT__MSG__JMX_PASSWORD_MUST_BE_SPECIFIED);
       }
+      user = new Credential(user.getIdentifier(), newPassword);
     }
 
     sslConfigProps = readSSLConfiguration();
 
     if (useHttp) {
-      result = httpConnect(sslConfigProps, useSsl, url, userName, password);
+      result = httpConnect(sslConfigProps, useSsl, url, user);
     } else {
-      result = jmxConnect(sslConfigProps, memberRmiHostPort, locatorTcpHostPort, useSsl, userName,
-          password, gfSecurityPropertiesPath, false);
+      result = jmxConnect(sslConfigProps, memberRmiHostPort, locatorTcpHostPort, useSsl, user.getIdentifier(),
+          user.getPassword(), gfSecurityPropertiesPath, false);
     }
     return result;
   }
@@ -309,6 +304,7 @@ public class ConnectCommand {
       }
 
       // print out the connecting endpoint
+      // Why is retry a guard on a print statement but does nothing else?
       if (!retry) {
         Gfsh.println(CliStrings.format(CliStrings.CONNECT__MSG__CONNECTING_TO_MANAGER_AT_0,
             new Object[] {hostPortToConnect.toString(false)}));
@@ -342,15 +338,11 @@ public class ConnectCommand {
         // return handleException(e, hostPortToConnect);
       }
 
-      // otherwise, prompt for username and password and retry the conenction
-      try {
-        userName = gfsh.readText(CliStrings.CONNECT__USERNAME + ": ");
-        password = gfsh.readPassword(CliStrings.CONNECT__PASSWORD + ": ");
-        // GEODE-2250 If no value for both username and password, at this point we need to error to
-        // avoid a stack overflow.
-        if (userName == null && password == null) {
-          throw new RuntimeException(e);
-          // return handleException(e, hostPortToConnect);
+      // otherwise, prompt for username and password and retry the connection
+       try {
+        Credential promptedUser = promptForUser();
+        if (!promptedUser.isValid()){
+           throw new RuntimeException(e);
         }
         return jmxConnect(sslConfigProps, hostPortToConnect, null, useSsl, userName, password,
             gfSecurityPropertiesPath, true);
@@ -363,16 +355,23 @@ public class ConnectCommand {
     }
   }
 
+  private Credential promptForUser() throws IOException {
+    String userName = gfsh.readText(CliStrings.CONNECT__USERNAME + ": ");
+    String password = gfsh.readPassword(CliStrings.CONNECT__PASSWORD + ": ");
+    return new Credential(userName, password);
+  }
+
   private Result httpConnect(Map<String, String> sslConfigProps, boolean useSsl, String url,
-      String userName, String password) {
+      final Credential user) {
     try {
-      Map<String, String> securityProperties = new HashMap<String, String>();
+      Map<String, String> securityProperties = new HashMap<>();
 
       // at this point, if userName is not empty, password should not be empty either
-      if (userName != null && userName.length() > 0) {
-        securityProperties.put("security-username", userName);
-        securityProperties.put("security-password", password);
-      }
+      user.onValid(() -> {
+          securityProperties.put("security-username", user.getIdentifier());
+          securityProperties.put("security-password", user.getPassword());
+        }
+      );
 
       if (useSsl) {
         configureHttpsURLConnection(sslConfigProps);
@@ -381,9 +380,7 @@ public class ConnectCommand {
         }
       }
 
-      Iterator<String> it = sslConfigProps.keySet().iterator();
-      while (it.hasNext()) {
-        String secKey = it.next();
+      for (String secKey : sslConfigProps.keySet()) {
         securityProperties.put(secKey, sslConfigProps.get(secKey));
       }
 
@@ -411,18 +408,17 @@ public class ConnectCommand {
         // return handleException(e, null);
       }
 
-      // if it's security exception, and we already sent in username and password, still retuns the
+      // if it's security exception, and we already sent in username and password, still returns the
       // connection error
-      if (userName != null) {
+      if (user.getIdentifier() != null) {
         throw new RuntimeException(e);
         // return handleException(e, null);
       }
 
       // otherwise, prompt for username and password and retry the connection
       try {
-        userName = gfsh.readText(CliStrings.CONNECT__USERNAME + ": ");
-        password = gfsh.readPassword(CliStrings.CONNECT__PASSWORD + ": ");
-        return httpConnect(sslConfigProps, useSsl, url, userName, password);
+        Credential promptedUser = promptForUser();
+        return httpConnect(sslConfigProps, useSsl, url, promptedUser);
       } catch (IOException ioe) {
         throw new RuntimeException(e);
         // return handleException(ioe, null);

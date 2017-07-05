@@ -17,6 +17,7 @@ package org.apache.geode.management.internal.cli.commands;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -26,7 +27,7 @@ import java.util.Map;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import org.apache.geode.management.cli.Result;
+import org.apache.geode.management.internal.Credential;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.cli.util.ConnectionEndpoint;
 import org.apache.geode.management.internal.web.shell.SimpleHttpOperationInvoker;
@@ -37,8 +38,9 @@ public class ConnectCommandTest {
 
   private ConnectionEndpoint memberRmiHostPort = null;
   private ConnectionEndpoint locatorTcpHostPort = null;
-  private String userName = null;
-  private String password = null;
+  private Credential user = null;
+//  private String userName = null;
+//  private String password = null;
   private String keystore = null;
   private String keystorePassword = null;
   private String truststore = null;
@@ -54,26 +56,22 @@ public class ConnectCommandTest {
 
   @Test
   public void connectionReportsGenericErrorWhenNotGivenValidArguments() throws Exception {
-    ConnectCommand command = new ConnectCommand(memberRmiHostPort, locatorTcpHostPort, userName,
-        password, keystore, keystorePassword, truststore, truststorePassword, sslCiphers,
+    ConnectCommand command = new ConnectCommand(memberRmiHostPort, locatorTcpHostPort, user, keystore, keystorePassword, truststore, truststorePassword, sslCiphers,
         sslProtocols, useHttp, useSsl, gfsh, gfSecurityPropertiesPath, url);
-
-    // This throws an NPE internally, but isn't that the intended response now? To let errors
-    // percolate up and be handled by the caller of the command class?
-    Result result = command.run();
-    assertThat(result.getStatus()).describedAs(result.toString()).isEqualTo(Result.Status.ERROR);
+    assertThatThrownBy(command::run).isInstanceOf(NullPointerException.class);
   }
 
   @Test
   public void connectSetsSimpleHttpOperationInvoker() throws Exception {
     useHttp = true;
     url = "";
+    user = new Credential(null, null);
     gfsh = mock(Gfsh.class);
+
     doCallRealMethod().when(gfsh).getOperationInvoker();
     doCallRealMethod().when(gfsh).setOperationInvoker(any());
 
-    ConnectCommand command = new ConnectCommand(memberRmiHostPort, locatorTcpHostPort, userName,
-        password, keystore, keystorePassword, truststore, truststorePassword, sslCiphers,
+    ConnectCommand command = new ConnectCommand(memberRmiHostPort, locatorTcpHostPort, user, keystore, keystorePassword, truststore, truststorePassword, sslCiphers,
         sslProtocols, useHttp, useSsl, gfsh, gfSecurityPropertiesPath, url) {
       @Override
       public void verifyAuthenticatedConnection(Map<String, String> securityProps, String query) {}

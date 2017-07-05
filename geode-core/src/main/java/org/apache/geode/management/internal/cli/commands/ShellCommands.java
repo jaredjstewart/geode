@@ -48,6 +48,7 @@ import org.apache.geode.internal.util.PasswordUtil;
 import org.apache.geode.management.cli.CliMetaData;
 import org.apache.geode.management.cli.ConverterHint;
 import org.apache.geode.management.cli.Result;
+import org.apache.geode.management.internal.Credential;
 import org.apache.geode.management.internal.JmxManagerLocatorRequest;
 import org.apache.geode.management.internal.JmxManagerLocatorResponse;
 import org.apache.geode.management.internal.cli.CliUtil;
@@ -286,7 +287,8 @@ public class ShellCommands implements GfshCommand {
           unspecifiedDefaultValue = "false",
           help = CliStrings.CONNECT__USE_SSL__HELP) final boolean useSsl) {
 
-    ConnectCommand command = new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, userName, decrypt(password),
+    Credential user = new Credential(userName, decrypt(password));
+    ConnectCommand command = new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, user,
         keystore, keystorePassword, truststore, truststorePassword, sslCiphers, sslProtocols,
         useHttp, useSsl, getGfsh(), gfSecurityPropertiesPath, url);
 
