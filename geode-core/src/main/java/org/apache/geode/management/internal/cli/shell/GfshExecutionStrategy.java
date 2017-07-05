@@ -117,7 +117,7 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
   /**
    * Indicates commands are able to be presented. This generally means all important system startup
    * activities have completed. Copied from {@link ExecutionStrategy#isReadyForCommands()}.
-   *
+   * 
    * @return whether commands can be presented for processing at this time
    */
   @Override

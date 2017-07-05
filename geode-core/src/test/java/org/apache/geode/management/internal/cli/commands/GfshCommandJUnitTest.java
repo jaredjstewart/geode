@@ -21,18 +21,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.geode.cache.execute.Function;
-import org.apache.geode.cache.execute.FunctionService;
-import org.apache.geode.distributed.DistributedMember;
-import org.apache.geode.distributed.DistributedSystem;
-import org.apache.geode.internal.cache.InternalCache;
-import org.apache.geode.internal.lang.StringUtils;
-import org.apache.geode.internal.util.CollectionUtils;
-import org.apache.geode.management.cli.CliMetaData;
-import org.apache.geode.management.internal.cli.i18n.CliStrings;
-import org.apache.geode.management.internal.cli.shell.Gfsh;
-import org.apache.geode.management.internal.cli.util.MemberNotFoundException;
-import org.apache.geode.test.junit.categories.UnitTest;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Collections;
+import java.util.Set;
+
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.lib.concurrent.Synchroniser;
@@ -42,10 +35,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Collections;
-import java.util.Set;
+import org.apache.geode.cache.execute.Function;
+import org.apache.geode.cache.execute.FunctionService;
+import org.apache.geode.distributed.DistributedMember;
+import org.apache.geode.distributed.DistributedSystem;
+import org.apache.geode.internal.cache.InternalCache;
+import org.apache.geode.internal.lang.StringUtils;
+import org.apache.geode.internal.util.CollectionUtils;
+import org.apache.geode.management.cli.CliMetaData;
+import org.apache.geode.management.internal.cli.i18n.CliStrings;
+import org.apache.geode.management.internal.cli.util.MemberNotFoundException;
+import org.apache.geode.test.junit.categories.UnitTest;
 
 /**
  * The GfshCommandJUnitTest class is a test suite of test cases testing the contract and
@@ -64,10 +64,20 @@ public class GfshCommandJUnitTest {
 
   private Mockery mockContext;
 
-  private static class DefaultGfshCommmand implements GfshCommand {
+  private static <T extends Function> T register(T function) {
+    if (FunctionService.isRegistered(function.getId())) {
+      function = (T) FunctionService.getFunction(function.getId());
+    } else {
+      FunctionService.registerFunction(function);
+    }
+
+    return function;
   }
 
-  private DefaultGfshCommmand defaultGfshCommmand;
+  private static class DefaultGfshCommand implements GfshCommand {
+  }
+
+  private DefaultGfshCommand defaultGfshCommand;
 
   @Before
   public void setup() {
@@ -75,7 +85,7 @@ public class GfshCommandJUnitTest {
     mockContext.setImposteriser(ClassImposteriser.INSTANCE);
     mockContext.setThreadingPolicy(new Synchroniser());
 
-    defaultGfshCommmand = new DefaultGfshCommmand();
+    defaultGfshCommand = new DefaultGfshCommand();
   }
 
   @After
@@ -106,13 +116,13 @@ public class GfshCommandJUnitTest {
 
   @Test
   public void testConvertDefaultValue() {
-    assertNull(defaultGfshCommmand.convertDefaultValue(null, StringUtils.EMPTY));
+    assertNull(defaultGfshCommand.convertDefaultValue(null, StringUtils.EMPTY));
     assertEquals(StringUtils.EMPTY,
-        defaultGfshCommmand.convertDefaultValue(StringUtils.EMPTY, "test"));
+        defaultGfshCommand.convertDefaultValue(StringUtils.EMPTY, "test"));
     assertEquals(StringUtils.SPACE,
-        defaultGfshCommmand.convertDefaultValue(StringUtils.SPACE, "testing"));
+        defaultGfshCommand.convertDefaultValue(StringUtils.SPACE, "testing"));
     assertEquals("tested",
-        defaultGfshCommmand.convertDefaultValue(CliMetaData.ANNOTATION_DEFAULT_VALUE, "tested"));
+        defaultGfshCommand.convertDefaultValue(CliMetaData.ANNOTATION_DEFAULT_VALUE, "tested"));
   }
 
   @Test
@@ -311,7 +321,7 @@ public class GfshCommandJUnitTest {
           createAbstractCommandsSupport(mockContext.mock(InternalCache.class));
 
       assertFalse(FunctionService.isRegistered("testRegister"));
-      assertSame(mockFunction, commands.register(mockFunction));
+      assertSame(mockFunction, register(mockFunction));
       assertTrue(FunctionService.isRegistered("testRegister"));
     } finally {
       FunctionService.unregisterFunction("testRegister");
@@ -342,7 +352,7 @@ public class GfshCommandJUnitTest {
       FunctionService.registerFunction(registeredFunction);
 
       assertTrue(FunctionService.isRegistered("testRegisteredAlready"));
-      assertSame(registeredFunction, commands.register(unregisteredFunction));
+      assertSame(registeredFunction, register(unregisteredFunction));
       assertTrue(FunctionService.isRegistered("testRegisteredAlready"));
     } finally {
       FunctionService.unregisterFunction("testRegisteredAlready");
@@ -351,22 +361,22 @@ public class GfshCommandJUnitTest {
 
   @Test
   public void testToStringOnBoolean() {
-    assertEquals("false", defaultGfshCommmand.toString(null, null, null));
-    assertEquals("true", defaultGfshCommmand.toString(true, null, null));
-    assertEquals("true", defaultGfshCommmand.toString(Boolean.TRUE, null, null));
-    assertEquals("false", defaultGfshCommmand.toString(false, null, null));
-    assertEquals("false", defaultGfshCommmand.toString(Boolean.FALSE, null, null));
-    assertEquals("false", defaultGfshCommmand.toString(true, "false", "true"));
-    assertEquals("true", defaultGfshCommmand.toString(false, "false", "true"));
-    assertEquals("Yes", defaultGfshCommmand.toString(true, "Yes", "No"));
-    assertEquals("Yes", defaultGfshCommmand.toString(false, "No", "Yes"));
-    assertEquals("TRUE", defaultGfshCommmand.toString(Boolean.TRUE, "TRUE", "FALSE"));
-    assertEquals("FALSE", defaultGfshCommmand.toString(Boolean.FALSE, "TRUE", "FALSE"));
+    assertEquals("false", defaultGfshCommand.toString(null, null, null));
+    assertEquals("true", defaultGfshCommand.toString(true, null, null));
+    assertEquals("true", defaultGfshCommand.toString(Boolean.TRUE, null, null));
+    assertEquals("false", defaultGfshCommand.toString(false, null, null));
+    assertEquals("false", defaultGfshCommand.toString(Boolean.FALSE, null, null));
+    assertEquals("false", defaultGfshCommand.toString(true, "false", "true"));
+    assertEquals("true", defaultGfshCommand.toString(false, "false", "true"));
+    assertEquals("Yes", defaultGfshCommand.toString(true, "Yes", "No"));
+    assertEquals("Yes", defaultGfshCommand.toString(false, "No", "Yes"));
+    assertEquals("TRUE", defaultGfshCommand.toString(Boolean.TRUE, "TRUE", "FALSE"));
+    assertEquals("FALSE", defaultGfshCommand.toString(Boolean.FALSE, "TRUE", "FALSE"));
   }
 
   @Test
   public void testToStringOnThrowable() {
-    assertEquals("test", defaultGfshCommmand.toString(new Throwable("test"), false));
+    assertEquals("test", defaultGfshCommand.toString(new Throwable("test"), false));
   }
 
   @Test
@@ -376,7 +386,7 @@ public class GfshCommandJUnitTest {
 
     t.printStackTrace(new PrintWriter(writer));
 
-    assertEquals(writer.toString(), defaultGfshCommmand.toString(t, true));
+    assertEquals(writer.toString(), defaultGfshCommand.toString(t, true));
   }
 
   private static class TestCommands implements GfshCommand {

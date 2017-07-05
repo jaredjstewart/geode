@@ -14,40 +14,6 @@
  */
 package org.apache.geode.management.internal.cli.shell;
 
-import jline.Terminal;
-import jline.console.ConsoleReader;
-import org.apache.geode.internal.Banner;
-import org.apache.geode.internal.GemFireVersion;
-import org.apache.geode.internal.lang.ClassUtils;
-import org.apache.geode.internal.process.signal.AbstractSignalNotificationHandler;
-import org.apache.geode.internal.util.ArgumentRedactor;
-import org.apache.geode.internal.util.HostName;
-import org.apache.geode.internal.util.SunAPINotFoundException;
-import org.apache.geode.management.cli.CommandProcessingException;
-import org.apache.geode.management.cli.Result;
-import org.apache.geode.management.internal.cli.CliUtil;
-import org.apache.geode.management.internal.cli.CommandManager;
-import org.apache.geode.management.internal.cli.GfshParser;
-import org.apache.geode.management.internal.cli.LogWrapper;
-import org.apache.geode.management.internal.cli.i18n.CliStrings;
-import org.apache.geode.management.internal.cli.result.CommandResult;
-import org.apache.geode.management.internal.cli.result.CompositeResultData;
-import org.apache.geode.management.internal.cli.result.CompositeResultData.SectionResultData;
-import org.apache.geode.management.internal.cli.result.ResultBuilder;
-import org.apache.geode.management.internal.cli.shell.jline.ANSIHandler;
-import org.apache.geode.management.internal.cli.shell.jline.ANSIHandler.ANSIStyle;
-import org.apache.geode.management.internal.cli.shell.jline.GfshHistory;
-import org.apache.geode.management.internal.cli.shell.jline.GfshUnsupportedTerminal;
-import org.apache.geode.management.internal.cli.shell.unsafe.GfshSignalHandler;
-import org.apache.geode.management.internal.cli.util.CommentSkipHelper;
-import org.springframework.shell.core.AbstractShell;
-import org.springframework.shell.core.ExecutionStrategy;
-import org.springframework.shell.core.ExitShellRequest;
-import org.springframework.shell.core.JLineLogHandler;
-import org.springframework.shell.core.JLineShell;
-import org.springframework.shell.core.Parser;
-import org.springframework.shell.event.ShellStatus.Status;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -67,24 +33,58 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+import jline.Terminal;
+import jline.console.ConsoleReader;
+import org.springframework.shell.core.AbstractShell;
+import org.springframework.shell.core.ExecutionStrategy;
+import org.springframework.shell.core.ExitShellRequest;
+import org.springframework.shell.core.JLineLogHandler;
+import org.springframework.shell.core.JLineShell;
+import org.springframework.shell.core.Parser;
+import org.springframework.shell.event.ShellStatus.Status;
+
+import org.apache.geode.internal.Banner;
+import org.apache.geode.internal.GemFireVersion;
+import org.apache.geode.internal.lang.ClassUtils;
+import org.apache.geode.internal.process.signal.AbstractSignalNotificationHandler;
+import org.apache.geode.internal.util.ArgumentRedactor;
+import org.apache.geode.internal.util.HostName;
+import org.apache.geode.internal.util.SunAPINotFoundException;
+import org.apache.geode.management.cli.CommandProcessingException;
+import org.apache.geode.management.cli.Result;
+import org.apache.geode.management.internal.cli.CliUtil;
+import org.apache.geode.management.internal.cli.CommandContext;
+import org.apache.geode.management.internal.cli.CommandManager;
+import org.apache.geode.management.internal.cli.GfshParser;
+import org.apache.geode.management.internal.cli.LogWrapper;
+import org.apache.geode.management.internal.cli.i18n.CliStrings;
+import org.apache.geode.management.internal.cli.result.CommandResult;
+import org.apache.geode.management.internal.cli.result.ResultBuilder;
+import org.apache.geode.management.internal.cli.shell.jline.ANSIHandler;
+import org.apache.geode.management.internal.cli.shell.jline.ANSIHandler.ANSIStyle;
+import org.apache.geode.management.internal.cli.shell.jline.GfshHistory;
+import org.apache.geode.management.internal.cli.shell.jline.GfshUnsupportedTerminal;
+import org.apache.geode.management.internal.cli.shell.unsafe.GfshSignalHandler;
+import org.apache.geode.management.internal.cli.util.CommentSkipHelper;
+
 /**
  * Extends an interactive shell provided by
  * <a href="https://github.com/SpringSource/spring-shell">Spring Shell</a> library.
- * <p />
+ *
+ * <p>
  * This class is used to plug-in implementations of the following Spring (Roo) Shell components
  * customized to suite GemFire Command Line Interface (CLI) requirements:
  * <ul>
  * <li><code>org.springframework.roo.shell.ExecutionStrategy</code>
  * <li><code>org.springframework.roo.shell.Parser</code>
  * </ul>
- * <p />
- * Additionally, this class is used to maintain GemFire SHell (gfsh) specific information like:
- * environment TODO
  *
+ * <p>
+ * Additionally, this class is used to maintain GemFire SHell (gfsh) specific information
  *
  * @since GemFire 7.0
  */
-public class Gfsh extends JLineShell {
+public class Gfsh extends JLineShell implements CommandContext {
   public static final int DEFAULT_APP_FETCH_SIZE = 1000;
   public static final int DEFAULT_APP_LAST_EXIT_STATUS = 0;
   public static final int DEFAULT_APP_COLLECTION_LIMIT = 20;
@@ -135,16 +135,15 @@ public class Gfsh extends JLineShell {
   // private static final String ANIMATION_SLOT = "A"; //see 46072
   protected static PrintStream gfshout = System.out;
   protected static PrintStream gfsherr = System.err;
-  protected static ThreadLocal<Gfsh> gfshThreadLocal = new ThreadLocal<Gfsh>();
   private static Gfsh instance;
   // This flag is used to restrict column trimming to table only types
-  private static ThreadLocal<Boolean> resultTypeTL = new ThreadLocal<Boolean>();
+  private static ThreadLocal<Boolean> resultTypeTL = new ThreadLocal<>();
   private static String OS = System.getProperty("os.name").toLowerCase();
-  private final Map<String, String> env = new TreeMap<String, String>();
-  private final List<String> readonlyAppEnv = new ArrayList<String>();
+  private final Map<String, String> env = new TreeMap<>();
+  private final List<String> readonlyAppEnv = new ArrayList<>();
   // Map to keep reference to actual user specified Command String
   // Should always have one value at the max
-  private final Map<String, String> expandedPropCommandsMap = new HashMap<String, String>();
+  private final Map<String, String> expandedPropCommandsMap = new HashMap<>();
   private final ExecutionStrategy executionStrategy;
   private final GfshParser parser;
   private final LogWrapper gfshFileLogger;
@@ -1151,62 +1150,5 @@ public class Gfsh extends JLineShell {
       output = output.replace(foundInLine, envProperty);
     }
     return output;
-  }
-}
-
-
-class ScriptExecutionDetails {
-  private final String filePath;
-  private final List<CommandAndStatus> commandAndStatusList;
-
-  ScriptExecutionDetails(String filePath) {
-    this.filePath = filePath;
-    this.commandAndStatusList = new ArrayList<CommandAndStatus>();
-  }
-
-  void addCommandAndStatus(String command, String status) {
-    this.commandAndStatusList.add(new CommandAndStatus(command, status));
-  }
-
-  Result getResult() {
-    CompositeResultData compositeResultData = ResultBuilder.createCompositeResultData();
-    compositeResultData.setHeader(
-        "************************* Execution Summary ***********************\nScript file: "
-            + filePath);
-
-    for (int i = 0; i < this.commandAndStatusList.size(); i++) {
-      int commandSrNo = i + 1;
-      SectionResultData section = compositeResultData.addSection("" + (i + 1));
-      CommandAndStatus commandAndStatus = commandAndStatusList.get(i);
-      section.addData("Command-" + String.valueOf(commandSrNo), commandAndStatus.command);
-      section.addData("Status", commandAndStatus.status);
-      if (commandAndStatus.status.equals("FAILED")) {
-        compositeResultData.setStatus(org.apache.geode.management.cli.Result.Status.ERROR);
-      }
-      if (i != this.commandAndStatusList.size()) {
-        section.setFooter(Gfsh.LINE_SEPARATOR);
-      }
-    }
-
-    return ResultBuilder.buildResult(compositeResultData);
-  }
-
-  void logScriptExecutionInfo(LogWrapper logWrapper, Result result) {
-    logWrapper.info(ResultBuilder.resultAsString(result));
-  }
-
-  static class CommandAndStatus {
-    private final String command;
-    private final String status;
-
-    public CommandAndStatus(String command, String status) {
-      this.command = command;
-      this.status = status;
-    }
-
-    @Override
-    public String toString() {
-      return command + "     " + status;
-    }
   }
 }

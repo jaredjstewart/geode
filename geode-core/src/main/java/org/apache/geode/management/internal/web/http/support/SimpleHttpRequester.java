@@ -19,10 +19,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.geode.management.internal.cli.shell.Gfsh;
-import org.apache.geode.security.AuthenticationFailedException;
-import org.apache.geode.security.NotAuthorizedException;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -32,6 +28,11 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
+
+import org.apache.geode.management.internal.cli.CommandContext;
+import org.apache.geode.management.internal.cli.shell.Gfsh;
+import org.apache.geode.security.AuthenticationFailedException;
+import org.apache.geode.security.NotAuthorizedException;
 
 
 /**
@@ -71,7 +72,7 @@ public class SimpleHttpRequester {
    * @param connectTimeout an integer value specifying the timeout value in milliseconds for
    *        establishing the HTTP connection to the HTTP server.
    */
-  public SimpleHttpRequester(final Gfsh gfsh, final int connectTimeout,
+  public SimpleHttpRequester(final CommandContext gfsh, final int connectTimeout,
       Map<String, String> securityProperties) {
     final SimpleClientHttpRequestFactory clientHttpRequestFactory =
         new SimpleClientHttpRequestFactory();

@@ -14,7 +14,6 @@
  */
 package org.apache.geode.management.internal.cli.remote;
 
-import java.util.Collections;
 import java.util.Map;
 
 import org.springframework.shell.event.ParseResult;
@@ -29,13 +28,13 @@ import org.apache.geode.management.cli.Result;
  */
 public class CommandStatementImpl implements CommandStatement {
 
-  private CommandProcessor cmdProcessor;
+  private OnlineCommandProcessor cmdProcessor;
   private String commandString;
   private Map<String, String> env;
   private ParseResult parseResult;
 
   CommandStatementImpl(String commandString, Map<String, String> env,
-      CommandProcessor cmdProcessor) {
+      OnlineCommandProcessor cmdProcessor) {
     this.commandString = commandString;
     this.env = env;
     this.cmdProcessor = cmdProcessor;

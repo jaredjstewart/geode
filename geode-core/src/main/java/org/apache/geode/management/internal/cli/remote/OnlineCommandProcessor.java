@@ -39,30 +39,28 @@ import org.apache.geode.security.ResourcePermission;
 /**
  * @since GemFire 7.0
  */
-public class CommandProcessor {
-  protected CommandExecutor executor;
-  private GfshParser gfshParser;
+public class OnlineCommandProcessor {
+  protected final CommandExecutor executor;
+  private final GfshParser gfshParser;
 
   // Lock to synchronize getters & stop
   private final Object LOCK = new Object();
 
-  private volatile boolean isStopped = false;
-
   private final SecurityService securityService;
 
   @TestingConstructor
-  public CommandProcessor() throws ClassNotFoundException, IOException {
+  public OnlineCommandProcessor() throws ClassNotFoundException, IOException {
     this(new Properties(), SecurityServiceFactory.create());
   }
 
-  public CommandProcessor(Properties cacheProperties, SecurityService securityService)
+  public OnlineCommandProcessor(Properties cacheProperties, SecurityService securityService)
       throws ClassNotFoundException, IOException {
     this(cacheProperties, securityService, new CommandExecutor());
   }
 
   @TestingConstructor
-  public CommandProcessor(Properties cacheProperties, SecurityService securityService,
-      CommandExecutor commandExecutor) {
+  public OnlineCommandProcessor(Properties cacheProperties, SecurityService securityService,
+                                CommandExecutor commandExecutor) {
     this.gfshParser = new GfshParser(new CommandManager(cacheProperties));
     this.executor = commandExecutor;
     this.securityService = securityService;
@@ -117,17 +115,5 @@ public class CommandProcessor {
 
   public CommandStatement createCommandStatement(String commandString, Map<String, String> env) {
     return new CommandStatementImpl(commandString, env, this);
-  }
-
-  public boolean isStopped() {
-    return isStopped;
-  }
-
-  public void stop() {
-    synchronized (LOCK) {
-      this.gfshParser = null;
-      this.executor = null;
-      this.isStopped = true;
-    }
   }
 }

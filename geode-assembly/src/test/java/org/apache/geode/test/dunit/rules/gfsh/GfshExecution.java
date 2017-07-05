@@ -18,7 +18,6 @@ import static java.util.stream.Collectors.joining;
 
 import java.io.File;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class GfshExecution {
   private final Process process;

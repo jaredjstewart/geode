@@ -16,7 +16,6 @@ package org.apache.geode.management.internal.cli.commands;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import junitparams.JUnitParamsRunner;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -42,6 +41,27 @@ public class StatusLocatorRealGfshTest {
   public void statusLocatorFailsWhenNotConnected() throws Exception {
     GfshScript.of("start locator --name=locator1").withName("start locator").execute(gfshRule);
 
+    GfshScript.of("status locator --name=locator1").withName("status locator").expectFailure()
+        .execute(gfshRule);
+  }
+
+  @Test
+  public void connectWorksOverJmx() throws Exception {
+    startLocatorAndConnect(false);
+  }
+
+  @Test
+  public void connectWorksOverHttp() throws Exception {
+    startLocatorAndConnect(true);
+  }
+
+  private void startLocatorAndConnect(boolean useHttp) throws Exception {
+    GfshScript.of("start locator --name=locator1").execute(gfshRule);
+
+    GfshExecution gfshExecution =
+        GfshScript.of("connect --use-http=" + useHttp, "list members").execute(gfshRule);
+
+    assertThat(gfshExecution.getStdOutText()).contains("Successfully connected to:");
     GfshScript.of("status locator --name=locator1").withName("status locator").expectFailure()
         .execute(gfshRule);
   }

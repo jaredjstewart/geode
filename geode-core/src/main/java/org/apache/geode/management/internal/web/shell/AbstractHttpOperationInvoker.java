@@ -58,6 +58,7 @@ import org.apache.geode.internal.util.IOUtils;
 import org.apache.geode.management.DistributedSystemMXBean;
 import org.apache.geode.management.internal.MBeanJMXAdapter;
 import org.apache.geode.management.internal.ManagementConstants;
+import org.apache.geode.management.internal.cli.CommandContext;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
 import org.apache.geode.management.internal.web.domain.Link;
 import org.apache.geode.management.internal.web.domain.QueryParameterSource;
@@ -115,7 +116,7 @@ public abstract class AbstractHttpOperationInvoker implements HttpOperationInvok
   // a reference to the GemFire shell (Gfsh) instance using this HTTP-based OperationInvoker for
   // command execution
   // and processing
-  private final Gfsh gfsh;
+  private final CommandContext gfsh;
 
   // a list of acceptable content/media types supported by Gfsh
   private final List<MediaType> acceptableMediaTypes =
@@ -153,8 +154,6 @@ public abstract class AbstractHttpOperationInvoker implements HttpOperationInvok
    * @param gfsh a reference to the instance of the GemFire shell (Gfsh) using this HTTP-based
    *        OperationInvoker for command processing.
    * @throws AssertionError if the reference to the Gfsh instance is null.
-   * @see #AbstractHttpOperationInvoker(org.apache.geode.management.internal.cli.shell.Gfsh, String,
-   *      Map)
    * @see org.apache.geode.management.internal.cli.shell.Gfsh
    */
   public AbstractHttpOperationInvoker(final Gfsh gfsh, Map<String, String> securityProperties) {
@@ -174,7 +173,7 @@ public abstract class AbstractHttpOperationInvoker implements HttpOperationInvok
    * @throws AssertionError if the reference to the Gfsh instance is null.
    * @see org.apache.geode.management.internal.cli.shell.Gfsh
    */
-  public AbstractHttpOperationInvoker(final Gfsh gfsh, final String baseUrl,
+  public AbstractHttpOperationInvoker(final CommandContext gfsh, final String baseUrl,
       Map<String, String> securityProperties) {
     assertNotNull(gfsh, "The reference to the GemFire shell (Gfsh) cannot be null!");
 
@@ -379,7 +378,7 @@ public abstract class AbstractHttpOperationInvoker implements HttpOperationInvok
    *         OperationInvoker to process commands.
    * @see org.apache.geode.management.internal.cli.shell.Gfsh
    */
-  protected Gfsh getGfsh() {
+  protected CommandContext getGfsh() {
     return this.gfsh;
   }
 
