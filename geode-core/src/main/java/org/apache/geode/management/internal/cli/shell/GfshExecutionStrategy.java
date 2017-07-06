@@ -146,6 +146,7 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
   private Result executeOnRemote(GfshParseResult parseResult) {
     Result commandResult = null;
     Object response = null;
+    Path tempFile = null;
 
     if (!shell.isConnectedAndReady()) {
       shell.logWarning(
@@ -224,10 +225,7 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
         LogWrapper.getInstance().info(debugInfo);
       }
       commandResult = ResultBuilder.fromJson((String) response);
-    }
-
-    Path tempFile = null;
-    if (response instanceof Path) {
+    } else if (response instanceof Path) {
       tempFile = (Path) response;
     }
 
@@ -244,6 +242,11 @@ public class GfshExecutionStrategy implements ExecutionStrategy {
         }
         commandResult = postExecResult;
       }
+    }
+
+    if (commandResult == null) {
+      commandResult = ResultBuilder
+          .createGemFireErrorResult("Unable to build commandResult using the remote response.");
     }
 
     return commandResult;

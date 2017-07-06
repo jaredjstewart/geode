@@ -118,5 +118,7 @@ public interface Result {
    *        false otherwise.
    */
   public void setCommandPersisted(boolean commandPersisted);
+
+
 }
 

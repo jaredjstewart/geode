@@ -135,7 +135,7 @@ public class SimpleHttpOperationInvokerJUnitTest extends AbstractWebTestCase {
     };
 
     final String actualResult =
-        operationInvoker.processCommand(createCommandRequest("get resource --id=1"));
+        (String) operationInvoker.processCommand(createCommandRequest("get resource --id=1"));
 
     assertEquals(expectedResult, actualResult);
   }
@@ -169,7 +169,7 @@ public class SimpleHttpOperationInvokerJUnitTest extends AbstractWebTestCase {
         operationInvoker.getBaseUrl(), "test");
 
     final String actualResult =
-        operationInvoker.processCommand(createCommandRequest("get resource --id=1"));
+        (String) operationInvoker.processCommand(createCommandRequest("get resource --id=1"));
 
     assertFalse(operationInvoker.isConnected());
     assertEquals(expectedResult, actualResult);

@@ -14,15 +14,20 @@
  */
 package org.apache.geode.management.internal.web.controllers;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Set;
+
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.geode.internal.GemFireVersion;
-import org.apache.geode.internal.lang.ObjectUtils;
-import org.apache.geode.internal.util.IOUtils;
-import org.apache.geode.management.internal.cli.i18n.CliStrings;
-import org.apache.geode.management.internal.web.domain.Link;
-import org.apache.geode.management.internal.web.domain.LinkIndex;
-import org.apache.geode.management.internal.web.domain.QueryParameterSource;
-import org.apache.geode.management.internal.web.http.HttpMethod;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,12 +38,16 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.io.IOException;
-import java.util.Set;
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
+import org.apache.geode.internal.GemFireVersion;
+import org.apache.geode.internal.lang.ObjectUtils;
+import org.apache.geode.internal.util.IOUtils;
+import org.apache.geode.management.cli.Result;
+import org.apache.geode.management.internal.cli.i18n.CliStrings;
+import org.apache.geode.management.internal.cli.result.ResultBuilder;
+import org.apache.geode.management.internal.web.domain.Link;
+import org.apache.geode.management.internal.web.domain.LinkIndex;
+import org.apache.geode.management.internal.web.domain.QueryParameterSource;
+import org.apache.geode.management.internal.web.http.HttpMethod;
 
 /**
  * The ShellCommandsController class implements GemFire REST API calls for Gfsh Shell Commands.
@@ -63,11 +72,55 @@ public class ShellCommandsController extends AbstractCommandsController {
   protected static final String MBEAN_QUERY_LINK_RELATION = "mbean-query";
   protected static final String PING_LINK_RELATION = "ping";
 
-  @RequestMapping(method = RequestMethod.POST, value = "/management/commands", params = "cmd")
-  @ResponseBody
-  public String command(@RequestParam("cmd") final String command) {
-    return processCommand(decode(command));
+  @RequestMapping(method = RequestMethod.GET, value = "/management/commands", params = "cmd")
+  public ResponseEntity<InputStreamResource> command(@RequestParam("cmd") final String command) {
+    String result = processCommand(decode(command));
+    return getResponse(result);
   }
+
+  ResponseEntity<InputStreamResource> getResponse(String result) {
+    // the result is json string from CommandResult
+    Result commandResult = ResultBuilder.fromJson(result);
+
+    // if this command downloads file
+    if (commandResult.getStatus().equals(Result.Status.OK)) {
+      return getOKResponse(commandResult);
+
+    } else {
+      return getErrorResponse(result);
+    }
+  }
+
+  private ResponseEntity<InputStreamResource> getErrorResponse(String result) {
+    HttpHeaders respHeaders = new HttpHeaders();
+    InputStreamResource isr;// if the command is successful, the output is the filepath,
+    // else we need to send the orignal result back so that the receiver will know to turn it
+    // into a Result object
+    try {
+      isr = new InputStreamResource(org.apache.commons.io.IOUtils.toInputStream(result, "UTF-8"));
+      respHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+      return new ResponseEntity<InputStreamResource>(isr, respHeaders, HttpStatus.OK);
+    } catch (Exception e) {
+      throw new RuntimeException("IO Error writing file to output stream", e);
+    }
+  }
+
+  private ResponseEntity<InputStreamResource> getOKResponse(Result commandResult) {
+    HttpHeaders respHeaders = new HttpHeaders();
+    InputStreamResource isr;// if the command is successful, the output is the filepath,
+    String filePath = commandResult.nextLine().trim();
+    File zipFile = new File(filePath);
+    try {
+      isr = new InputStreamResource(new FileInputStream(zipFile));
+      respHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE);
+      return new ResponseEntity<InputStreamResource>(isr, respHeaders, HttpStatus.OK);
+    } catch (Exception e) {
+      throw new RuntimeException("IO Error writing file to output stream", e);
+    } finally {
+      FileUtils.deleteQuietly(zipFile);
+    }
+  }
+
 
   // TODO research the use of Jolokia instead
   @RequestMapping(method = RequestMethod.GET, value = "/mbean/attribute")

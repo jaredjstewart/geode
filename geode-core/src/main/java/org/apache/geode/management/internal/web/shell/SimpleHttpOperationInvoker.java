@@ -151,12 +151,16 @@ public class SimpleHttpOperationInvoker extends AbstractHttpOperationInvoker {
    * @see org.springframework.http.ResponseEntity
    */
   @Override
-  public String processCommand(final CommandRequest command) {
+  public Object processCommand(final CommandRequest command) {
     assertState(isConnected(),
         "Gfsh must be connected to the GemFire Manager in order to process commands remotely!");
 
     try {
-      return send(createHttpRequest(command), String.class);
+      if (command.isDownloadFile()) {
+        return downloadResponseToTempFile(createHttpRequest(command), command.getParameters());
+      } else {
+        return send(createHttpRequest(command), String.class, command.getParameters());
+      }
     } catch (ResourceAccessException e) {
       return handleResourceAccessException(e);
     }
