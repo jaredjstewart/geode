@@ -94,9 +94,9 @@ public class ConnectCommand {
 
 
   public ConnectCommand(ConnectionEndpoint locatorTcpHostPort, ConnectionEndpoint memberRmiHostPort,
-                        Credential user, Credential keystore, Credential truststore,
-                        String sslCiphers, String sslProtocols, boolean useHttp,
-                        boolean useSsl, CommandContext gfsh, String gfSecurityPropertiesPath, String url) {
+      Credential user, Credential keystore, Credential truststore, String sslCiphers,
+      String sslProtocols, boolean useHttp, boolean useSsl, CommandContext gfsh,
+      String gfSecurityPropertiesPath, String url) {
     this.locatorTcpHostPort = locatorTcpHostPort;
     this.memberRmiHostPort = memberRmiHostPort;
     this.user = user;
@@ -132,8 +132,8 @@ public class ConnectCommand {
     if (useHttp) {
       result = httpConnect(sslConfigProps, useSsl, url, user);
     } else {
-      result = jmxConnect(sslConfigProps, memberRmiHostPort, locatorTcpHostPort, useSsl, user.getIdentifier(),
-          user.getPassword(), gfSecurityPropertiesPath, false);
+      result = jmxConnect(sslConfigProps, memberRmiHostPort, locatorTcpHostPort, useSsl,
+          user.getIdentifier(), user.getPassword(), gfSecurityPropertiesPath, false);
     }
     return result;
   }
@@ -194,26 +194,30 @@ public class ConnectCommand {
 
       if (numTimesPrompted > 0) {
         // NOTE: sslConfigProps map was empty
-        keystore = new Credential(gfsh.readText(CliStrings.CONNECT__KEY_STORE + ": "), keystore.getPassword());
+        keystore = new Credential(gfsh.readText(CliStrings.CONNECT__KEY_STORE + ": "),
+            keystore.getPassword());
       }
 
       if (keystore.hasIdentifier() && !keystore.hasPassword()) {
-        keystore = credentialWithRetrievedPassword(keystore.getIdentifier(), sslConfigProps, Gfsh.SSL_KEYSTORE_PASSWORD, CliStrings.CONNECT__KEY_STORE_PASSWORD);
+        keystore = credentialWithRetrievedPassword(keystore.getIdentifier(), sslConfigProps,
+            Gfsh.SSL_KEYSTORE_PASSWORD, CliStrings.CONNECT__KEY_STORE_PASSWORD);
       }
 
-      keystore.onValid(()->{
+      keystore.onValid(() -> {
         sslConfigProps.put(Gfsh.SSL_KEYSTORE, keystore.getIdentifier());
         sslConfigProps.put(Gfsh.SSL_KEYSTORE_PASSWORD, keystore.getPassword());
       });
 
       if (numTimesPrompted > 0) {
-        truststore = new Credential(gfsh.readText(CliStrings.CONNECT__TRUST_STORE + ": "), truststore.getPassword());
+        truststore = new Credential(gfsh.readText(CliStrings.CONNECT__TRUST_STORE + ": "),
+            truststore.getPassword());
       }
       if (truststore.hasIdentifier() && !truststore.hasPassword()) {
-        truststore = credentialWithRetrievedPassword(truststore.getIdentifier(), sslConfigProps, Gfsh.SSL_TRUSTSTORE_PASSWORD, CliStrings.CONNECT__TRUST_STORE_PASSWORD);
+        truststore = credentialWithRetrievedPassword(truststore.getIdentifier(), sslConfigProps,
+            Gfsh.SSL_TRUSTSTORE_PASSWORD, CliStrings.CONNECT__TRUST_STORE_PASSWORD);
       }
 
-      truststore.onValid(()->{
+      truststore.onValid(() -> {
         sslConfigProps.put(Gfsh.SSL_TRUSTSTORE, truststore.getIdentifier());
         sslConfigProps.put(Gfsh.SSL_TRUSTSTORE_PASSWORD, truststore.getPassword());
       });
@@ -240,11 +244,10 @@ public class ConnectCommand {
     return sslConfigProps;
   }
 
-  private Credential credentialWithRetrievedPassword(String identifier, Map<String, String> sslConfigProps,
-                                                     String propertyKey, String prompt)
-      throws IOException {
+  private Credential credentialWithRetrievedPassword(String identifier,
+      Map<String, String> sslConfigProps, String propertyKey, String prompt) throws IOException {
     String password = sslConfigProps.get(propertyKey);
-    if (password==null) {
+    if (password == null) {
       // not even in properties file, prompt user for it
       password = gfsh.readPassword(prompt + ": ");
     }
@@ -335,10 +338,10 @@ public class ConnectCommand {
       }
 
       // otherwise, prompt for username and password and retry the connection
-       try {
+      try {
         Credential promptedUser = promptForUser();
-        if (!promptedUser.isValid()){
-           throw new RuntimeException(e);
+        if (!promptedUser.isValid()) {
+          throw new RuntimeException(e);
         }
         return jmxConnect(sslConfigProps, hostPortToConnect, null, useSsl, userName, password,
             gfSecurityPropertiesPath, true);
@@ -364,10 +367,9 @@ public class ConnectCommand {
 
       // at this point, if userName is not empty, password should not be empty either
       user.onValid(() -> {
-          securityProperties.put("security-username", user.getIdentifier());
-          securityProperties.put("security-password", user.getPassword());
-        }
-      );
+        securityProperties.put("security-username", user.getIdentifier());
+        securityProperties.put("security-password", user.getPassword());
+      });
 
       if (useSsl) {
         configureHttpsURLConnection(sslConfigProps);

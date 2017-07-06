@@ -52,8 +52,9 @@ public class ConnectCommandTest {
 
   @Test
   public void connectionReportsGenericErrorWhenNotGivenValidArguments() throws Exception {
-    ConnectCommand command = new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, user, keystore, truststore, sslCiphers,
-        sslProtocols, useHttp, useSsl, gfsh, gfSecurityPropertiesPath, url);
+    ConnectCommand command =
+        new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, user, keystore, truststore,
+            sslCiphers, sslProtocols, useHttp, useSsl, gfsh, gfSecurityPropertiesPath, url);
     assertThatThrownBy(command::run).isInstanceOf(NullPointerException.class);
   }
 
@@ -69,17 +70,18 @@ public class ConnectCommandTest {
     doCallRealMethod().when(gfsh).getOperationInvoker();
     doCallRealMethod().when(gfsh).setOperationInvoker(any());
 
-    ConnectCommand command = new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, user, keystore, truststore, sslCiphers,
-        sslProtocols, useHttp, useSsl, gfsh, gfSecurityPropertiesPath, url) {
-      @Override
-      public void verifyAuthenticatedConnection(Map<String, String> securityProps, String query) {}
-    };
+    ConnectCommand command =
+        new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, user, keystore, truststore,
+            sslCiphers, sslProtocols, useHttp, useSsl, gfsh, gfSecurityPropertiesPath, url) {
+          @Override
+          public void verifyAuthenticatedConnection(Map<String, String> securityProps,
+              String query) {}
+        };
 
     command.run();
     assertThat(gfsh.getOperationInvoker()).isInstanceOf(SimpleHttpOperationInvoker.class);
   }
 
   @Test
-  public void testReadSSLConfig() throws Exception {
-  }
+  public void testReadSSLConfig() throws Exception {}
 }

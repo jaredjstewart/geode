@@ -247,8 +247,8 @@ public class MemberCommandsDUnitTest extends JUnit4CacheTestCase {
 
       final Properties props = createProperties(host, openPorts[0]);
       OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
-      Result result =
-          onlineCommandProcessor.createCommandStatement(CliStrings.LIST_MEMBER, EMPTY_ENV).process();
+      Result result = onlineCommandProcessor
+          .createCommandStatement(CliStrings.LIST_MEMBER, EMPTY_ENV).process();
 
       getLogWriter().info("#SB" + getResultAsString(result));
       assertEquals(true, result.getStatus().equals(Status.ERROR));
@@ -269,7 +269,8 @@ public class MemberCommandsDUnitTest extends JUnit4CacheTestCase {
     OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
     CommandStringBuilder csb = new CommandStringBuilder(CliStrings.LIST_MEMBER);
     csb.addOption(CliStrings.GROUP, "G1");
-    Result result = onlineCommandProcessor.createCommandStatement(csb.toString(), EMPTY_ENV).process();
+    Result result =
+        onlineCommandProcessor.createCommandStatement(csb.toString(), EMPTY_ENV).process();
     getLogWriter().info("#SB" + getResultAsString(result));
     assertEquals(true, result.getStatus().equals(Status.OK));
   }

@@ -60,7 +60,7 @@ public class OnlineCommandProcessor {
 
   @TestingConstructor
   public OnlineCommandProcessor(Properties cacheProperties, SecurityService securityService,
-                                CommandExecutor commandExecutor) {
+      CommandExecutor commandExecutor) {
     this.gfshParser = new GfshParser(new CommandManager(cacheProperties));
     this.executor = commandExecutor;
     this.securityService = securityService;

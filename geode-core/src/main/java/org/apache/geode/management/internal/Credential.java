@@ -31,11 +31,11 @@ public class Credential {
     return password;
   }
 
-  public boolean isValid(){
+  public boolean isValid() {
     return hasIdentifier() && hasPassword();
   }
 
-  public void onValid(Runnable lambda){
+  public void onValid(Runnable lambda) {
     if (isValid()) {
       lambda.run();
     }
@@ -43,13 +43,14 @@ public class Credential {
 
   /**
    * blank and empty string password should be considered valid
+   * 
    * @return
    */
   public boolean hasPassword() {
-    return password!=null;
+    return password != null;
   }
 
   public boolean hasIdentifier() {
-    return identifier!=null;
+    return identifier != null;
   }
 }

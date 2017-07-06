@@ -329,8 +329,8 @@ public class ConfigCommandsDUnitTest extends CliCommandTestBase {
     assertEquals(10, config.getLogDiskSpaceLimit());
 
     OnlineCommandProcessor onlineCommandProcessor = new OnlineCommandProcessor();
-    Result result =
-        onlineCommandProcessor.createCommandStatement("alter runtime", Collections.EMPTY_MAP).process();
+    Result result = onlineCommandProcessor
+        .createCommandStatement("alter runtime", Collections.EMPTY_MAP).process();
   }
 
   @Test

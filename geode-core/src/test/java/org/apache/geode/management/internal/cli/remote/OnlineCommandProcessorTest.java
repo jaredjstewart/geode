@@ -78,13 +78,15 @@ public class OnlineCommandProcessorTest {
 
   @Test
   public void executeStripsComments() throws Exception {
-    Result commandResult = onlineCommandProcessor.executeCommand(createCommandStatement("/*comment*/"));
+    Result commandResult =
+        onlineCommandProcessor.executeCommand(createCommandStatement("/*comment*/"));
     assertThat(commandResult).isNull();
   }
 
   @Test
   public void executeReturnsExecutorResult() throws Exception {
-    Result commandResult = onlineCommandProcessor.executeCommand(createCommandStatement("start locator"));
+    Result commandResult =
+        onlineCommandProcessor.executeCommand(createCommandStatement("start locator"));
     assertThat(commandResult).isSameAs(result);
   }
 
@@ -98,7 +100,8 @@ public class OnlineCommandProcessorTest {
 
   @Test
   public void handlesParsingError() throws Exception {
-    Result commandResult = onlineCommandProcessor.executeCommand(createCommandStatement("foo --bar"));
+    Result commandResult =
+        onlineCommandProcessor.executeCommand(createCommandStatement("foo --bar"));
     assertThat(commandResult).isInstanceOf(CommandResult.class);
     assertThat(commandResult.toString()).contains("Could not parse command string. foo --bar");
   }

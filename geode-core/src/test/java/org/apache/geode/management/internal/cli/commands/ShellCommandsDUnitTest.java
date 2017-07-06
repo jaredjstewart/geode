@@ -93,27 +93,27 @@ public class ShellCommandsDUnitTest extends CliCommandTestBase {
 
     assertTrue(workingDirectory.isDirectory());
 
-    locatorLauncher = new LocatorLauncher.Builder().setBindAddress(null)
-        .setForce(true).setMemberName(pathname).setPort(locatorPort)
+    locatorLauncher = new LocatorLauncher.Builder().setBindAddress(null).setForce(true)
+        .setMemberName(pathname).setPort(locatorPort)
         .setWorkingDirectory(IOUtils.tryGetCanonicalPathElseGetAbsolutePath(workingDirectory))
         .build();
 
     assertNotNull(locatorLauncher);
     assertEquals(locatorPort, locatorLauncher.getPort().intValue());
 
-      // fix for bug 46729
-      locatorLauncher.start();
+    // fix for bug 46729
+    locatorLauncher.start();
 
-      final LocatorState locatorState =
-          locatorLauncher.waitOnStatusResponse(60, 10, TimeUnit.SECONDS);
+    final LocatorState locatorState =
+        locatorLauncher.waitOnStatusResponse(60, 10, TimeUnit.SECONDS);
 
-      assertThat(locatorState).isNotNull();
-      assertThat(locatorState.getStatus()).isEqualTo(Status.ONLINE);
+    assertThat(locatorState).isNotNull();
+    assertThat(locatorState.getStatus()).isEqualTo(Status.ONLINE);
 
-      final Result result = connectToLocator(locatorPort);
+    final Result result = connectToLocator(locatorPort);
 
-      assertThat(result).isNotNull();
-      assertThat(result.getStatus()).as("Result is not OK: " + result).isEqualTo(Result.Status.OK);
+    assertThat(result).isNotNull();
+    assertThat(result.getStatus()).as("Result is not OK: " + result).isEqualTo(Result.Status.OK);
   }
 
   @Test

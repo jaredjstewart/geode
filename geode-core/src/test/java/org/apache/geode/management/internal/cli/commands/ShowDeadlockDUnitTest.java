@@ -133,8 +133,8 @@ public class ShowDeadlockDUnitTest extends JUnit4CacheTestCase {
     File outputFile = new File(temporaryFolder.getRoot(), "dependency.txt");
     String showDeadlockCommand = new CommandStringBuilder(CliStrings.SHOW_DEADLOCK)
         .addOption(CliStrings.SHOW_DEADLOCK__DEPENDENCIES__FILE, outputFile.getName()).toString();
-    CommandStatement showDeadlocksCommand =
-        new OnlineCommandProcessor().createCommandStatement(showDeadlockCommand, Collections.emptyMap());
+    CommandStatement showDeadlocksCommand = new OnlineCommandProcessor()
+        .createCommandStatement(showDeadlockCommand, Collections.emptyMap());
 
     Awaitility.await().atMost(1, TimeUnit.MINUTES).until(() -> {
       Result result = showDeadlocksCommand.process();

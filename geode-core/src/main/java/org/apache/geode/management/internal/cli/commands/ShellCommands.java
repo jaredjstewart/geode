@@ -290,9 +290,9 @@ public class ShellCommands implements GfshCommand {
     Credential user = new Credential(userName, decrypt(password));
     Credential keyS = new Credential(keystore, keystorePassword);
     Credential trustS = new Credential(truststore, truststorePassword);
-    ConnectCommand command = new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, user,
-        keyS, trustS, sslCiphers, sslProtocols,
-        useHttp, useSsl, getGfsh(), gfSecurityPropertiesPath, url);
+    ConnectCommand command =
+        new ConnectCommand(locatorTcpHostPort, memberRmiHostPort, user, keyS, trustS, sslCiphers,
+            sslProtocols, useHttp, useSsl, getGfsh(), gfSecurityPropertiesPath, url);
 
     try {
       return command.run();
