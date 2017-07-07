@@ -15,6 +15,7 @@
 package org.apache.geode.management.internal.cli.result;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -51,6 +52,7 @@ public class CommandResult implements Result {
   private boolean failedToPersist = false;
 
   private transient int numTimesSaved;
+  private Path fileToDownload;
 
 
   public CommandResult(ResultData resultData) {
@@ -58,6 +60,19 @@ public class CommandResult implements Result {
     this.gfJsonObject = this.resultData.getGfJsonObject();
     this.status = this.resultData.getStatus();
     this.resultLines = new Vector<String>();
+  }
+
+  public CommandResult( Path fileToDownload){
+    this(new InfoResultData(fileToDownload.toString()));
+    this.fileToDownload = fileToDownload;
+  }
+
+  public boolean hasFileToDownload(){
+    return fileToDownload != null;
+  }
+
+  public Path getFileToDownload() {
+    return fileToDownload;
   }
 
   @Override
@@ -669,4 +684,7 @@ public class CommandResult implements Result {
     this.failedToPersist = !commandPersisted;
   }
 
+  public void setFileToDownload(Path fileToDownload) {
+    this.fileToDownload = fileToDownload;
+  }
 }
