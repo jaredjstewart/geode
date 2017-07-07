@@ -36,7 +36,9 @@ public class DownloadFileResult implements Result {
   }
 
   @Override
-  public void resetToFirstLine() {}
+  public void resetToFirstLine() {
+    hasLine = true;
+  }
 
   @Override
   public boolean hasNextLine() {
@@ -70,14 +72,4 @@ public class DownloadFileResult implements Result {
   public void setCommandPersisted(boolean commandPersisted) {
 
   }
-
-  // public DownloadFileResult(String filePath) {
-  // super(new InfoResultData(){{
-  // addLine(filePath);
-  // }});
-  // }
-  //
-  // public boolean hasIncomingFiles() {
-  // return true;
-  // }
 }

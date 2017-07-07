@@ -41,4 +41,30 @@ public class DownloadFileResultTest {
     result.nextLine();
     assertThatThrownBy(() -> result.nextLine()).isInstanceOf(IndexOutOfBoundsException.class);
   }
+
+  @Test
+  public void resetLineResetsNextLine() throws Exception {
+    DownloadFileResult result = new DownloadFileResult("/vol/log.zip");
+    result.nextLine();
+    assertThatThrownBy(() -> result.nextLine()).isInstanceOf(IndexOutOfBoundsException.class);
+    result.resetToFirstLine();
+    assertThat(result.nextLine()).isEqualTo("/vol/log.zip");
+  }
+
+  @Test
+  public void resetLineResetsHasNextLine() throws Exception {
+    DownloadFileResult result = new DownloadFileResult("/vol/log.zip");
+    result.nextLine();
+    result.resetToFirstLine();
+    assertThat(result.hasNextLine()).isTrue();
+  }
+
+  @Test
+  public void hasIncomingFilesReturnsTrue() throws Exception {
+    DownloadFileResult result = new DownloadFileResult("/vol/log.zip");
+    result.nextLine();
+    result.resetToFirstLine();
+    assertThat(result.hasNextLine()).isTrue();
+  }
+
 }

@@ -89,9 +89,11 @@ public class ExportLogController extends AbstractCommandsController {
       command.addOption(CliStrings.EXPORT_LOGS__ENDTIME, endTime);
     }
 
+    //json representation of Result (Info or Error result)
     String result = processCommand(command.toString());
-    return getResponse(result);
 
+
+    return getResponse(result);
   }
 
   ResponseEntity<InputStreamResource> getResponse(String result) {
