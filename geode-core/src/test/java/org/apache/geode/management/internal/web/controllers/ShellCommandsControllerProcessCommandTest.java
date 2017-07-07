@@ -28,6 +28,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import org.apache.geode.management.internal.cli.CommandResponseBuilder;
 import org.apache.geode.management.internal.cli.result.CommandResult;
+import org.apache.geode.management.internal.cli.result.ErrorResultData;
 import org.apache.geode.management.internal.cli.result.InfoResultData;
 import org.apache.geode.management.internal.cli.result.ResultBuilder;
 import org.apache.geode.test.junit.categories.UnitTest;
@@ -51,8 +52,19 @@ public class ShellCommandsControllerProcessCommandTest {
   }
 
   @Test
-  public void x(){
-    fakeResult = new CommandResult(new InfoResultData("Some result message"));
+  public void infoOkResult(){
+    fakeResult = new CommandResult(new InfoResultData("Some info message"));
+
+    String responseJson = controller.command("xyz");
+    CommandResult result = ResultBuilder.fromJson(responseJson);
+
+    assertThat(result.nextLine()).isEqualTo(fakeResult.nextLine());
+  }
+
+  @Test
+  public void errorResult(){
+    ErrorResultData errorResultData = new ErrorResultData("Some error message");
+    fakeResult = new CommandResult(errorResultData);
 
     String responseJson = controller.command("xyz");
     CommandResult result = ResultBuilder.fromJson(responseJson);

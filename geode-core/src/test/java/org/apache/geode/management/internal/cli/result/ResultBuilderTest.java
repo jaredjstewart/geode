@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.internal.cli.CommandResponseBuilder;
 import org.apache.geode.management.internal.cli.json.GfJsonException;
 import org.apache.geode.test.junit.categories.UnitTest;
@@ -50,6 +51,16 @@ public class ResultBuilderTest {
     CommandResult rehydratedResult = ResultBuilder.fromJson(resultJson);
     assertThat(rehydratedResult.getContent().toString()).isEqualTo(result.getContent().toString());
     assertThat(rehydratedResult.hasFileToDownload()).isTrue();
+  }
+
+  @Test
+  public void errorResultGetsRehydratedWithErrorStatus() throws GfJsonException {
+    CommandResult result = new CommandResult(new ErrorResultData("some error message"));
+
+    String resultJson = CommandResponseBuilder.createCommandResponseJson("someMember", result);
+
+    CommandResult rehydratedResult = ResultBuilder.fromJson(resultJson);
+    assertThat(rehydratedResult.getStatus()).isEqualTo(Result.Status.ERROR);
   }
 
 }
