@@ -15,18 +15,27 @@
 package org.apache.geode.management.internal.web.controllers;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -40,10 +49,14 @@ import org.apache.geode.management.internal.cli.result.CommandResult;
 import org.apache.geode.management.internal.cli.result.ErrorResultData;
 import org.apache.geode.management.internal.cli.result.InfoResultData;
 import org.apache.geode.management.internal.cli.result.ResultBuilder;
+import org.apache.geode.test.junit.categories.IntegrationTest;
 import org.apache.geode.test.junit.categories.UnitTest;
 
 @Category(UnitTest.class)
 public class ShellCommandsControllerProcessCommandTest {
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   private ShellCommandsController controller;
   private CommandResult fakeResult;
 
@@ -87,13 +100,21 @@ public class ShellCommandsControllerProcessCommandTest {
 
   @Test
   public void resultWithFile() throws IOException {
-    fakeResult = new CommandResult(Paths.get("."));
+    File tempFile = temporaryFolder.newFile();
+    FileUtils.writeStringToFile(tempFile, "some file contents", "UTF-8");
+
+    fakeResult = new CommandResult(tempFile.toPath());
 
     ResponseEntity<InputStreamResource> responseFileStream = controller.command("xyz");
 
     assertThatContentTypeEquals(responseFileStream, MediaType.APPLICATION_OCTET_STREAM);
 
-    assertThat(responseFileStream.getBody().getInputStream()).isInstanceOf(FileInputStream.class);
+    String fileContents = toFileContents(responseFileStream);
+    assertThat(fileContents).isEqualTo("some file contents");
+  }
+
+  private String toFileContents(ResponseEntity<InputStreamResource> response) throws IOException {
+    return IOUtils.toString(response.getBody().getInputStream(), "UTF-8");
   }
 
   private String toString(ResponseEntity<InputStreamResource> response) throws IOException {
