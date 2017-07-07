@@ -14,6 +14,7 @@
  */
 package org.apache.geode.management.internal.web.controllers;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.geode.internal.GemFireVersion;
 import org.apache.geode.internal.lang.ObjectUtils;
@@ -26,6 +27,9 @@ import org.apache.geode.management.internal.web.domain.Link;
 import org.apache.geode.management.internal.web.domain.LinkIndex;
 import org.apache.geode.management.internal.web.domain.QueryParameterSource;
 import org.apache.geode.management.internal.web.http.HttpMethod;
+
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +40,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Set;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -66,19 +73,52 @@ public class ShellCommandsController extends AbstractCommandsController {
   protected static final String MBEAN_QUERY_LINK_RELATION = "mbean-query";
   protected static final String PING_LINK_RELATION = "ping";
 
-  @RequestMapping(method = RequestMethod.POST, value = "/management/commands", params = "cmd")
-  @ResponseBody
-  public String command(@RequestParam("cmd") final String command) {
-//     String resultJson = processCommand(decode(command));
-//     CommandResult result = ResultBuilder.fromJson(resultJson); //populate from resultJson
-//
-//     if (result.hasFileToDownload() && result.getStatus() == Result.Status.OK) {
-//       return buildFileDownloadResponse(result);
-//     } else {
-//       return buildJsonResponse(result);
-//     }
-//
-    return processCommand(decode(command));
+  @RequestMapping(method = RequestMethod.GET, value = "/management/commands", params = "cmd")
+  public ResponseEntity<InputStreamResource> command(@RequestParam("cmd") final String command) {
+    String result = processCommand(decode(command));
+
+    return getResponse(result);
+  }
+
+  ResponseEntity<InputStreamResource> getResponse(String result) {
+    // the result is json string from CommandResult
+    CommandResult commandResult = ResultBuilder.fromJson(result);
+
+    if (commandResult.getStatus().equals(Result.Status.OK) && commandResult.hasFileToDownload()) {
+      return getFileDownloadResponse(commandResult);
+    } else {
+      return getJsonResponse(result);
+    }
+  }
+
+  private ResponseEntity<InputStreamResource> getJsonResponse(String result) {
+    HttpHeaders respHeaders = new HttpHeaders();
+    InputStreamResource isr;// if the command is successful, the output is the filepath,
+    // else we need to send the orignal result back so that the receiver will know to turn it
+    // into a Result object
+    try {
+      isr = new InputStreamResource(org.apache.commons.io.IOUtils.toInputStream(result, "UTF-8"));
+      respHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+      return new ResponseEntity<>(isr, respHeaders, HttpStatus.OK);
+    } catch (Exception e) {
+      throw new RuntimeException("IO Error writing file to output stream", e);
+    }
+  }
+
+  private ResponseEntity<InputStreamResource> getFileDownloadResponse(CommandResult commandResult) {
+    HttpHeaders respHeaders = new HttpHeaders();
+    InputStreamResource isr;// if the command is successful, the output is the filepath,
+
+    Path filePath = commandResult.getFileToDownload();
+    try {
+      isr = new InputStreamResource(new FileInputStream(filePath.toFile()));
+      respHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE);
+      return new ResponseEntity<>(isr, respHeaders, HttpStatus.OK);
+    } catch (Exception e) {
+      throw new RuntimeException("IO Error writing file to output stream", e);
+    } finally {
+      FileUtils.deleteQuietly(filePath.toFile());
+    }
   }
 
   // TODO research the use of Jolokia instead

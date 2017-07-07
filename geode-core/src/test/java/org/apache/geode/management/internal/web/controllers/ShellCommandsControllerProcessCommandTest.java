@@ -16,12 +16,21 @@ package org.apache.geode.management.internal.web.controllers;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Paths;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -36,7 +45,6 @@ import org.apache.geode.test.junit.categories.UnitTest;
 @Category(UnitTest.class)
 public class ShellCommandsControllerProcessCommandTest {
   private ShellCommandsController controller;
-  private MockHttpServletRequest request;
   private CommandResult fakeResult;
 
   @Before
@@ -48,37 +56,54 @@ public class ShellCommandsControllerProcessCommandTest {
         return CommandResponseBuilder.createCommandResponseJson("someMember", fakeResult);
       }
     };
-    request = new MockHttpServletRequest();
   }
 
   @Test
-  public void infoOkResult(){
+  public void infoOkResult() throws IOException {
     fakeResult = new CommandResult(new InfoResultData("Some info message"));
 
-    String responseJson = controller.command("xyz");
+    ResponseEntity<InputStreamResource> responseJsonStream = controller.command("xyz");
+    assertThatContentTypeEquals(responseJsonStream, MediaType.APPLICATION_JSON);
+
+    String responseJson = toString(responseJsonStream);
     CommandResult result = ResultBuilder.fromJson(responseJson);
 
     assertThat(result.nextLine()).isEqualTo(fakeResult.nextLine());
   }
 
   @Test
-  public void errorResult(){
+  public void errorResult() throws IOException {
     ErrorResultData errorResultData = new ErrorResultData("Some error message");
     fakeResult = new CommandResult(errorResultData);
 
-    String responseJson = controller.command("xyz");
+    ResponseEntity<InputStreamResource> responseJsonStream = controller.command("xyz");
+    assertThatContentTypeEquals(responseJsonStream, MediaType.APPLICATION_JSON);
+
+    String responseJson = toString(responseJsonStream);
     CommandResult result = ResultBuilder.fromJson(responseJson);
 
     assertThat(result.nextLine()).isEqualTo(fakeResult.nextLine());
   }
 
   @Test
-  public void resultWithFile(){
+  public void resultWithFile() throws IOException {
     fakeResult = new CommandResult(Paths.get("."));
 
-    String responseJson = controller.command("xyz");
-    CommandResult result = ResultBuilder.fromJson(responseJson);
+    ResponseEntity<InputStreamResource> responseFileStream = controller.command("xyz");
 
-    assertThat(result.hasFileToDownload()).isTrue();
+    assertThatContentTypeEquals(responseFileStream, MediaType.APPLICATION_OCTET_STREAM);
+
+    assertThat(responseFileStream.getBody().getInputStream()).isInstanceOf(FileInputStream.class);
+  }
+
+  private String toString(ResponseEntity<InputStreamResource> response) throws IOException {
+    return IOUtils.toString(response.getBody().getInputStream(), "UTF-8");
+  }
+
+  private void assertThatContentTypeEquals(ResponseEntity<InputStreamResource> response,
+                                           MediaType mediaType) {
+    assertThat(response.getHeaders().get(HttpHeaders.CONTENT_TYPE))
+        .containsExactly(mediaType.toString());
+
   }
 }
