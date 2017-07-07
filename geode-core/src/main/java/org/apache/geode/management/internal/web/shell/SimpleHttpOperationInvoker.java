@@ -21,6 +21,7 @@ import java.util.Map;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import org.apache.geode.annotations.TestingConstructor;
 import org.apache.geode.management.internal.cli.CommandContext;
 import org.apache.geode.management.internal.cli.CommandRequest;
 import org.apache.geode.management.internal.cli.shell.Gfsh;
@@ -52,6 +53,7 @@ public class SimpleHttpOperationInvoker extends AbstractHttpOperationInvoker {
    * Default no-arg constructor to create an instance of the SimpleHttpOperationInvoker class for
    * testing purposes.
    */
+  @TestingConstructor
   SimpleHttpOperationInvoker() {
     super(REST_API_URL);
   }
@@ -63,7 +65,7 @@ public class SimpleHttpOperationInvoker extends AbstractHttpOperationInvoker {
    * 
    * @param gfsh a reference to the instance of the GemFire shell using this OperationInvoker to
    *        process commands.
-   * @see #SimpleHttpOperationInvoker(org.apache.geode.management.internal.cli.shell.Gfsh, String,
+   * @see #(org.apache.geode.management.internal.cli.shell.Gfsh, String,
    *      Map)
    * @see org.apache.geode.management.internal.cli.shell.Gfsh
    */
@@ -151,15 +153,18 @@ public class SimpleHttpOperationInvoker extends AbstractHttpOperationInvoker {
    * @see org.springframework.http.ResponseEntity
    */
   @Override
-  public String processCommand(final CommandRequest command) {
+  public Object processCommand(final CommandRequest command) {
     assertState(isConnected(),
         "Gfsh must be connected to the GemFire Manager in order to process commands remotely!");
 
-    try {
-      return send(createHttpRequest(command), String.class);
-    } catch (ResourceAccessException e) {
-      return handleResourceAccessException(e);
-    }
+    Object result = null;
+      if (command.isDownloadFile()) {
+        result = downloadResponseToTempFile(createHttpRequest(command), command.getParameters());
+      } else {
+        result = send(createHttpRequest(command), String.class, command.getParameters());
+      }
+      return result;
   }
+
 
 }
