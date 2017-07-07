@@ -14,23 +14,15 @@
  */
 package org.apache.geode.management.internal.web.controllers;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
-
 import org.apache.geode.internal.GemFireVersion;
 import org.apache.geode.internal.lang.ObjectUtils;
 import org.apache.geode.internal.util.IOUtils;
-import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
-import org.apache.geode.management.internal.cli.result.CommandResult;
-import org.apache.geode.management.internal.cli.result.ResultBuilder;
 import org.apache.geode.management.internal.web.domain.Link;
 import org.apache.geode.management.internal.web.domain.LinkIndex;
 import org.apache.geode.management.internal.web.domain.QueryParameterSource;
 import org.apache.geode.management.internal.web.http.HttpMethod;
-
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,12 +33,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Set;
-
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MalformedObjectNameException;
@@ -54,6 +42,7 @@ import javax.management.ObjectName;
 
 /**
  * The ShellCommandsController class implements GemFire REST API calls for Gfsh Shell Commands.
+ * 
  * @see org.apache.geode.management.internal.cli.commands.ShellCommands
  * @see org.apache.geode.management.internal.web.controllers.AbstractCommandsController
  * @see org.springframework.stereotype.Controller
@@ -74,78 +63,38 @@ public class ShellCommandsController extends AbstractCommandsController {
   protected static final String MBEAN_QUERY_LINK_RELATION = "mbean-query";
   protected static final String PING_LINK_RELATION = "ping";
 
-  @RequestMapping(method = RequestMethod.GET, value = "/management/commands", params = "cmd")
-  public ResponseEntity<InputStreamResource> command(@RequestParam("cmd") final String command) {
-    String result = processCommand(decode(command));
-
-    return getResponse(result);
-  }
-
-  ResponseEntity<InputStreamResource> getResponse(String result) {
-    // the result is json string from CommandResult
-    CommandResult commandResult = ResultBuilder.fromJson(result);
-
-    if (commandResult.getStatus().equals(Result.Status.OK) && commandResult.hasFileToDownload()) {
-      return getFileDownloadResponse(commandResult);
-    } else {
-      return getJsonResponse(result);
-    }
-  }
-
-  private ResponseEntity<InputStreamResource> getJsonResponse(String result) {
-    HttpHeaders respHeaders = new HttpHeaders();
-    InputStreamResource isr;// if the command is successful, the output is the filepath,
-    // else we need to send the orignal result back so that the receiver will know to turn it
-    // into a Result object
-    try {
-      isr = new InputStreamResource(org.apache.commons.io.IOUtils.toInputStream(result, "UTF-8"));
-      respHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-      return new ResponseEntity<>(isr, respHeaders, HttpStatus.OK);
-    } catch (Exception e) {
-      throw new RuntimeException("IO Error writing file to output stream", e);
-    }
-  }
-
-  private ResponseEntity<InputStreamResource> getFileDownloadResponse(CommandResult commandResult) {
-    HttpHeaders respHeaders = new HttpHeaders();
-    InputStreamResource isr;// if the command is successful, the output is the filepath,
-
-    Path filePath = commandResult.getFileToDownload();
-    try {
-      isr = new InputStreamResource(new FileInputStream(filePath.toFile()));
-      respHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM_VALUE);
-      return new ResponseEntity<>(isr, respHeaders, HttpStatus.OK);
-    } catch (Exception e) {
-      throw new RuntimeException("IO Error writing file to output stream", e);
-    } finally {
-      FileUtils.deleteQuietly(filePath.toFile());
-    }
+  @RequestMapping(method = RequestMethod.POST, value = "/management/commands", params = "cmd")
+  @ResponseBody
+  public String command(@RequestParam("cmd") final String command) {
+    return processCommand(decode(command));
   }
 
   // TODO research the use of Jolokia instead
   @RequestMapping(method = RequestMethod.GET, value = "/mbean/attribute")
   public ResponseEntity<?> getAttribute(@RequestParam("resourceName") final String resourceName,
-                                        @RequestParam("attributeName") final String attributeName) {
+      @RequestParam("attributeName") final String attributeName) {
     try {
       final Object attributeValue = getMBeanServer()
           .getAttribute(ObjectName.getInstance(decode(resourceName)), decode(attributeName));
 
-      return new ResponseEntity<>(IOUtils.serializeObject(attributeValue), HttpStatus.OK);
-    } catch (AttributeNotFoundException | MalformedObjectNameException e) {
-      return new ResponseEntity<>(printStackTrace(e), HttpStatus.BAD_REQUEST);
+      return new ResponseEntity<byte[]>(IOUtils.serializeObject(attributeValue), HttpStatus.OK);
+    } catch (AttributeNotFoundException e) {
+      return new ResponseEntity<String>(printStackTrace(e), HttpStatus.BAD_REQUEST);
     } catch (InstanceNotFoundException e) {
-      return new ResponseEntity<>(printStackTrace(e), HttpStatus.NOT_FOUND);
+      return new ResponseEntity<String>(printStackTrace(e), HttpStatus.NOT_FOUND);
+    } catch (MalformedObjectNameException e) {
+      return new ResponseEntity<String>(printStackTrace(e), HttpStatus.BAD_REQUEST);
     } catch (Exception e) {
-      return new ResponseEntity<>(printStackTrace(e), HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<String>(printStackTrace(e), HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   // TODO research the use of Jolokia instead
   @RequestMapping(method = RequestMethod.POST, value = "/mbean/operation")
   public ResponseEntity<?> invoke(@RequestParam("resourceName") final String resourceName,
-                                  @RequestParam("operationName") final String operationName,
-                                  @RequestParam(value = "signature", required = false) String[] signature,
-                                  @RequestParam(value = "parameters", required = false) Object[] parameters) {
+      @RequestParam("operationName") final String operationName,
+      @RequestParam(value = "signature", required = false) String[] signature,
+      @RequestParam(value = "parameters", required = false) Object[] parameters) {
     signature = (signature != null ? signature : ArrayUtils.EMPTY_STRING_ARRAY);
     parameters = (parameters != null ? parameters : ObjectUtils.EMPTY_OBJECT_ARRAY);
 
@@ -178,6 +127,7 @@ public class ShellCommandsController extends AbstractCommandsController {
   /**
    * Gets a link index for the web service endpoints and REST API calls in GemFire for management
    * and monitoring using GemFire shell (Gfsh).
+   * 
    * @return a LinkIndex containing Links for all web service endpoints, REST API calls in GemFire.
    * @see org.apache.geode.management.internal.cli.i18n.CliStrings
    * @see AbstractCommandsController#toUri(String, String)
