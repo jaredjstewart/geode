@@ -18,7 +18,10 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.geode.internal.GemFireVersion;
 import org.apache.geode.internal.lang.ObjectUtils;
 import org.apache.geode.internal.util.IOUtils;
+import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.internal.cli.i18n.CliStrings;
+import org.apache.geode.management.internal.cli.result.CommandResult;
+import org.apache.geode.management.internal.cli.result.ResultBuilder;
 import org.apache.geode.management.internal.web.domain.Link;
 import org.apache.geode.management.internal.web.domain.LinkIndex;
 import org.apache.geode.management.internal.web.domain.QueryParameterSource;
@@ -66,6 +69,15 @@ public class ShellCommandsController extends AbstractCommandsController {
   @RequestMapping(method = RequestMethod.POST, value = "/management/commands", params = "cmd")
   @ResponseBody
   public String command(@RequestParam("cmd") final String command) {
+//     String resultJson = processCommand(decode(command));
+//     CommandResult result = ResultBuilder.fromJson(resultJson); //populate from resultJson
+//
+//     if (result.hasFileToDownload() && result.getStatus() == Result.Status.OK) {
+//       return buildFileDownloadResponse(result);
+//     } else {
+//       return buildJsonResponse(result);
+//     }
+//
     return processCommand(decode(command));
   }
 

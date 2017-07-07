@@ -52,6 +52,11 @@ public class CommandResult implements Result {
   private boolean failedToPersist = false;
 
   private transient int numTimesSaved;
+
+  public Path getFileToDownload() {
+    return fileToDownload;
+  }
+
   private Path fileToDownload;
 
 
@@ -64,15 +69,11 @@ public class CommandResult implements Result {
 
   public CommandResult( Path fileToDownload){
     this(new InfoResultData(fileToDownload.toString()));
-    this.fileToDownload = fileToDownload;
+    this.fileToDownload = fileToDownload.toAbsolutePath();
   }
 
   public boolean hasFileToDownload(){
     return fileToDownload != null;
-  }
-
-  public Path getFileToDownload() {
-    return fileToDownload;
   }
 
   @Override

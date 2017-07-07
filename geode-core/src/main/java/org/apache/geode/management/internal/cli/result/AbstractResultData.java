@@ -71,9 +71,6 @@ public abstract class AbstractResultData implements ResultData {
     this.contentObject = gfJsonObject.getJSONObject(RESULT_CONTENT);
   }
 
-  /**
-   * @return the gfJsonObject
-   */
   public GfJsonObject getGfJsonObject() {
     return gfJsonObject;
   }
@@ -107,9 +104,7 @@ public abstract class AbstractResultData implements ResultData {
   }
 
   /**
-   * 
-   * @param footerText
-   * @return this ResultData
+   *
    * @throws ResultDataException If the value is non-finite number or if the key is null.
    */
   public AbstractResultData setFooter(String footerText) {

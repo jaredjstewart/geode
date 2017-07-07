@@ -46,7 +46,8 @@ public class CommandResponseBuilder {
         result.getHeader(), // header
         content, // content
         result.getFooter(), // footer
-        result.failedToPersist()); // failed to persist
+        result.failedToPersist(),
+        result.getFileToDownload()); // failed to persist
   }
 
   // De-serializing to CommandResponse

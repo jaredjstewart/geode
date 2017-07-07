@@ -18,8 +18,11 @@ import org.apache.geode.management.cli.Result;
 import org.apache.geode.management.internal.cli.json.GfJsonException;
 import org.apache.geode.management.internal.cli.json.GfJsonObject;
 
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Provides methods for creating {@link Result} objects to return from Gfsh command functions
@@ -251,6 +254,11 @@ public class ResultBuilder {
       }
 
       result = buildResult(resultData);
+
+      String fileToDownloadPath = jsonObject.getString("fileToDownload");
+      if (StringUtils.isNotBlank(fileToDownloadPath) && !fileToDownloadPath.equals("null")) {
+        result.setFileToDownload(Paths.get(fileToDownloadPath));
+      }
 
     } catch (GfJsonException e) {
       result = createBadResponseErrorResult(json);

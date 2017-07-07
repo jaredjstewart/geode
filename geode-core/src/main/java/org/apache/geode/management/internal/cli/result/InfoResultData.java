@@ -31,7 +31,7 @@ public class InfoResultData extends AbstractResultData {
     super(gfJsonObject);
   }
 
-  InfoResultData(String message) {
+  public InfoResultData(String message) {
     this();
     addLine(message);
   }
