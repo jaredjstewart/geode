@@ -12,25 +12,19 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.geode.management.internal.cli.multistep;
 
-import org.apache.geode.management.cli.Result;
+package org.apache.geode.management.internal.cli.commands;
 
-public class CLIStepExecption extends RuntimeException {
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+import org.apache.geode.test.junit.categories.UnitTest;
 
-  private Result result;
+@Category(UnitTest.class)
+public class QueryCommandUnitTest {
 
-
-  public CLIStepExecption(Result result) {
-    this.result = result;
+  @Test
+  public void query() throws Exception {
+    QueryCommand queryCommand = new QueryCommand();
   }
-
-
-  public Result getResult() {
-    return result;
-  }
-
-
-
 }
